@@ -76,6 +76,17 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(read_json(DATA / 'last_model_change_result.json', {}))
         elif p == '/api/officials-stats':
             self.send_json(read_json(DATA / 'officials_stats.json', {}))
+        elif p == '/api/morning-brief':
+            self.send_json(read_json(DATA / 'morning_brief.json', {}))
+        elif p == '/api/morning-brief/refresh' and method == 'POST':
+            import subprocess as sp
+            sp.Popen(['python3', str(BASE / 'scripts_fetch_morning_news.py')])
+            self.send_json({'ok': True, 'message': '采集已触发，约30-60秒后刷新'})
+        elif p == '/api/morning-brief':
+            self.send_json(read_json(DATA / 'morning_brief.json', {}))
+        elif p.startswith('/api/morning-brief/'):
+            date = p.split('/')[-1]
+            self.send_json(read_json(DATA / f'morning_brief_{date}.json', {}))
         else:
             self.send_error(404)
 

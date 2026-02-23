@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+"""
+早朝简报采集脚本
+每日 06:00 自动运行，抓取全球新闻 RSS → data/morning_brief_YYYYMMDD.json
+覆盖: 政治 | 军事 | 经济 | AI大模型
+"""
+import json, pathlib, datetime, subprocess, re, sys, os
+from xml.etree import ElementTree as ET
+
+DATA = pathlib.Path('/Users/bingsen/clawd/junjichu-v2/data')
+LOCK = DATA / 'morning_brief.lock'
+
+# ── RSS 源配置 ──────────────────────────────────────────────────────────
+FEEDS = {
+    '政治': [
+        ('BBC World', 'https://feeds.bbci.co.uk/news/world/rss.xml'),
+        ('Reuters World', 'https://feeds.reuters.com/reuters/worldNews'),
+        ('AP Top News', 'https://rsshub.app/apnews/topics/ap-top-news'),
+    ],
+    '军事': [
+        ('Defense News', 'https://www.defensenews.com/rss/'),
+        ('BBC World', 'https://feeds.bbci.co.uk/news/world/rss.xml'),
+        ('Reuters', 'https://feeds.reuters.com/reuters/worldNews'),
+    ],
+    '经济': [
+        ('Reuters Business', 'https://feeds.reuters.com/reuters/businessNews'),
+        ('BBC Business', 'https://feeds.bbci.co.uk/news/business/rss.xml'),
+        ('CNBC', 'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114'),
+    ],
+    'AI大模型': [
+        ('Hacker News', 'https://hnrss.org/newest?q=AI+LLM+model&points=50'),
+        ('VentureBeat AI', 'https://venturebeat.com/category/ai/feed/'),
+        ('MIT Tech Review', 'https://www.technologyreview.com/feed/'),
+    ],
+}
+
+CATEGORY_KEYWORDS = {
+    '军事': ['war', 'military', 'troops', 'attack', 'missile', 'army', 'navy', 'weapons',
+              '战', '军', '导弹', '士兵', 'ukraine', 'russia', 'china sea', 'nato'],
+    'AI大模型': ['ai', 'llm', 'gpt', 'claude', 'gemini', 'openai', 'anthropic', 'deepseek',
+                'machine learning', 'neural', 'model', '大模型', '人工智能', 'chatgpt'],
+}
+
+def curl_rss(url, timeout=10):
+    """用 curl 抓取 RSS"""
+    try:
+        r = subprocess.run(
+            ['curl', '-s', '--max-time', str(timeout), '-L',
+             '-A', 'Mozilla/5.0 (compatible; MorningBrief/1.0)',
+             url],
+            capture_output=True, timeout=timeout+2
+        )
+        return r.stdout.decode('utf-8', errors='ignore')
+    except Exception:
+        return ''
+
+def parse_rss(xml_text):
+    """解析 RSS XML → list of {title, desc, link, pub_date, image}"""
+    items = []
+    try:
+        root = ET.fromstring(xml_text)
+        # RSS 2.0
+        ns = {'media': 'http://search.yahoo.com/mrss/'}
+        for item in root.findall('.//item')[:8]:
+            def get(tag):
+                el = item.find(tag)
+                return (el.text or '').strip() if el is not None else ''
+            title = get('title')
+            desc  = re.sub(r'<[^>]+>', '', get('description'))[:200]
+            link  = get('link')
+            pub   = get('pubDate')
+            # 图片
+            img = ''
+            enc = item.find('enclosure')
+            if enc is not None and 'image' in (enc.get('type') or ''):
+                img = enc.get('url', '')
+            media = item.find('media:thumbnail', ns) or item.find('media:content', ns)
+            if media is not None:
+                img = media.get('url', img)
+            items.append({'title': title, 'desc': desc, 'link': link,
+                          'pub_date': pub, 'image': img})
+    except Exception:
+        pass
+    return items
+
+def match_category(item, category):
+    """判断新闻是否属于该分类（用于军事/AI过滤）"""
+    kws = CATEGORY_KEYWORDS.get(category, [])
+    if not kws:
+        return True
+    text = (item['title'] + ' ' + item['desc']).lower()
+    return any(k in text for k in kws)
+
+def fetch_category(category, feeds, max_items=5):
+    """抓取一个分类的新闻"""
+    seen_urls = set()
+    results = []
+    for source_name, url in feeds:
+        if len(results) >= max_items:
+            break
+        xml = curl_rss(url)
+        if not xml:
+            continue
+        items = parse_rss(xml)
+        for item in items:
+            if not item['title']:
+                continue
+            if item['link'] in seen_urls:
+                continue
+            # 军事和AI分类需要关键词过滤
+            if category in CATEGORY_KEYWORDS and not match_category(item, category):
+                continue
+            seen_urls.add(item['link'])
+            results.append({
+                'title': item['title'],
+                'summary': item['desc'] or item['title'],
+                'link': item['link'],
+                'pub_date': item['pub_date'],
+                'image': item['image'],
+                'source': source_name,
+            })
+            if len(results) >= max_items:
+                break
+    return results
+
+def main():
+    # 幂等锁：防重复执行
+    today = datetime.date.today().strftime('%Y%m%d')
+    lock_file = DATA / f'morning_brief_{today}.lock'
+    if lock_file.exists():
+        age = datetime.datetime.now().timestamp() - lock_file.stat().st_mtime
+        if age < 3600:  # 1小时内不重复
+            print(f'[朝报] 今日已采集（{today}），跳过')
+            return
+    lock_file.touch()
+
+    print(f'[朝报] 开始采集 {today}...')
+    result = {
+        'date': today,
+        'generated_at': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'categories': {}
+    }
+
+    for category, feeds in FEEDS.items():
+        print(f'  采集 {category}...', end='', flush=True)
+        items = fetch_category(category, feeds)
+        result['categories'][category] = items
+        print(f' {len(items)} 条')
+
+    # 写入今日文件
+    today_file = DATA / f'morning_brief_{today}.json'
+    today_file.write_text(json.dumps(result, ensure_ascii=False, indent=2))
+
+    # 覆写 latest（看板读这个）
+    latest_file = DATA / 'morning_brief.json'
+    latest_file.write_text(json.dumps(result, ensure_ascii=False, indent=2))
+
+    total = sum(len(v) for v in result['categories'].values())
+    print(f'[朝报] ✅ 完成：共 {total} 条新闻 → {today_file.name}')
+
+    # 清除锁文件
+    lock_file.unlink(missing_ok=True)
+
+if __name__ == '__main__':
+    main()

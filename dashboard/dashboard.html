@@ -280,6 +280,60 @@
 
     .off-grid{display:none} /* legacy, hidden */
 
+    /* ══ 早朝简报 ══ */
+    .mn-hdr{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px;padding:14px 18px;background:linear-gradient(135deg,#0a1228,#140e28);border:1px solid #1a2a4a;border-radius:14px}
+    .mn-date{font-size:20px;font-weight:800;background:linear-gradient(135deg,#f5c842,#ff9a3c);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .mn-sub{font-size:12px;color:var(--muted);margin-top:2px}
+    .mn-hdr-r{margin-left:auto;display:flex;gap:8px;align-items:center}
+    .btn-morning-refresh{font-size:12px;padding:6px 14px;border-radius:8px;background:linear-gradient(135deg,#f5c842,#ff9a3c);color:#000;border:none;cursor:pointer;font-weight:700}
+    .btn-morning-refresh:hover{filter:brightness(1.1)}
+    .mn-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+    .mn-cat{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+    .mn-cat-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel2);border-bottom:1px solid var(--line)}
+    .mn-cat-icon{font-size:20px}.mn-cat-name{font-size:15px;font-weight:800}.mn-cat-cnt{font-size:11px;color:var(--muted);margin-left:auto}
+    .mn-items{padding:10px}
+    .mn-item{display:flex;gap:10px;padding:8px;border-radius:8px;margin-bottom:6px;cursor:pointer;border:1px solid transparent;transition:border-color .1s}
+    .mn-item:hover{background:var(--panel2);border-color:var(--line)}
+    .mn-item:last-child{margin-bottom:0}
+    .mn-img{width:70px;height:52px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden}
+    .mn-img img{width:100%;height:100%;object-fit:cover}
+    .mn-content{flex:1;min-width:0}
+    .mn-title{font-size:12px;font-weight:700;line-height:1.4;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .mn-summary{font-size:11px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .mn-meta{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:10px;color:var(--muted)}
+    .mn-source{color:var(--acc)}.mn-time{margin-left:auto}
+    .mn-empty{text-align:center;padding:30px 20px;color:var(--muted);font-size:13px}
+    .mn-loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;color:var(--muted);font-size:13px}
+
+    /* ══ MORNING BRIEF ══ */
+    .mb-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+    .mb-title{font-size:20px;font-weight:800;background:linear-gradient(135deg,#f5c842,#ff9a4a);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .mb-sub{font-size:12px;color:var(--muted);margin-top:3px}
+
+    .mb-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+    .mb-cat{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+    .mb-cat-hdr{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line)}
+    .mb-cat-icon{font-size:20px}
+    .mb-cat-name{font-size:14px;font-weight:800}
+    .mb-cat-cnt{font-size:11px;color:var(--muted);margin-left:auto}
+
+    .mb-news-list{padding:10px}
+    .mb-card{display:flex;gap:12px;padding:10px 8px;border-radius:10px;margin-bottom:6px;cursor:pointer;transition:background .12s;border-bottom:1px solid var(--line)}
+    .mb-card:last-child{border-bottom:none;margin-bottom:0}
+    .mb-card:hover{background:var(--panel2)}
+
+    .mb-img{width:72px;height:52px;border-radius:7px;object-fit:cover;flex-shrink:0;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden}
+    .mb-img img{width:100%;height:100%;object-fit:cover;border-radius:7px}
+    .mb-info{flex:1;min-width:0}
+    .mb-headline{font-size:13px;font-weight:700;line-height:1.4;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .mb-summary{font-size:11px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .mb-meta{display:flex;align-items:center;gap:8px;margin-top:5px}
+    .mb-source{font-size:10px;color:var(--acc)}
+    .mb-time{font-size:10px;color:var(--muted)}
+
+    .mb-empty{text-align:center;padding:30px;color:var(--muted);font-size:13px}
+    .mb-loading{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--muted);font-size:14px;gap:10px}
+
     /* MISC */
     .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
     .sec-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px}
@@ -307,6 +361,8 @@
   <div class="tabs">
     <div class="tab active" data-tab="edicts">📜 旨意看板 <span class="tbadge" id="tb-e">0</span></div>
     <div class="tab" data-tab="monitor">🔭 省部调度 <span class="tbadge" id="tb-m">0</span></div>
+    <div class="tab" data-tab="morning">🌅 早朝简报</div>
+    <div class="tab" data-tab="morning">🌅 早朝简报</div>
     <div class="tab" data-tab="officials">👥 官员总览</div>
     <div class="tab" data-tab="models">⚙️ 模型配置</div>
     <div class="tab" data-tab="skills">🛠️ 技能配置</div>
@@ -321,6 +377,24 @@
   <div class="panel" id="panel-monitor">
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px">各省部当前承接旨意与执行状态 · 每5秒自动刷新</div>
     <div class="duty-grid" id="duty-grid"></div>
+  </div>
+
+  <!-- ══ 早朝简报 ══ -->
+  <div class="panel" id="panel-morning">
+    <div id="morning-hdr" class="mn-hdr"></div>
+    <div id="morning-body"></div>
+  </div>
+
+  <!-- ══ 早朝简报 ══ -->
+  <div class="panel" id="panel-morning">
+    <div class="mb-hdr">
+      <div>
+        <div class="mb-title">🌅 早朝简报</div>
+        <div id="mb-subtitle" class="mb-sub">加载中…</div>
+      </div>
+      <button class="btn btn-g" id="mb-refresh-btn" onclick="refreshNews()" style="font-size:12px;padding:6px 14px">⟳ 立即采集</button>
+    </div>
+    <div id="mb-body"></div>
   </div>
 
   <!-- ══ 官员总览 ══ -->
@@ -714,6 +788,194 @@ async function loadAgentConfig(){
 }
 async function loadAll(){await loadLive();if(['models','skills'].includes(activeTab))await loadAgentConfig()}
 
+/* ══ MORNING BRIEF ══ */
+const CAT_COLORS = {politics:'#6a9eff',military:'#ff5270',economy:'#2ecc8a',ai:'#a07aff'};
+
+async function loadMorning(){
+  document.getElementById('morning-body').innerHTML='<div class="mn-loading">🌅 正在加载早朝简报…</div>';
+  try{
+    const d = await fetchJ(API+'/morning-brief');
+    renderMorning(d);
+  }catch(e){
+    document.getElementById('morning-body').innerHTML='<div class="mn-empty">⏳ 今日简报尚未生成<br><small>每日 06:00 自动采集，或点击手动刷新</small></div>';
+    document.getElementById('morning-hdr').innerHTML=morningHdr(null);
+  }
+}
+
+function morningHdr(d){
+  const rawDate = d&&(d.date||d.generated_at||'');
+  const dateDisplay = rawDate
+    ? new Date(rawDate).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'})
+    : new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'});
+  const gen = d&&(d.generatedAt||d.generated_at||'—');
+  const cats = d&&d.categories;
+  const total = cats
+    ? (Array.isArray(cats)
+        ? cats.reduce((s,c)=>s+(c.items||[]).length,0)
+        : Object.values(cats).reduce((s,v)=>s+(v||[]).length,0))
+    : 0;
+  return `<div>
+    <div class="mn-date">🌅 ${dateDisplay} 早朝简报</div>
+    <div class="mn-sub">采集时间：${esc(String(gen).substring(0,16))} · 每日 06:00 自动更新</div>
+  </div>
+  <div class="mn-hdr-r">
+    <span class="chip">${total?total+' 条新闻':'无数据'}</span>
+    <button class="btn-morning-refresh" onclick="loadMorning()">⟳ 手动刷新</button>
+  </div>`;
+}
+
+const CAT_ICON = {'政治':'🏛️','军事':'⚔️','经济':'💹','AI大模型':'🤖',
+  politics:'🏛️',military:'⚔️',economy:'💹',ai:'🤖'};
+const CAT_COLOR_MAP = {'政治':'#6a9eff','军事':'#ff5270','经济':'#2ecc8a','AI大模型':'#a07aff',
+  politics:'#6a9eff',military:'#ff5270',economy:'#2ecc8a',ai:'#a07aff'};
+
+function normalizeMorning(d){
+  // 统一成 [{key, label, items:[{title,summary,url,image_url,source,published}]}]
+  if(!d) return [];
+  const cats = d.categories;
+  if(!cats) return [];
+  // Array format (Python script)
+  if(Array.isArray(cats)) return cats.map(c=>({
+    key:c.key, label:c.label,
+    items:(c.items||[]).map(i=>({
+      title:i.title_zh||i.title, summary:i.summary_zh||i.summary||'',
+      url:i.url||i.link, image_url:i.image||i.image_url||'',
+      source:i.source, published:i.pub_date||i.published||''
+    }))
+  }));
+  // Object format (zaochao agent)
+  return Object.entries(cats).map(([label, items])=>({
+    key: label, label: (CAT_ICON[label]||'📰')+' '+label,
+    items: (items||[]).map(i=>({
+      title: i.title_zh||i.title_en||i.title||'',
+      summary: i.summary_zh||i.summary||'',
+      url: i.url||i.link||'',
+      image_url: i.image||i.image_url||'',
+      source: i.source||'',
+      published: (i.pub_date||i.published||'').substring(0,10)
+    }))
+  }));
+}
+
+function renderMorning(d){
+  document.getElementById('morning-hdr').innerHTML = morningHdr(d);
+  const cats = normalizeMorning(d);
+  if(!cats.length){
+    document.getElementById('morning-body').innerHTML='<div class="mn-empty">⏳ 今日简报尚未生成<br><small>每日 06:00 自动采集，或点击上方「手动刷新」</small></div>';
+    return;
+  }
+  document.getElementById('morning-body').innerHTML=`<div class="mn-cats">${
+    cats.map(cat=>{
+      const icon = CAT_ICON[cat.key]||'📰';
+      const color = CAT_COLOR_MAP[cat.key]||'var(--acc)';
+      const name = cat.label.replace(/^[^\s]+\s*/,''); // strip leading emoji
+      return `<div class="mn-cat" style="border-top:3px solid ${color}">
+        <div class="mn-cat-hdr">
+          <span class="mn-cat-icon">${icon}</span>
+          <span class="mn-cat-name">${esc(name||cat.key)}</span>
+          <span class="mn-cat-cnt">${(cat.items||[]).length} 条</span>
+        </div>
+        <div class="mn-items">
+          ${!(cat.items||[]).length?'<div class="mn-empty">暂无新闻</div>':
+            cat.items.map(item=>`
+            <div class="mn-item" onclick="window.open('${esc(item.url||'')}','_blank')">
+              <div class="mn-img">
+                ${item.image_url?`<img src="${esc(item.image_url)}" onerror="this.parentElement.innerHTML='${icon}'">`:icon}
+              </div>
+              <div class="mn-content">
+                <div class="mn-title">${esc(item.title||'')}</div>
+                <div class="mn-summary">${esc(item.summary||'')}</div>
+                <div class="mn-meta">
+                  <span class="mn-source">📰 ${esc(item.source||'')}</span>
+                  <span class="mn-time">${esc(item.published||'')}</span>
+                </div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
+/* ══ MORNING BRIEF ══ */
+const CAT_META = {
+  '政治': {icon:'🏛️', color:'#6a9eff'},
+  '军事': {icon:'⚔️',  color:'#ff5270'},
+  '经济': {icon:'💹',  color:'#2ecc8a'},
+  'AI大模型': {icon:'🤖', color:'#a07aff'},
+};
+
+async function loadMorning(){
+  const body = document.getElementById('mb-body');
+  body.innerHTML = '<div class="mb-loading">⟳ 加载新闻中…</div>';
+  try{
+    const d = await fetchJ(API+'/morning-brief');
+    renderMorning(d);
+  }catch(e){
+    body.innerHTML = '<div class="mb-empty">⚠️ 暂无数据，请点击「立即采集」</div>';
+  }
+}
+
+function renderMorning(d){
+  const sub = document.getElementById('mb-subtitle');
+  if(d.generated_at){
+    const dateStr = d.date ? d.date.replace(/(\d{4})(\d{2})(\d{2})/,'$1年$2月$3日') : '';
+    sub.textContent = `${dateStr} | 采集于 ${d.generated_at} | 共 ${Object.values(d.categories||{}).flat().length} 条要闻`;
+  }
+  const body = document.getElementById('mb-body');
+  const cats = d.categories||{};
+  if(!Object.keys(cats).length){
+    body.innerHTML='<div class="mb-empty">暂无数据，点击右上角「立即采集」获取今日简报</div>';
+    return;
+  }
+  body.innerHTML = `<div class="mb-cats">
+    ${Object.entries(cats).map(([cat, items])=>{
+      const meta = CAT_META[cat]||{icon:'📰',color:'var(--acc)'};
+      return `<div class="mb-cat">
+        <div class="mb-cat-hdr">
+          <span class="mb-cat-icon">${meta.icon}</span>
+          <span class="mb-cat-name" style="color:${meta.color}">${esc(cat)}</span>
+          <span class="mb-cat-cnt">${items.length} 条</span>
+        </div>
+        <div class="mb-news-list">
+          ${!items.length ? '<div class="mb-empty" style="padding:16px">暂无新闻</div>' :
+            items.map(item => {
+              const hasImg = item.image && item.image.startsWith('http');
+              return `<div class="mb-card" onclick="window.open('${esc(item.link)}','_blank')">
+                <div class="mb-img">
+                  ${hasImg
+                    ? `<img src="${esc(item.image)}" onerror="this.parentElement.textContent='${meta.icon}'" loading="lazy">`
+                    : `<span>${meta.icon}</span>`}
+                </div>
+                <div class="mb-info">
+                  <div class="mb-headline">${esc(item.title)}</div>
+                  <div class="mb-summary">${esc(item.summary||item.desc||'')}</div>
+                  <div class="mb-meta">
+                    <span class="mb-source">📡 ${esc(item.source||'')}</span>
+                    ${item.pub_date ? `<span class="mb-time">${esc(item.pub_date.substring(0,16))}</span>` : ''}
+                  </div>
+                </div>
+              </div>`;
+            }).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+async function refreshNews(){
+  const btn = document.getElementById('mb-refresh-btn');
+  btn.disabled = true; btn.textContent = '⟳ 采集中…';
+  try{
+    const r = await postJ(API+'/morning-brief/refresh', {});
+    toast(r.message||'采集已触发', 'ok', 5000);
+    setTimeout(()=>loadMorning(), 45000);
+  }catch(e){
+    toast('触发失败', 'err');
+  }
+  setTimeout(()=>{btn.disabled=false; btn.textContent='⟳ 立即采集';}, 5000);
+}
+
 /* ══ OFFICIALS ══ */
 let officialsData = null;
 let selectedOfficial = null;
@@ -860,6 +1122,8 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.getElementById('panel-'+activeTab).classList.add('active');
   if(['models','skills'].includes(activeTab))loadAgentConfig();
   if(activeTab==='officials')loadOfficials();
+  if(activeTab==='morning')loadMorning();
+  if(activeTab==='morning')loadMorning();
 }));
 
 /* ══ COUNTDOWN (5s) ══ */
