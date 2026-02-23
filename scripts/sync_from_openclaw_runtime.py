@@ -5,10 +5,10 @@ import time
 import datetime
 import traceback
 
-BASE = pathlib.Path(__file__).parent.parent
+BASE = pathlib.Path('/Users/bingsen/clawd/junjichu-v2')
 DATA = BASE / 'data'
 SYNC_STATUS = DATA / 'sync_status.json'
-SESSIONS_ROOT = pathlib.Path.home() / '.openclaw' / 'agents'
+SESSIONS_ROOT = pathlib.Path('/Users/bingsen/.openclaw/agents')
 
 
 def write_status(**kwargs):
@@ -190,6 +190,18 @@ def main():
                 pass
 
         tasks.sort(key=lambda x: x.get('sourceMeta', {}).get('updatedAt', 0), reverse=True)
+
+        # ── 保留已有的 JJC-* 旨意任务（不覆盖皇上下旨记录）──
+        existing_tasks_file = DATA / 'tasks_source.json'
+        if existing_tasks_file.exists():
+            try:
+                existing = json.loads(existing_tasks_file.read_text())
+                jjc_existing = [t for t in existing if str(t.get('id', '')).startswith('JJC')]
+                # 去掉 tasks 里已有的 JJC（以防重复），再把旨意放到最前面
+                tasks = [t for t in tasks if not str(t.get('id', '')).startswith('JJC')]
+                tasks = jjc_existing + tasks
+            except Exception:
+                pass
 
         (DATA / 'tasks_source.json').write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
 
