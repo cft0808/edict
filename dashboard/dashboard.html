@@ -586,7 +586,7 @@ function tcard(t){
     <div class="cid">${esc(t.id)}</div>
     <span class="corg tag ${orgCls(t.org)}">${esc(t.org||'—')}</span>
     <div class="ctitle">${esc(t.title||'无标题')}</div>
-    <div class="cmeta">${t.official?`👤 ${esc(t.official)}`:''}${t.eta&&t.eta!=='-'?` · 📅 ${esc(t.eta)}`:''}`.trim()||'&nbsp;'}</div>
+    <div class="cmeta">${(t.official?'👤 '+esc(t.official):'')+(t.eta&&t.eta!=='-'?' · 📅 '+esc(t.eta):'')||'&nbsp;'}</div>
     <div class="cmeta" style="margin-bottom:4px">${t.now?esc(t.now.substring(0,60)):''}</div>
     <div class="cfoot">
       <span class="hb ${hb.status}">${esc(hb.label)}</span>
