@@ -324,6 +324,13 @@ async function fetchJ(u){const r=await fetch(u,{cache:'no-store'});if(!r.ok)thro
 async function postJ(u,d){const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});return r.json()}
 function toast(msg,type='ok',ms=3000){const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;document.getElementById('toaster').appendChild(el);setTimeout(()=>el.remove(),ms)}
 const STATE_LABEL={Inbox:'收件',Zhongshu:'中书规划',Menxia:'门下审议',Assigned:'已派发',Doing:'执行中',Review:'待审查',Done:'已完成',Blocked:'阻塞',Next:'待执行'};
+// 根据轮次动态生成状态标签
+function stateLabel(t){
+  const r = t.review_round||0;
+  if(t.state==='Menxia' && r>1) return `门下审议（第${r}轮）`;
+  if(t.state==='Zhongshu' && r>0) return `中书修订（第${r}轮）`;
+  return STATE_LABEL[t.state]||t.state;
+}
 
 /* ══ TASK CLASSIFICATION ══ */
 // 皇上的旨意：JJC-* 开头，有真实标题
@@ -379,11 +386,15 @@ function renderEdicts(tasks){
       <div class="ec-id">${esc(t.id)}</div>
       <div class="ec-title">${esc(t.title||'(无标题)')}</div>
       <div class="ec-meta">
-        <span class="tag ${stCls}">${STATE_LABEL[t.state]||t.state}</span>
+        <span class="tag ${stCls}">${stateLabel(t)}</span>
         ${t.org ? `<span class="tag ${deptCls}">${esc(t.org)}</span>` : ''}
         ${curStage ? `<span style="font-size:11px;color:var(--muted)">当前: <b style="color:${deptColor(curStage.dept)}">${curStage.dept} · ${curStage.action}</b></span>` : ''}
       </div>
       ${t.now && t.now !== '-' ? `<div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px">${esc(t.now.substring(0,80))}</div>` : ''}
+      ${(t.review_round||0)>0 ? `<div style="font-size:11px;margin-bottom:6px">
+        ${Array.from({length:t.review_round||0},(_,i)=>`<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${i<(t.review_round||0)-1?'#1a3a6a':'var(--acc)'}22;border:1px solid ${i<(t.review_round||0)-1?'#2a4a8a':'var(--acc)'};font-size:9px;text-align:center;line-height:13px;margin-right:2px;color:${i<(t.review_round||0)-1?'#4a6aaa':'var(--acc)'}">${i+1}</span>`).join('')}
+        <span style="color:var(--muted);font-size:10px">第 ${t.review_round} 轮磋商</span>
+      </div>` : ''}
       <div class="ec-footer">
         <span class="hb ${hb.status}">${esc(hb.label)}</span>
         ${isBlocked ? `<span class="tag" style="border-color:#ff527044;color:var(--danger);background:#200a10">🚫 ${esc(t.block)}</span>` : ''}
@@ -482,7 +493,7 @@ function openTask(id){
     <!-- 基本信息 -->
     <div class="m-section">
       <div class="m-rows">
-        <div class="m-row"><div class="mr-label">状态</div><div class="mr-val"><span class="tag st-${t.state}">${STATE_LABEL[t.state]||t.state}</span></div></div>
+        <div class="m-row"><div class="mr-label">状态</div><div class="mr-val"><span class="tag st-${t.state}">${stateLabel(t)}</span>${(t.review_round||0)>0?`<span style="font-size:11px;color:var(--muted);margin-left:8px">共磋商 ${t.review_round} 轮</span>`:''}</div></div>
         <div class="m-row"><div class="mr-label">执行部门</div><div class="mr-val"><span class="tag dt-${(t.org||'').replace(/\s/g,'')}">${esc(t.org||'—')}</span></div></div>
         ${t.eta&&t.eta!=='-'?`<div class="m-row"><div class="mr-label">预计完成</div><div class="mr-val">${esc(t.eta)}</div></div>`:''}
         ${t.block&&t.block!=='无'&&t.block!=='-'?`<div class="m-row"><div class="mr-label" style="color:var(--danger)">阻塞项</div><div class="mr-val" style="color:var(--danger)">${esc(t.block)}</div></div>`:''}
