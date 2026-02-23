@@ -137,17 +137,36 @@
     .mr-val{font-size:13px;font-weight:600;word-break:break-all}
 
     /* ══ 省部调度 tab ══ */
-    .dept-monitor{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
-    .dm-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-    .dm-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel2);border-bottom:1px solid var(--line)}
-    .dm-emoji{font-size:18px}.dm-name{font-size:14px;font-weight:700}.dm-cnt{font-size:11px;color:var(--muted);margin-left:auto}
-    .dm-sessions{padding:8px}
-    .ds-row{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;font-size:12px;margin-bottom:3px;cursor:pointer}
-    .ds-row:hover{background:var(--panel2)}
-    .ds-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-    .ds-dot.active{background:var(--ok)}.ds-dot.warn{background:var(--warn)}.ds-dot.stalled{background:var(--danger);animation:pulse 1.2s infinite}.ds-dot.unknown{background:var(--muted)}
-    .ds-id{color:var(--muted);font-size:10px;font-family:monospace;min-width:80px}
-    .ds-state{margin-left:auto}.ds-hb{font-size:10px;color:var(--muted)}
+    .duty-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+    .duty-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:border-color .15s}
+    .duty-card:hover{border-color:#2e3d6a}
+    .duty-card.active-card{border-color:var(--acc)}
+    .duty-card.blocked-card{border-color:#ff527055}
+
+    .dc-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--panel2);border-bottom:1px solid var(--line)}
+    .dc-emoji{font-size:22px}
+    .dc-info{flex:1}
+    .dc-name{font-size:14px;font-weight:800}
+    .dc-role{font-size:10px;color:var(--muted)}
+    .dc-status{display:flex;align-items:center;gap:5px;font-size:11px}
+    .dc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .dc-dot.active{background:var(--ok)}.dc-dot.busy{background:var(--warn);animation:pulse 1.5s infinite}
+    .dc-dot.blocked{background:var(--danger);animation:pulse 1s infinite}.dc-dot.idle{background:#2a3a5a}
+
+    .dc-body{padding:14px 16px}
+
+    /* 候命状态 */
+    .dc-idle{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;padding:6px 0}
+
+    /* 执行中任务 */
+    .dc-task{display:flex;flex-direction:column;gap:6px}
+    .dc-task-id{font-size:10px;color:var(--acc);font-weight:700;letter-spacing:.04em}
+    .dc-task-title{font-size:14px;font-weight:700;color:var(--text);line-height:1.3}
+    .dc-task-now{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
+    .dc-task-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+
+    .dc-footer{padding:8px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:8px;background:var(--panel2)}
+    .dc-model{font-size:10px;color:var(--muted)}.dc-la{font-size:10px;color:var(--muted);margin-left:auto}
 
     /* ══ Model / Skills tabs ══ */
     .model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:18px}
@@ -300,7 +319,8 @@
 
   <!-- ══ 省部调度 ══ -->
   <div class="panel" id="panel-monitor">
-    <div class="dept-monitor" id="dept-monitor"></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">各省部当前承接旨意与执行状态 · 每5秒自动刷新</div>
+    <div class="duty-grid" id="duty-grid"></div>
   </div>
 
   <!-- ══ 官员总览 ══ -->
@@ -446,48 +466,80 @@ function renderEdicts(tasks){
 
 /* ══ DEPT MONITOR ══ */
 function renderMonitor(tasks){
-  const sessions = tasks.filter(isSession);
-  document.getElementById('tb-m').textContent = sessions.length;
   const DEPTS = [
-    {id:'zhongshu',label:'中书省',emoji:'📜'},
-    {id:'menxia',  label:'门下省',emoji:'🔍'},
-    {id:'shangshu',label:'尚书省',emoji:'📮'},
-    {id:'hubu',    label:'户部',  emoji:'💰'},
-    {id:'libu',    label:'礼部',  emoji:'📝'},
-    {id:'bingbu',  label:'兵部',  emoji:'⚔️'},
-    {id:'xingbu',  label:'刑部',  emoji:'⚖️'},
-    {id:'gongbu',  label:'工部',  emoji:'🔧'},
+    {id:'zhongshu',label:'中书省',emoji:'📜',role:'中书令',  rank:'正一品'},
+    {id:'menxia',  label:'门下省',emoji:'🔍',role:'侍中',    rank:'正一品'},
+    {id:'shangshu',label:'尚书省',emoji:'📮',role:'尚书令',  rank:'正一品'},
+    {id:'libu',    label:'礼部',  emoji:'📝',role:'礼部尚书',rank:'正二品'},
+    {id:'hubu',    label:'户部',  emoji:'💰',role:'户部尚书',rank:'正二品'},
+    {id:'bingbu',  label:'兵部',  emoji:'⚔️',role:'兵部尚书',rank:'正二品'},
+    {id:'xingbu',  label:'刑部',  emoji:'⚖️',role:'刑部尚书',rank:'正二品'},
+    {id:'gongbu',  label:'工部',  emoji:'🔧',role:'工部尚书',rank:'正二品'},
   ];
-  const byDept = {};
-  sessions.forEach(t => {
-    const org = t.org || '其他';
-    (byDept[org] || (byDept[org] = [])).push(t);
-  });
-  const el = document.getElementById('dept-monitor');
-  el.innerHTML = DEPTS.map(d => {
-    const items = byDept[d.label] || [];
-    return `<div class="dm-card">
-      <div class="dm-hdr">
-        <span class="dm-emoji">${d.emoji}</span>
-        <span class="dm-name">${d.label}</span>
-        <span class="dm-cnt">${items.length} 会话</span>
+
+  // 每个部门当前承接的旨意：从 JJC 任务里找 org 匹配且非 Done 的
+  const activeTasks = tasks.filter(t => isEdict(t) && t.state !== 'Done' && t.state !== 'Next');
+  // 官员统计数据（如已加载）
+  const offMap = {};
+  if(officialsData && officialsData.officials){
+    officialsData.officials.forEach(o=>offMap[o.id]=o);
+  }
+
+  let activeCount = 0;
+  const cards = DEPTS.map(d => {
+    // 该部门正在处理的旨意
+    const myTasks = activeTasks.filter(t => t.org === d.label);
+    // 也从 flow_log 中找最近参与的旨意
+    const recentEdict = tasks.filter(t=>isEdict(t))
+      .find(t=>(t.flow_log||[]).some(f=>f.from===d.label||f.to===d.label));
+
+    const isActive = myTasks.some(t=>t.state==='Doing');
+    const isBlocked = myTasks.some(t=>t.state==='Blocked');
+    const off = offMap[d.id]||{};
+    const hb = off.heartbeat||{status:'idle',label:'⚪'};
+    if(isActive) activeCount++;
+
+    const dotCls = isBlocked?'blocked':isActive?'busy':hb.status==='active'?'active':'idle';
+    const statusText = isBlocked?'⚠️ 阻塞':isActive?'⚙️ 执行中':hb.status==='active'?'🟢 活跃':'⚪ 候命';
+    const cardCls = isBlocked?'blocked-card':isActive?'active-card':'';
+
+    return `<div class="duty-card ${cardCls}">
+      <div class="dc-hdr">
+        <span class="dc-emoji">${d.emoji}</span>
+        <div class="dc-info">
+          <div class="dc-name">${d.label}</div>
+          <div class="dc-role">${d.role} · ${d.rank}</div>
+        </div>
+        <div class="dc-status">
+          <span class="dc-dot ${dotCls}"></span>
+          <span>${statusText}</span>
+        </div>
       </div>
-      <div class="dm-sessions">
-        ${!items.length ? '<div style="font-size:11px;color:var(--muted);padding:8px;opacity:.6">空闲</div>' :
-          items.slice(0,5).map(t => {
-            const hb = t.heartbeat||{status:'unknown'};
-            const shortId = t.id.replace(/^OC-[a-z]+-/,'').substring(0,8);
-            return `<div class="ds-row" onclick='openTask(${JSON.stringify(t.id)})'>
-              <div class="ds-dot ${hb.status}"></div>
-              <span class="ds-id">${esc(shortId)}</span>
-              <span style="flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc((t.title||'').replace(/褚凤天\s*/,'').replace(/会话/,'').substring(0,20)||'会话')}</span>
-              <span class="tag ds-state st-${t.state}" style="font-size:9px">${STATE_LABEL[t.state]||t.state}</span>
-            </div>`
-          }).join('')
-        }
+      <div class="dc-body">
+        ${myTasks.length ? myTasks.map(t=>`
+          <div class="dc-task" onclick='openTask(${JSON.stringify(t.id)})' style="cursor:pointer;padding:6px;border-radius:8px;border:1px solid var(--line);margin-bottom:6px">
+            <div class="dc-task-id">${esc(t.id)}</div>
+            <div class="dc-task-title">${esc(t.title||'(无标题)')}</div>
+            ${t.now&&t.now!=='-'?`<div class="dc-task-now">${esc(t.now.substring(0,70))}</div>`:''}
+            <div class="dc-task-meta">
+              <span class="tag st-${t.state}">${stateLabel(t)}</span>
+              ${t.block&&t.block!=='无'?`<span class="tag" style="border-color:#ff527044;color:var(--danger)">🚫${esc(t.block)}</span>`:''}
+            </div>
+          </div>`).join('') :
+          `<div class="dc-idle">
+            <span style="font-size:20px">🪭</span>
+            <span>候命中 ${recentEdict?`· 最近参与 <b style="color:var(--muted)">${esc(recentEdict.id)}</b>`:'· 尚无旨意记录'}</span>
+          </div>`}
+      </div>
+      <div class="dc-footer">
+        <span class="dc-model">🤖 ${esc(off.model_short||'待配置')}</span>
+        ${off.last_active?`<span class="dc-la">⏰ ${esc(off.last_active)}</span>`:''}
       </div>
     </div>`;
-  }).join('');
+  });
+
+  document.getElementById('tb-m').textContent = activeCount + '活跃';
+  document.getElementById('duty-grid').innerHTML = cards.join('');
 }
 
 /* ══ TASK DETAIL MODAL ══ */
