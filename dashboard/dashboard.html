@@ -94,9 +94,11 @@
     .pipe-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px}
     .pipe{display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:4px}
     .pipe-stage{display:flex;align-items:center;flex-shrink:0}
-    .pn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;min-width:90px;cursor:default}
+    .pn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 14px;border-radius:10px;min-width:80px;cursor:default}
     .pn.has-tasks{background:#1a2040;border:1px solid var(--acc)}
     .pn-icon{font-size:20px}
+    .pn-dept{font-size:11px;font-weight:700;color:var(--text);margin-bottom:1px}
+    .pn.has-tasks .pn-dept{color:var(--acc)}
     .pn-label{font-size:10px;color:var(--muted)}
     .pn.has-tasks .pn-label{color:var(--acc)}
     .pn-count{font-size:11px;font-weight:700;color:var(--acc)}
@@ -395,13 +397,13 @@ const ORG_COLOR = {'中书省':'var(--r0)','门下省':'var(--r1)','尚书省':'
 const STATE_LABEL = {Inbox:'收件箱',Zhongshu:'中书规划',Menxia:'门下审议',Assigned:'已派发',Doing:'执行中',Review:'待审查',Done:'已完成',Blocked:'阻塞',Next:'待执行'};
 const STATE_ORDER = ['Inbox','Zhongshu','Menxia','Assigned','Doing','Review','Done','Blocked','Next'];
 const PIPE_STAGES = [
-  {key:'Inbox',    label:'收件',   icon:'📥'},
-  {key:'Zhongshu', label:'规划',   icon:'📜'},
-  {key:'Menxia',   label:'审议',   icon:'🔍'},
-  {key:'Assigned', label:'派发',   icon:'📮'},
-  {key:'Doing',    label:'执行',   icon:'⚙️'},
-  {key:'Review',   label:'审查',   icon:'🔎'},
-  {key:'Done',     label:'完成',   icon:'✅'},
+  {key:'Inbox',    label:'收件',   icon:'📥', dept:'皇上'},
+  {key:'Zhongshu', label:'规划',   icon:'📜', dept:'中书省'},
+  {key:'Menxia',   label:'审议',   icon:'🔍', dept:'门下省'},
+  {key:'Assigned', label:'派发',   icon:'📮', dept:'尚书省'},
+  {key:'Doing',    label:'执行',   icon:'⚙️', dept:'六部'},
+  {key:'Review',   label:'审查',   icon:'🔎', dept:'尚书省'},
+  {key:'Done',     label:'完成',   icon:'✅', dept:'回奏'},
 ];
 
 /* ════════════════════════════
@@ -458,8 +460,9 @@ function renderPipeline(tasks){
     return `<div class="pipe-stage">
       <div class="pn ${n>0?'has-tasks':''}">
         <div class="pn-icon">${st.icon}</div>
+        <div class="pn-dept">${st.dept}</div>
         <div class="pn-label">${st.label}</div>
-        ${n>0?`<div class="pn-count">${n}</div>`:''}
+        ${n>0?`<div class="pn-count">${n} 件</div>`:''}
       </div>
       ${i<PIPE_STAGES.length-1?`<div class="pipe-arrow">→</div>`:''}
     </div>`
