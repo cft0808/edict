@@ -8,261 +8,186 @@
     :root{
       --bg:#07090f;--panel:#0f1219;--panel2:#141824;--line:#1c2236;
       --text:#dde4f8;--muted:#5a6b92;--ok:#2ecc8a;--warn:#f5c842;--danger:#ff5270;
-      --acc:#6a9eff;--acc2:#a07aff;--acc3:#ff9a6a;
-      --r0:#a07aff;--r1:#6a9eff;--r2:#6aef9a;
-      --r3:#f5c842;--r4:#ff9a6a;--r5:#ff5270;--r6:#c44;--r7:#44aaff;
+      --acc:#6a9eff;--acc2:#a07aff;
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:var(--bg);color:var(--text);font-family:"PingFang SC",Inter,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
-    ::-webkit-scrollbar{width:4px;height:4px}
-    ::-webkit-scrollbar-track{background:transparent}
-    ::-webkit-scrollbar-thumb{background:#1e2538;border-radius:4px}
+    ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1e2538;border-radius:4px}
 
-    /* ── LAYOUT ── */
-    .wrap{max-width:1520px;margin:0 auto;padding:16px}
+    .wrap{max-width:1400px;margin:0 auto;padding:16px}
 
-    /* ── HEADER ── */
+    /* HEADER */
     .hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
     .logo{font-size:20px;font-weight:800;background:linear-gradient(135deg,#6a9eff,#a07aff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .sub{font-size:11px;color:var(--muted);margin-top:1px}
-    .hdr-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .sub{font-size:11px;color:var(--muted)}
+    .hdr-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
     .chip{font-size:11px;padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--muted)}
-    .chip.ok{border-color:#2ecc8a44;color:var(--ok)}
-    .chip.warn{border-color:#f5c84244;color:var(--warn)}
-    .chip.err{border-color:#ff527044;color:var(--danger)}
-    #next-refresh{font-size:11px;color:var(--muted)}
+    .chip.ok{border-color:#2ecc8a44;color:var(--ok)}.chip.warn{border-color:#f5c84244;color:var(--warn)}.chip.err{border-color:#ff527044;color:var(--danger)}
+    .btn-refresh{font-size:11px;padding:4px 10px;border:1px solid var(--acc);border-radius:6px;background:transparent;color:var(--acc);cursor:pointer}
+    .btn-refresh:hover{background:#0a1228}
+    #cd{font-size:11px;color:var(--muted)}
 
-    /* ── SEARCH ── */
-    .search-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px}
-    .search-input{flex:1;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:7px 12px;font-size:13px;outline:none}
-    .search-input:focus{border-color:var(--acc)}
-    .search-input::placeholder{color:var(--muted)}
-
-    /* ── TABS ── */
-    .tabs{display:flex;gap:2px;margin-bottom:18px;border-bottom:1px solid var(--line);overflow-x:auto;padding-bottom:0}
+    /* TABS */
+    .tabs{display:flex;gap:2px;margin-bottom:18px;border-bottom:1px solid var(--line);overflow-x:auto}
     .tab{font-size:13px;padding:8px 16px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);border:1px solid transparent;border-bottom:none;white-space:nowrap;position:relative;bottom:-1px;transition:all .15s;user-select:none}
     .tab:hover{color:var(--text);background:var(--panel)}
     .tab.active{color:var(--text);background:var(--panel);border-color:var(--line);font-weight:600}
-    .tab-badge{font-size:10px;padding:1px 5px;border-radius:999px;background:#1a2040;color:var(--acc);margin-left:4px}
+    .tbadge{font-size:10px;padding:1px 5px;border-radius:999px;background:#1a2040;color:var(--acc);margin-left:4px}
     .panel{display:none}.panel.active{display:block}
 
-    /* ── METRICS ── */
-    .metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:18px}
-    .mcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:3px;cursor:default}
-    .mcard .ml{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-    .mcard .mv{font-size:28px;font-weight:800;line-height:1}
-    .mcard .ms{font-size:11px;color:var(--muted)}
-    .mv.ok{color:var(--ok)}.mv.warn{color:var(--warn)}.mv.danger{color:var(--danger)}
+    /* ══ 旨意看板 ══ */
+    .edict-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+    .edict-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;transition:border-color .15s,transform .1s,box-shadow .15s}
+    .edict-card:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:0 4px 20px rgba(106,158,255,.1)}
 
-    /* ── OVERVIEW: 2-col layout ── */
-    .overview-grid{display:grid;grid-template-columns:1fr 340px;gap:14px;margin-bottom:18px}
-    @media(max-width:900px){.overview-grid{grid-template-columns:1fr}}
+    /* pipeline strip on card */
+    .ec-pipe{display:flex;align-items:center;gap:0;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
+    .ep-node{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 8px;border-radius:6px;flex-shrink:0;min-width:52px}
+    .ep-node.done{background:#0a2018}
+    .ep-node.active{background:#0f1a38;border:1px solid var(--acc)}
+    .ep-node.pending{opacity:.3}
+    .ep-icon{font-size:14px}
+    .ep-name{font-size:9px;color:var(--muted);white-space:nowrap}
+    .ep-node.done .ep-name{color:var(--ok)}
+    .ep-node.active .ep-name{color:var(--acc);font-weight:700}
+    .ep-arrow{font-size:10px;color:#1c2236;padding:0 1px;flex-shrink:0}
 
-    /* ── AGENT HEALTH CARDS ── */
-    .agents-panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
-    .ap-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px}
-    .agent-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;margin-bottom:4px;cursor:default}
-    .agent-row:hover{background:var(--panel2)}
-    .ag-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-    .ag-dot.active{background:var(--ok);box-shadow:0 0 6px var(--ok)}
-    .ag-dot.warn{background:var(--warn)}
-    .ag-dot.stalled{background:var(--danger);animation:pulse2 1.2s infinite}
-    .ag-dot.idle{background:var(--muted)}
-    @keyframes pulse2{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-    .ag-info{flex:1;min-width:0}
-    .ag-name{font-size:12px;font-weight:600}
-    .ag-model{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .ag-hb{font-size:10px;color:var(--muted);flex-shrink:0;text-align:right}
+    .ec-id{font-size:10px;color:var(--acc);font-weight:700;letter-spacing:.04em;margin-bottom:5px}
+    .ec-title{font-size:15px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--text)}
+    .ec-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+    .tag{font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid;display:inline-block;white-space:nowrap}
 
-    /* ── CHARTS ── */
-    .charts-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:18px}
-    .chart-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
-    .cc-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px}
-    .bar-chart{display:flex;flex-direction:column;gap:7px}
-    .bar-row{display:flex;align-items:center;gap:8px;font-size:11px}
-    .bar-label{min-width:55px;color:var(--muted);text-align:right}
-    .bar-track{flex:1;background:#0e1320;border-radius:3px;height:14px;overflow:hidden}
-    .bar-fill{height:100%;border-radius:3px;transition:width .5s ease}
-    .bar-val{min-width:20px;text-align:right;color:var(--text);font-weight:600}
-    .donut-wrap{display:flex;align-items:center;gap:14px}
-    .donut-legend{display:flex;flex-direction:column;gap:5px}
-    .dl-item{display:flex;align-items:center;gap:6px;font-size:11px}
-    .dl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    /* state colors */
+    .st-Inbox{border-color:#3a4a7a44;color:#7a9aff;background:#0a1028}
+    .st-Zhongshu{border-color:#a07aff44;color:#a07aff;background:#110a28}
+    .st-Menxia{border-color:#ff9a6a44;color:#ff9a6a;background:#280f0a}
+    .st-Assigned,.st-Doing{border-color:#6a9eff44;color:#6a9eff;background:#0a1428}
+    .st-Review{border-color:#f5c84244;color:#f5c842;background:#201a08}
+    .st-Done{border-color:#2ecc8a44;color:var(--ok);background:#0a2018}
+    .st-Blocked{border-color:#ff527044;color:var(--danger);background:#200a10}
+    .st-Next{border-color:#4a9adf44;color:#4a9adf;background:#0a1424}
 
-    /* ── PIPELINE ── */
-    .pipe-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:18px}
-    .pipe-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px}
-    .pipe{display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:4px}
-    .pipe-stage{display:flex;align-items:center;flex-shrink:0}
-    .pn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 14px;border-radius:10px;min-width:80px;cursor:default}
-    .pn.has-tasks{background:#1a2040;border:1px solid var(--acc)}
-    .pn-icon{font-size:20px}
-    .pn-dept{font-size:11px;font-weight:700;color:var(--text);margin-bottom:1px}
-    .pn.has-tasks .pn-dept{color:var(--acc)}
-    .pn-label{font-size:10px;color:var(--muted)}
-    .pn.has-tasks .pn-label{color:var(--acc)}
-    .pn-count{font-size:11px;font-weight:700;color:var(--acc)}
-    .pipe-arrow{color:#1c2236;font-size:16px;padding:0 4px;flex-shrink:0}
+    /* dept colors */
+    .dt-中书省{border-color:#a07aff44;color:#a07aff;background:#1a0f38}
+    .dt-门下省{border-color:#6a9eff44;color:#6a9eff;background:#0f1a38}
+    .dt-尚书省{border-color:#6aef9a44;color:#6aef9a;background:#0a2018}
+    .dt-礼部{border-color:#f5c84244;color:#f5c842;background:#201a08}
+    .dt-户部{border-color:#ff9a6a44;color:#ff9a6a;background:#28100a}
+    .dt-兵部{border-color:#ff527044;color:#ff5270;background:#280a10}
+    .dt-刑部{border-color:#cc444444;color:#cc4444;background:#280808}
+    .dt-工部{border-color:#44aaff44;color:#44aaff;background:#081828}
 
-    /* ── FILTER BAR ── */
-    .filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
-    .fb{font-size:12px;padding:4px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--muted);cursor:pointer;user-select:none;transition:all .1s}
-    .fb:hover{border-color:#2e3d6a;color:var(--text)}
-    .fb.active{border-color:var(--acc);color:var(--acc);background:#0a1228}
-    .fsep{width:1px;height:18px;background:var(--line);margin:0 4px}
-
-    /* ── KANBAN ── */
-    .kanban{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;align-items:start}
-    .k-col{background:var(--panel);border:1px solid var(--line);border-radius:11px;overflow:hidden}
-    .k-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-bottom:1px solid var(--line);background:var(--panel2)}
-    .k-hdr .kn{font-size:11px;font-weight:700;letter-spacing:.04em}
-    .k-hdr .kc{font-size:11px;padding:1px 6px;border-radius:999px;background:#0a0e1a;color:var(--muted)}
-    .k-cards{padding:8px;display:flex;flex-direction:column;gap:7px;min-height:40px}
-    .k-empty{font-size:11px;color:var(--muted);text-align:center;padding:12px 0;opacity:.4}
-
-    /* ── TASK CARD ── */
-    .tc{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
-    .tc:hover{border-color:#2e3d6a;box-shadow:0 2px 12px rgba(0,0,0,.3)}
-    .tc .cid{font-size:10px;color:var(--acc);font-weight:700;letter-spacing:.03em;margin-bottom:2px}
-    .tc .corg{display:inline-block;font-size:10px;padding:1px 6px;border-radius:4px;margin-bottom:3px;font-weight:600}
-    .tc .ctitle{font-size:13px;font-weight:600;line-height:1.4;margin-bottom:6px}
-    .tc .cmeta{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:2px}
-    .tc .cfoot{display:flex;justify-content:space-between;align-items:center;margin-top:7px;flex-wrap:wrap;gap:3px}
+    .ec-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:6px}
     .hb{font-size:10px;padding:2px 7px;border-radius:999px;border:1px solid var(--line)}
-    .hb.active{border-color:#2ecc8a44;color:var(--ok)}
-    .hb.warn{border-color:#f5c84244;color:var(--warn)}
-    .hb.stalled{border-color:#ff527044;color:var(--danger);animation:pulse2 1.5s infinite}
-    .hb.unknown{color:var(--muted)}
+    .hb.active{border-color:#2ecc8a44;color:var(--ok)}.hb.warn{border-color:#f5c84244;color:var(--warn)}.hb.stalled{border-color:#ff527044;color:var(--danger);animation:pulse 1.5s infinite}.hb.unknown{color:var(--muted)}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-    /* STATE */
-    .s-Inbox{border-color:#3a4a7a44;color:#7a9aff;background:#0a1028}
-    .s-Zhongshu{border-color:#4a3a7a44;color:#a07aff;background:#110a28}
-    .s-Menxia{border-color:#7a4a3a44;color:#ff9a6a;background:#280f0a}
-    .s-Assigned{border-color:#3a6a4a44;color:#6aef9a;background:#0a2018}
-    .s-Doing{border-color:#2a5aaa44;color:#7aafff;background:#0a1428}
-    .s-Review{border-color:#7a6a2a44;color:#f5c842;background:#201a08}
-    .s-Done{border-color:#2a7a5a44;color:var(--ok);background:#0a2018}
-    .s-Blocked{border-color:#7a2a3a44;color:var(--danger);background:#200a10}
-    .s-Next{border-color:#2a4a6a44;color:#4a9adf;background:#0a1424}
+    /* ══ TASK DETAIL MODAL ══ */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;backdrop-filter:blur(3px);overflow-y:auto}
+    .modal-bg.open{display:flex;align-items:flex-start;justify-content:center;padding:40px 16px}
+    .modal{background:var(--panel);border:1px solid var(--line);border-radius:18px;width:100%;max-width:760px;padding:28px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+    .modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px;color:var(--muted)}
+    .modal-close:hover{background:var(--panel2);color:var(--text)}
+    .modal-id{font-size:11px;color:var(--acc);font-weight:700;letter-spacing:.04em;margin-bottom:6px}
+    .modal-title{font-size:22px;font-weight:800;line-height:1.3;margin-bottom:18px}
 
-    /* ORG */
-    .o-0{color:var(--r0);background:#1a0f38}
-    .o-1{color:var(--r1);background:#0f1a38}
-    .o-2{color:var(--r2);background:#0a2018}
-    .o-3{color:var(--r3);background:#201a08}
-    .o-4{color:var(--r4);background:#28100a}
-    .o-5{color:var(--r5);background:#280a10}
-    .o-6{color:#cc4444;background:#280808}
-    .o-7{color:#44aaff;background:#081828}
+    /* full pipeline in modal */
+    .m-pipe{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:16px;background:var(--panel2);border-radius:12px;margin-bottom:20px}
+    .mp-stage{display:flex;align-items:center;flex-shrink:0}
+    .mp-node{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:10px;min-width:80px;position:relative}
+    .mp-node.done{background:#0a2018;border:1px solid #2ecc8a44}
+    .mp-node.active{background:#0f1838;border:2px solid var(--acc);box-shadow:0 0 14px rgba(106,158,255,.2)}
+    .mp-node.pending{opacity:.25;border:1px dashed var(--line)}
+    .mp-icon{font-size:22px}
+    .mp-dept{font-size:12px;font-weight:700;margin-top:2px}
+    .mp-node.done .mp-dept{color:var(--ok)}
+    .mp-node.active .mp-dept{color:var(--acc)}
+    .mp-node.pending .mp-dept{color:var(--muted)}
+    .mp-action{font-size:10px;color:var(--muted);margin-top:1px}
+    .mp-node.active .mp-action{color:#6a9eff88}
+    .mp-done-tick{position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:var(--ok);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;font-weight:700}
+    .mp-arrow{color:#1c2236;font-size:18px;padding:0 6px;margin-top:-10px}
 
-    /* ── HISTORY ── */
-    .hist-section{margin-bottom:16px}
-    .dept-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px 10px 0 0;cursor:pointer;user-select:none}
-    .dept-hdr .dh-arrow{font-size:12px;color:var(--muted);transition:transform .2s;margin-left:auto}
-    .dept-hdr.open .dh-arrow{transform:rotate(90deg)}
-    .dept-body{display:none;background:var(--panel);border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px}
-    .dept-body.open{display:block}
-    .hist-row{display:grid;grid-template-columns:130px 1fr 90px 70px;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line);font-size:12px;align-items:center;cursor:pointer}
-    .hist-row:last-of-type{border-bottom:none}
-    .hist-row:hover{background:var(--panel2)}
-    .hr-time{color:var(--muted);font-size:11px}
-    .hr-qa{text-align:center}
-    .hr-link{color:var(--acc);font-size:11px}
-    .flow-log-wrap{padding:12px 14px;background:var(--bg);border-top:1px solid var(--line);display:none}
-    .flow-log-wrap.open{display:block}
-    .fl-row{display:flex;gap:8px;padding:5px 0;font-size:11px;border-bottom:1px solid #0e1320}
-    .fl-row:last-child{border-bottom:none}
-    .fl-time{color:var(--muted);min-width:110px;flex-shrink:0}
-    .fl-from{color:var(--acc);font-weight:600;min-width:55px}
-    .fl-to{color:var(--acc2);font-weight:600;min-width:55px}
-    .fl-sep{color:var(--muted)}
-    .fl-rem{color:var(--text)}
+    /* current stage banner */
+    .cur-stage{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#0a1228;border:1px solid var(--acc);border-radius:10px;margin-bottom:18px}
+    .cs-icon{font-size:24px}
+    .cs-info .cs-dept{font-size:16px;font-weight:700;color:var(--acc)}
+    .cs-info .cs-action{font-size:12px;color:var(--muted);margin-top:2px}
+    .cs-hb{margin-left:auto}
 
-    /* ── TIMELINE ── */
-    .timeline{display:flex;flex-direction:column;gap:0;position:relative}
-    .timeline::before{content:'';position:absolute;left:80px;top:0;bottom:0;width:1px;background:var(--line)}
-    .tl-item{display:flex;gap:0;position:relative;padding:8px 0}
-    .tl-time{min-width:80px;font-size:11px;color:var(--muted);text-align:right;padding-right:16px;flex-shrink:0;padding-top:2px}
-    .tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;position:relative;z-index:1}
-    .tl-content{padding-left:12px;flex:1;min-width:0}
-    .tl-who{font-size:12px;font-weight:600;margin-bottom:2px}
-    .tl-desc{font-size:11px;color:var(--muted);line-height:1.5}
+    /* flow log */
+    .m-section{margin-bottom:18px}
+    .m-sec-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+    .fl-timeline{display:flex;flex-direction:column;gap:0;position:relative}
+    .fl-timeline::before{content:'';position:absolute;left:60px;top:0;bottom:0;width:1px;background:var(--line)}
+    .fl-item{display:flex;gap:0;position:relative;padding:8px 0}
+    .fl-time{min-width:60px;font-size:10px;color:var(--muted);text-align:right;padding-right:14px;flex-shrink:0;padding-top:3px}
+    .fl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px;position:relative;z-index:1}
+    .fl-content{padding-left:12px;flex:1}
+    .fl-who{font-size:12px;margin-bottom:2px}
+    .fl-who .from{font-weight:700}
+    .fl-who .to{font-weight:700}
+    .fl-rem{font-size:11px;color:var(--muted);line-height:1.5}
+    .fl-ok{color:var(--ok)}.fl-warn{color:var(--warn)}.fl-blue{color:var(--acc)}.fl-purple{color:var(--acc2)}
 
-    /* ── MODEL CONFIG ── */
-    .model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;margin-bottom:20px}
-    .mc-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;transition:border-color .15s}
-    .mc-card:hover{border-color:#2e3d6a}
+    /* meta rows */
+    .m-rows{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .m-row{background:var(--panel2);border-radius:8px;padding:10px 12px}
+    .mr-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+    .mr-val{font-size:13px;font-weight:600;word-break:break-all}
+
+    /* ══ 省部调度 tab ══ */
+    .dept-monitor{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+    .dm-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+    .dm-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel2);border-bottom:1px solid var(--line)}
+    .dm-emoji{font-size:18px}.dm-name{font-size:14px;font-weight:700}.dm-cnt{font-size:11px;color:var(--muted);margin-left:auto}
+    .dm-sessions{padding:8px}
+    .ds-row{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;font-size:12px;margin-bottom:3px;cursor:pointer}
+    .ds-row:hover{background:var(--panel2)}
+    .ds-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .ds-dot.active{background:var(--ok)}.ds-dot.warn{background:var(--warn)}.ds-dot.stalled{background:var(--danger);animation:pulse 1.2s infinite}.ds-dot.unknown{background:var(--muted)}
+    .ds-id{color:var(--muted);font-size:10px;font-family:monospace;min-width:80px}
+    .ds-state{margin-left:auto}.ds-hb{font-size:10px;color:var(--muted)}
+
+    /* ══ Model / Skills tabs ══ */
+    .model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:18px}
+    .mc-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
     .mc-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
     .mc-emoji{font-size:22px}
-    .mc-name{font-size:15px;font-weight:700}
-    .mc-role{font-size:11px;color:var(--muted)}
-    .mc-cur{font-size:11px;color:var(--muted);margin-bottom:8px}
-    .mc-cur span{color:var(--text);font-weight:500}
-    .msel{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:7px;color:var(--text);padding:7px 10px;font-size:12px;outline:none;cursor:pointer}
-    .msel:focus{border-color:var(--acc)}
+    .mc-name{font-size:15px;font-weight:700}.mc-role{font-size:11px;color:var(--muted)}
+    .mc-cur{font-size:11px;color:var(--muted);margin-bottom:8px}.mc-cur b{color:var(--text)}
+    .msel{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:7px;color:var(--text);padding:7px 10px;font-size:12px;outline:none;cursor:pointer}.msel:focus{border-color:var(--acc)}
     .mc-btns{display:flex;gap:6px;margin-top:8px}
-    .btn{font-size:12px;padding:6px 14px;border-radius:7px;border:none;cursor:pointer;font-weight:600;transition:all .15s}
-    .btn-p{background:var(--acc);color:#000}.btn-p:hover{background:#89b4ff}.btn-p:disabled{background:#2a3a6a;color:var(--muted);cursor:not-allowed}
+    .btn{font-size:12px;padding:6px 14px;border-radius:7px;border:none;cursor:pointer;font-weight:600}
+    .btn-p{background:var(--acc);color:#000}.btn-p:hover{filter:brightness(1.15)}.btn-p:disabled{background:#2a3a6a;color:var(--muted);cursor:not-allowed}
     .btn-g{background:transparent;border:1px solid var(--line);color:var(--muted)}.btn-g:hover{border-color:#2e3d6a;color:var(--text)}
-    .mc-status{font-size:11px;margin-top:6px;padding:4px 8px;border-radius:5px;display:none}
-    .mc-status.ok{display:block;background:#0a2018;color:var(--ok);border:1px solid #2ecc8a44}
-    .mc-status.err{display:block;background:#200a10;color:var(--danger);border:1px solid #ff527044}
-    .mc-status.pending{display:block;background:#0a1228;color:var(--acc);border:1px solid #6a9eff44}
-    .cl-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:14px}
+    .mc-st{font-size:11px;margin-top:6px;padding:4px 8px;border-radius:5px;display:none}
+    .mc-st.ok{display:block;background:#0a2018;color:var(--ok);border:1px solid #2ecc8a44}
+    .mc-st.err{display:block;background:#200a10;color:var(--danger);border:1px solid #ff527044}
+    .mc-st.pending{display:block;background:#0a1228;color:var(--acc);border:1px solid #6a9eff44}
+    .cl-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
     .cl-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px}
-    .cl-row{display:flex;gap:10px;font-size:11px;padding:5px 0;border-bottom:1px solid var(--line)}
-    .cl-row:last-child{border-bottom:none}
-    .cl-t{color:var(--muted);min-width:115px}.cl-a{color:var(--acc);min-width:80px}.cl-c{color:var(--muted)}
-    .cl-c b{color:var(--text)}
+    .cl-row{display:flex;gap:10px;font-size:11px;padding:5px 0;border-bottom:1px solid var(--line)}.cl-row:last-child{border-bottom:none}
+    .cl-t{color:var(--muted);min-width:115px}.cl-a{color:var(--acc);min-width:80px}.cl-c{color:var(--muted)}.cl-c b{color:var(--text)}
 
-    /* ── SKILLS ── */
-    .skills-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+    .skills-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
     .sk-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
     .sk-hdr{display:flex;align-items:center;gap:9px;padding:11px 14px;background:var(--panel2);border-bottom:1px solid var(--line)}
     .sk-emoji{font-size:18px}.sk-name{font-size:14px;font-weight:700}.sk-cnt{font-size:11px;color:var(--muted);margin-left:auto}
     .sk-list{padding:10px}
-    .sk-item{display:flex;gap:8px;padding:6px 8px;border-radius:7px;font-size:12px;margin-bottom:3px}
-    .sk-item:hover{background:var(--panel2)}
+    .sk-item{display:flex;gap:8px;padding:6px 8px;border-radius:7px;font-size:12px;margin-bottom:3px}.sk-item:hover{background:var(--panel2)}
     .si-name{font-weight:600;min-width:100px}.si-desc{color:var(--muted);flex:1;line-height:1.4}
     .sk-empty{font-size:12px;color:var(--muted);padding:12px;text-align:center;opacity:.6}
 
-    /* ── DRAWER ── */
-    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;backdrop-filter:blur(2px)}
-    .overlay.open{display:block}
-    .drawer{position:fixed;right:-540px;top:0;bottom:0;width:540px;background:var(--panel);border-left:1px solid var(--line);z-index:101;overflow-y:auto;transition:right .25s cubic-bezier(.4,0,.2,1)}
-    .drawer.open{right:0}
-    .dr-hdr{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;z-index:1}
-    .dr-close{font-size:18px;cursor:pointer;color:var(--muted);width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px}
-    .dr-close:hover{background:var(--panel2);color:var(--text)}
-    .dr-body{padding:16px}
-    .dr-id{font-size:11px;color:var(--acc);font-weight:700;letter-spacing:.04em;margin-bottom:3px}
-    .dr-title{font-size:17px;font-weight:700;line-height:1.4;margin-bottom:12px}
-    .sec{margin-bottom:16px}
-    .sec-lbl{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--line)}
-    .drow{display:flex;gap:8px;font-size:12px;padding:5px 0;border-bottom:1px solid #0e1320}
-    .drow:last-child{border-bottom:none}
-    .dk{color:var(--muted);min-width:75px;flex-shrink:0}.dv{color:var(--text);word-break:break-all}
-    .act-list{display:flex;flex-direction:column;gap:0}
-    .act-i{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #0e1320;font-size:11px}
-    .act-i:last-child{border-bottom:none}
-    .act-t{color:var(--muted);min-width:55px;flex-shrink:0}
-    .ak{padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;flex-shrink:0;height:fit-content;margin-top:1px}
-    .ak-tool{background:#0a1228;color:var(--acc)}.ak-assistant{background:#0a2018;color:var(--ok)}.ak-user{background:#200a10;color:var(--danger)}
-    .act-tx{color:var(--text);line-height:1.5;word-break:break-all;flex:1}
-
-    /* ── TOAST ── */
-    #toaster{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:200}
-    .toast{font-size:13px;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);box-shadow:0 4px 20px rgba(0,0,0,.4);animation:tin .2s ease;max-width:320px}
+    /* TOAST */
+    #toaster{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:300}
+    .toast{font-size:13px;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);box-shadow:0 4px 20px rgba(0,0,0,.4);animation:tin .2s;max-width:320px}
     .toast.ok{border-color:#2ecc8a55;background:#0a1a10}.toast.err{border-color:#ff527055;background:#200a10}
     @keyframes tin{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
 
-    /* ── MISC ── */
-    .sec-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+    /* MISC */
     .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
-    .tag{font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid;display:inline-block;white-space:nowrap}
-    .pill-ok{border-color:#2ecc8a44;color:var(--ok);background:#0a1a10}
-    .pill-warn{border-color:#f5c84244;color:var(--warn);background:#1a1408}
-    .pill-err{border-color:#ff527044;color:var(--danger);background:#200a10}
+    .sec-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px}
     code{font-size:11px;background:var(--panel2);padding:2px 6px;border-radius:4px;font-family:monospace}
   </style>
 </head>
@@ -273,451 +198,294 @@
   <div class="hdr">
     <div>
       <div class="logo">⚔️ 军机处 · 三省六部总控台</div>
-      <div class="sub">OpenClaw Multi-Agent Orchestration Dashboard</div>
+      <div class="sub">皇上视角 · 实时旨意追踪</div>
     </div>
-    <div class="hdr-right">
+    <div class="hdr-r">
       <span class="chip" id="chip-sync">⟳ 同步中</span>
-      <span class="chip" id="chip-tasks">— 任务</span>
-      <span class="chip" id="chip-agents">— 官员</span>
-      <span id="next-refresh"></span>
-      <input type="text" class="search-input" id="search-input" placeholder="🔍 搜索任务 ID / 标题 / 官员…" style="max-width:260px" oninput="onSearch(this.value)">
+      <span class="chip" id="chip-tasks">— 旨意</span>
+      <button class="btn-refresh" onclick="loadAll()">⟳ 立即刷新</button>
+      <span id="cd"></span>
     </div>
   </div>
 
   <!-- TABS -->
   <div class="tabs">
-    <div class="tab active" data-tab="overview">🏠 总览</div>
-    <div class="tab" data-tab="kanban">📋 任务看板 <span class="tab-badge" id="tb-doing">0</span></div>
-    <div class="tab" data-tab="history">📊 工作记录 <span class="tab-badge" id="tb-done">0</span></div>
-    <div class="tab" data-tab="timeline">⏱️ 时间线</div>
+    <div class="tab active" data-tab="edicts">📜 旨意看板 <span class="tbadge" id="tb-e">0</span></div>
+    <div class="tab" data-tab="monitor">🔭 省部调度 <span class="tbadge" id="tb-m">0</span></div>
     <div class="tab" data-tab="models">⚙️ 模型配置</div>
     <div class="tab" data-tab="skills">🛠️ 技能配置</div>
   </div>
 
-  <!-- ══ TAB: 总览 ══ -->
-  <div class="panel active" id="panel-overview">
-    <div class="metrics" id="metrics-row"></div>
-    <div class="overview-grid">
-      <div>
-        <!-- pipeline -->
-        <div class="pipe-wrap">
-          <div class="pipe-title">流程管线 · 任务流向</div>
-          <div class="pipe" id="pipeline"></div>
-        </div>
-        <!-- charts -->
-        <div class="charts-row" id="charts-row"></div>
-      </div>
-      <!-- agents health -->
-      <div class="agents-panel">
-        <div class="ap-title">Agent 健康状态</div>
-        <div id="agents-health"></div>
-      </div>
-    </div>
+  <!-- ══ 旨意看板 ══ -->
+  <div class="panel active" id="panel-edicts">
+    <div id="edict-grid" class="edict-grid"></div>
   </div>
 
-  <!-- ══ TAB: 任务看板 ══ -->
-  <div class="panel" id="panel-kanban">
-    <div class="filter-bar" id="filter-bar">
-      <span class="fb active" data-f="all">全部</span>
-      <span class="fsep"></span>
-      <span class="fb" data-f="三省六部">⛩️ 三省</span>
-      <span class="fb" data-f="六部">🏛️ 六部</span>
-      <span class="fsep"></span>
-      <span class="fb" data-f="中书省">📜 中书省</span>
-      <span class="fb" data-f="门下省">🔍 门下省</span>
-      <span class="fb" data-f="尚书省">📮 尚书省</span>
-      <span class="fsep"></span>
-      <span class="fb" data-f="礼部">📝 礼部</span>
-      <span class="fb" data-f="户部">💰 户部</span>
-      <span class="fb" data-f="兵部">⚔️ 兵部</span>
-      <span class="fb" data-f="刑部">⚖️ 刑部</span>
-      <span class="fb" data-f="工部">🔧 工部</span>
-    </div>
-    <div class="kanban" id="kanban-board"></div>
+  <!-- ══ 省部调度 ══ -->
+  <div class="panel" id="panel-monitor">
+    <div class="dept-monitor" id="dept-monitor"></div>
   </div>
 
-  <!-- ══ TAB: 工作记录 ══ -->
-  <div class="panel" id="panel-history">
-    <div id="history-content"></div>
-  </div>
-
-  <!-- ══ TAB: 时间线 ══ -->
-  <div class="panel" id="panel-timeline">
-    <div class="chart-card" style="margin-bottom:14px">
-      <div class="cc-title">全局事件时间线（最近已完成任务的流转记录）</div>
-      <div class="timeline" id="timeline-content"></div>
-    </div>
-  </div>
-
-  <!-- ══ TAB: 模型配置 ══ -->
+  <!-- ══ 模型配置 ══ -->
   <div class="panel" id="panel-models">
-    <div class="sec-title" style="margin-bottom:14px">
-      各省部 · 模型配置
-      <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--muted);margin-left:6px">更改后自动重启 Gateway 生效（约 5 秒）</span>
-    </div>
+    <div class="sec-title" style="margin-bottom:14px">各省部 · 模型配置 <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--muted)">— 更改后自动重启 Gateway（约5秒）</span></div>
     <div class="model-grid" id="model-grid"></div>
-    <div class="cl-wrap">
-      <div class="cl-title">变更记录</div>
-      <div id="cl-list"></div>
-    </div>
+    <div class="cl-wrap"><div class="cl-title">变更记录</div><div id="cl-list"></div></div>
   </div>
 
-  <!-- ══ TAB: 技能配置 ══ -->
+  <!-- ══ 技能配置 ══ -->
   <div class="panel" id="panel-skills">
     <div class="sec-title" style="margin-bottom:14px">各省部 · Skills 配置</div>
     <div class="skills-grid" id="skills-grid"></div>
   </div>
 </div>
 
-<!-- DRAWER -->
-<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
-<div class="drawer" id="drawer">
-  <div class="dr-hdr">
-    <span id="dr-hdr-id" style="font-size:13px;font-weight:700">任务详情</span>
-    <span class="dr-close" onclick="closeDrawer()">✕</span>
+<!-- TASK DETAIL MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-close" onclick="closeModal()">✕</div>
+    <div id="modal-body"></div>
   </div>
-  <div class="dr-body" id="dr-body"></div>
 </div>
 
-<!-- TOAST -->
 <div id="toaster"></div>
 
 <script>
-/* ════════════════════════════
-   CONFIG
-════════════════════════════ */
+/* ══ CONFIG ══ */
 const API = 'http://127.0.0.1:7891/api';
-let liveStatus = null, agentConfig = null;
-let activeTab = 'overview', orgFilter = 'all', searchQ = '';
-let refreshCountdown = 15;
+let liveStatus=null, agentConfig=null, activeTab='edicts', countdown=5;
 
-const ORG_MAP = {'中书省':'o-0','门下省':'o-1','尚书省':'o-2','礼部':'o-3','户部':'o-4','兵部':'o-5','刑部':'o-6','工部':'o-7'};
-const ORG_EMOJI = {'中书省':'📜','门下省':'🔍','尚书省':'📮','礼部':'📝','户部':'💰','兵部':'⚔️','刑部':'⚖️','工部':'🔧'};
-const ORG_COLOR = {'中书省':'var(--r0)','门下省':'var(--r1)','尚书省':'var(--r2)','礼部':'var(--r3)','户部':'var(--r4)','兵部':'var(--r5)','刑部':'var(--r6)','工部':'var(--r7)'};
-const STATE_LABEL = {Inbox:'收件箱',Zhongshu:'中书规划',Menxia:'门下审议',Assigned:'已派发',Doing:'执行中',Review:'待审查',Done:'已完成',Blocked:'阻塞',Next:'待执行'};
-const STATE_ORDER = ['Inbox','Zhongshu','Menxia','Assigned','Doing','Review','Done','Blocked','Next'];
-const PIPE_STAGES = [
-  {key:'Inbox',    label:'收件',   icon:'📥', dept:'皇上'},
-  {key:'Zhongshu', label:'规划',   icon:'📜', dept:'中书省'},
-  {key:'Menxia',   label:'审议',   icon:'🔍', dept:'门下省'},
-  {key:'Assigned', label:'派发',   icon:'📮', dept:'尚书省'},
-  {key:'Doing',    label:'执行',   icon:'⚙️', dept:'六部'},
-  {key:'Review',   label:'审查',   icon:'🔎', dept:'尚书省'},
-  {key:'Done',     label:'完成',   icon:'✅', dept:'回奏'},
+/* ══ PIPELINE DEFINITION ══ */
+const PIPE = [
+  {key:'Inbox',    dept:'皇上',   icon:'👑', action:'下旨'},
+  {key:'Zhongshu', dept:'中书省', icon:'📜', action:'规划'},
+  {key:'Menxia',   dept:'门下省', icon:'🔍', action:'审议'},
+  {key:'Assigned', dept:'尚书省', icon:'📮', action:'派发'},
+  {key:'Doing',    dept:'六部',   icon:'⚙️', action:'执行'},
+  {key:'Review',   dept:'尚书省', icon:'🔎', action:'汇总'},
+  {key:'Done',     dept:'回奏',   icon:'✅', action:'完成'},
 ];
+const PIPE_STATE_IDX = {Inbox:0,Zhongshu:1,Menxia:2,Assigned:3,Doing:4,Review:5,Done:6,Blocked:4,Next:3};
 
-/* ════════════════════════════
-   UTILS
-════════════════════════════ */
-const esc = s => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '';
-async function fetchJ(u){const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw Error(`${r.status}`);return r.json()}
+/* ══ DEPT COLORS ══ */
+const DEPT_COLOR = {'中书省':'#a07aff','门下省':'#6a9eff','尚书省':'#6aef9a','礼部':'#f5c842','户部':'#ff9a6a','兵部':'#ff5270','刑部':'#cc4444','工部':'#44aaff','皇上':'#ffd700','回奏':'#2ecc8a'};
+function deptColor(d){return DEPT_COLOR[d]||'#6a9eff'}
+
+/* ══ UTILS ══ */
+const esc=s=>s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';
+async function fetchJ(u){const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw Error(r.status);return r.json()}
 async function postJ(u,d){const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});return r.json()}
 function toast(msg,type='ok',ms=3000){const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;document.getElementById('toaster').appendChild(el);setTimeout(()=>el.remove(),ms)}
-function orgCls(org){return ORG_MAP[org]||'o-0'}
+const STATE_LABEL={Inbox:'收件',Zhongshu:'中书规划',Menxia:'门下审议',Assigned:'已派发',Doing:'执行中',Review:'待审查',Done:'已完成',Blocked:'阻塞',Next:'待执行'};
 
-/* ════════════════════════════
-   SEARCH
-════════════════════════════ */
-function onSearch(q){searchQ=q.toLowerCase().trim();if(liveStatus)renderKanban(liveStatus.tasks||[])}
+/* ══ TASK CLASSIFICATION ══ */
+// 皇上的旨意：JJC-* 开头，有真实标题
+function isEdict(t){ return /^JJC-/i.test(t.id||'') }
+// 系统会话：OC-* / MC-* 开头
+function isSession(t){ return /^(OC-|MC-)/i.test(t.id||'') }
 
-/* ════════════════════════════
-   HEADER
-════════════════════════════ */
-function updateHeader(s){
-  const sync=s.syncStatus||{};
-  const cs=document.getElementById('chip-sync');
-  cs.textContent=sync.ok?'✅ 同步正常':'⚠️ 同步异常';
-  cs.className=`chip ${sync.ok?'ok':'warn'}`;
-  document.getElementById('chip-tasks').textContent=`${(s.tasks||[]).length} 任务`;
-  document.getElementById('chip-agents').textContent=`${(s.officials||[]).length} 官员`;
+/* ══ PIPE STATUS FOR A TASK ══ */
+function getPipeStatus(t){
+  const stateIdx = PIPE_STATE_IDX[t.state] ?? 4;
+  return PIPE.map((stage, i) => ({
+    ...stage,
+    status: i < stateIdx ? 'done' : i === stateIdx ? 'active' : 'pending'
+  }));
 }
 
-/* ════════════════════════════
-   METRICS
-════════════════════════════ */
-function renderMetrics(m,tasks){
-  const stalled=(tasks||[]).filter(t=>t.heartbeat&&t.heartbeat.status==='stalled').length;
-  const blocked=(tasks||[]).filter(t=>t.state==='Blocked').length;
-  document.getElementById('metrics-row').innerHTML=`
-    ${mc('执行中',m.inProgress||0,'任务',m.inProgress>0?'warn':'')}
-    ${mc('今日完成',m.todayDone||0,'任务','ok')}
-    ${mc('阻塞',blocked,'任务',blocked>0?'danger':'')}
-    ${mc('心跳停滞',stalled,'会话',stalled>0?'danger':'')}
-    ${mc('总任务',(tasks||[]).length,'条目','')}
-    ${mc('官员数',m.officialCount||0,'已编制','')}
-  `;
-}
-function mc(l,v,s,cls){return`<div class="mcard"><div class="ml">${l}</div><div class="mv ${cls}">${v}</div><div class="ms">${s}</div></div>`}
-
-/* ════════════════════════════
-   PIPELINE
-════════════════════════════ */
-function renderPipeline(tasks){
-  const counts={};
-  (tasks||[]).forEach(t=>{if(!counts[t.state])counts[t.state]=0;counts[t.state]++});
-  document.getElementById('pipeline').innerHTML=PIPE_STAGES.map((st,i)=>{
-    const n=counts[st.key]||0;
-    return `<div class="pipe-stage">
-      <div class="pn ${n>0?'has-tasks':''}">
-        <div class="pn-icon">${st.icon}</div>
-        <div class="pn-dept">${st.dept}</div>
-        <div class="pn-label">${st.label}</div>
-        ${n>0?`<div class="pn-count">${n} 件</div>`:''}
+/* ══ CARD MINI PIPELINE ══ */
+function miniPipe(t){
+  const stages = getPipeStatus(t);
+  return `<div class="ec-pipe">
+    ${stages.map((s,i) => `
+      <div class="ep-node ${s.status}">
+        <div class="ep-icon">${s.icon}</div>
+        <div class="ep-name">${s.dept}</div>
       </div>
-      ${i<PIPE_STAGES.length-1?`<div class="pipe-arrow">→</div>`:''}
-    </div>`
+      ${i < stages.length-1 ? `<div class="ep-arrow">›</div>` : ''}
+    `).join('')}
+  </div>`;
+}
+
+/* ══ EDICT CARDS ══ */
+function renderEdicts(tasks){
+  const edicts = tasks.filter(isEdict).sort((a,b) => {
+    const order = {Doing:0,Review:1,Assigned:2,Menxia:3,Zhongshu:4,Inbox:5,Blocked:6,Next:7,Done:8};
+    return (order[a.state]??9) - (order[b.state]??9);
+  });
+  document.getElementById('tb-e').textContent = edicts.length;
+  document.getElementById('chip-tasks').textContent = edicts.length + ' 道旨意';
+  const el = document.getElementById('edict-grid');
+  if(!edicts.length){
+    el.innerHTML='<div class="empty" style="grid-column:1/-1">暂无旨意<br><small style="font-size:11px;margin-top:6px;display:block;color:var(--muted)">通过飞书/Telegram 向中书省发送任务，任务ID格式 JJC-* 将显示于此</small></div>';
+    return;
+  }
+  el.innerHTML = edicts.map(t => {
+    const hb = t.heartbeat||{status:'unknown',label:'⚪'};
+    const deptCls = 'dt-'+(t.org||'').replace(/\s/g,'');
+    const stCls = 'st-'+(t.state||'');
+    const isBlocked = t.block && t.block !== '无' && t.block !== '-';
+    const curStage = PIPE.find((_,i) => getPipeStatus(t)[i].status === 'active');
+    return `
+    <div class="edict-card" onclick='openTask(${JSON.stringify(t.id)})'>
+      ${miniPipe(t)}
+      <div class="ec-id">${esc(t.id)}</div>
+      <div class="ec-title">${esc(t.title||'(无标题)')}</div>
+      <div class="ec-meta">
+        <span class="tag ${stCls}">${STATE_LABEL[t.state]||t.state}</span>
+        ${t.org ? `<span class="tag ${deptCls}">${esc(t.org)}</span>` : ''}
+        ${curStage ? `<span style="font-size:11px;color:var(--muted)">当前: <b style="color:${deptColor(curStage.dept)}">${curStage.dept} · ${curStage.action}</b></span>` : ''}
+      </div>
+      ${t.now && t.now !== '-' ? `<div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px">${esc(t.now.substring(0,80))}</div>` : ''}
+      <div class="ec-footer">
+        <span class="hb ${hb.status}">${esc(hb.label)}</span>
+        ${isBlocked ? `<span class="tag" style="border-color:#ff527044;color:var(--danger);background:#200a10">🚫 ${esc(t.block)}</span>` : ''}
+        ${t.eta && t.eta !== '-' ? `<span style="font-size:11px;color:var(--muted)">📅 ${esc(t.eta)}</span>` : ''}
+      </div>
+    </div>`;
   }).join('');
 }
 
-/* ════════════════════════════
-   CHARTS
-════════════════════════════ */
-function renderCharts(tasks){
-  // chart 1: by org
-  const byOrg={};
-  (tasks||[]).forEach(t=>{const o=t.org||'其他';byOrg[o]=(byOrg[o]||0)+1});
-  const maxOrg=Math.max(...Object.values(byOrg),1);
-  const orgBars=Object.entries(byOrg).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([org,n])=>`
-    <div class="bar-row">
-      <div class="bar-label">${esc(org)}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxOrg*100)}%;background:${ORG_COLOR[org]||'var(--acc)'}"></div></div>
-      <div class="bar-val">${n}</div>
-    </div>`).join('');
-
-  // chart 2: by state
-  const byState={};
-  (tasks||[]).forEach(t=>{const s=STATE_LABEL[t.state]||t.state;byState[s]=(byState[s]||0)+1});
-  const stateColors={'执行中':'var(--acc)','已完成':'var(--ok)','待审查':'var(--warn)','阻塞':'var(--danger)','已派发':'#6aef9a'};
-  const stateEntries=Object.entries(byState).sort((a,b)=>b[1]-a[1]);
-  const maxState=Math.max(...stateEntries.map(e=>e[1]),1);
-  const stateBars=stateEntries.map(([s,n])=>`
-    <div class="bar-row">
-      <div class="bar-label" style="font-size:10px">${esc(s)}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxState*100)}%;background:${stateColors[s]||'var(--muted)'}"></div></div>
-      <div class="bar-val">${n}</div>
-    </div>`).join('');
-
-  document.getElementById('charts-row').innerHTML=`
-    <div class="chart-card"><div class="cc-title">任务分布 · 省/部</div><div class="bar-chart">${orgBars||'<div class="empty">暂无数据</div>'}</div></div>
-    <div class="chart-card"><div class="cc-title">任务分布 · 状态</div><div class="bar-chart">${stateBars||'<div class="empty">暂无数据</div>'}</div></div>
-  `;
-}
-
-/* ════════════════════════════
-   AGENTS HEALTH
-════════════════════════════ */
-function renderAgentsHealth(tasks){
-  // 从会话类型任务中提取 agent 状态
-  const agentMap={};
-  (tasks||[]).forEach(t=>{
-    const src=t.sourceMeta||{};
-    if(src.agentId){
-      const id=src.agentId;
-      if(!agentMap[id]||src.updatedAt>agentMap[id].updatedAt){
-        agentMap[id]={
-          id,org:t.org,label:t.official||id,
-          hb:t.heartbeat||{status:'unknown',label:'⚪ 无数据'},
-          model:(t.now||'').match(/模型\s+([^\s·]+)/)?.[1]||'—',
-          updatedAt:src.updatedAt||0,
+/* ══ DEPT MONITOR ══ */
+function renderMonitor(tasks){
+  const sessions = tasks.filter(isSession);
+  document.getElementById('tb-m').textContent = sessions.length;
+  const DEPTS = [
+    {id:'zhongshu',label:'中书省',emoji:'📜'},
+    {id:'menxia',  label:'门下省',emoji:'🔍'},
+    {id:'shangshu',label:'尚书省',emoji:'📮'},
+    {id:'hubu',    label:'户部',  emoji:'💰'},
+    {id:'libu',    label:'礼部',  emoji:'📝'},
+    {id:'bingbu',  label:'兵部',  emoji:'⚔️'},
+    {id:'xingbu',  label:'刑部',  emoji:'⚖️'},
+    {id:'gongbu',  label:'工部',  emoji:'🔧'},
+  ];
+  const byDept = {};
+  sessions.forEach(t => {
+    const org = t.org || '其他';
+    (byDept[org] || (byDept[org] = [])).push(t);
+  });
+  const el = document.getElementById('dept-monitor');
+  el.innerHTML = DEPTS.map(d => {
+    const items = byDept[d.label] || [];
+    return `<div class="dm-card">
+      <div class="dm-hdr">
+        <span class="dm-emoji">${d.emoji}</span>
+        <span class="dm-name">${d.label}</span>
+        <span class="dm-cnt">${items.length} 会话</span>
+      </div>
+      <div class="dm-sessions">
+        ${!items.length ? '<div style="font-size:11px;color:var(--muted);padding:8px;opacity:.6">空闲</div>' :
+          items.slice(0,5).map(t => {
+            const hb = t.heartbeat||{status:'unknown'};
+            const shortId = t.id.replace(/^OC-[a-z]+-/,'').substring(0,8);
+            return `<div class="ds-row" onclick='openTask(${JSON.stringify(t.id)})'>
+              <div class="ds-dot ${hb.status}"></div>
+              <span class="ds-id">${esc(shortId)}</span>
+              <span style="flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc((t.title||'').replace(/褚凤天\s*/,'').replace(/会话/,'').substring(0,20)||'会话')}</span>
+              <span class="tag ds-state st-${t.state}" style="font-size:9px">${STATE_LABEL[t.state]||t.state}</span>
+            </div>`
+          }).join('')
         }
-      }
-    }
-  });
-  // 补充 agentConfig 数据
-  if(agentConfig&&agentConfig.agents){
-    agentConfig.agents.forEach(ag=>{
-      if(!agentMap[ag.id]){
-        agentMap[ag.id]={id:ag.id,org:ag.label,label:ag.role,hb:{status:'idle',label:'⚪ 待命'},model:ag.model,updatedAt:0}
-      } else {
-        agentMap[ag.id].model=ag.model;
-      }
-    });
-  }
-  const rows=Object.values(agentMap);
-  if(!rows.length){document.getElementById('agents-health').innerHTML='<div class="empty" style="padding:20px">暂无数据</div>';return}
-  document.getElementById('agents-health').innerHTML=rows.map(ag=>`
-    <div class="agent-row">
-      <div class="ag-dot ${ag.hb.status}"></div>
-      <div class="ag-info">
-        <div class="ag-name">${esc(ORG_EMOJI[ag.org]||'🏛️')} ${esc(ag.label||ag.id)}</div>
-        <div class="ag-model">${esc(ag.model)}</div>
       </div>
-      <div class="ag-hb">${esc(ag.hb.label)}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
-/* ════════════════════════════
-   KANBAN
-════════════════════════════ */
-function filterTasks(tasks){
-  let f=tasks;
-  if(orgFilter!=='all'){
-    if(orgFilter==='三省六部')f=f.filter(t=>['中书省','门下省','尚书省'].includes(t.org));
-    else if(orgFilter==='六部')f=f.filter(t=>['礼部','户部','兵部','刑部','工部'].includes(t.org));
-    else f=f.filter(t=>t.org===orgFilter);
-  }
-  if(searchQ)f=f.filter(t=>{
-    const hay=(t.id+t.title+t.official+t.org+t.now+t.block).toLowerCase();
-    return hay.includes(searchQ);
-  });
-  return f;
-}
+/* ══ TASK DETAIL MODAL ══ */
+function openTask(id){
+  if(!liveStatus||!liveStatus.tasks)return;
+  const t = liveStatus.tasks.find(x=>x.id===id);
+  if(!t)return;
+  const stages = getPipeStatus(t);
+  const activeStage = stages.find(s=>s.status==='active');
+  const hb = t.heartbeat||{status:'unknown',label:'⚪ 无数据'};
+  const flowLog = t.flow_log||[];
 
-function renderKanban(tasks){
-  const filtered=filterTasks(tasks);
-  const groups={};
-  STATE_ORDER.forEach(s=>groups[s]=[]);
-  filtered.forEach(t=>{(groups[t.state]||(groups[t.state]=[])).push(t)});
-  const SHOW_EMPTY=['Doing','Review','Done'];
-  const cols=STATE_ORDER.filter(s=>groups[s].length>0||SHOW_EMPTY.includes(s));
-  document.getElementById('kanban-board').innerHTML=cols.map(state=>`
-    <div class="k-col">
-      <div class="k-hdr">
-        <span class="kn tag s-${state}">${STATE_LABEL[state]||state}</span>
-        <span class="kc">${(groups[state]||[]).length}</span>
-      </div>
-      <div class="k-cards">
-        ${(groups[state]||[]).length===0?'<div class="k-empty">暂无</div>':(groups[state]||[]).map(t=>tcard(t)).join('')}
-      </div>
-    </div>`).join('');
-  document.getElementById('tb-doing').textContent=tasks.filter(t=>['Doing','Assigned','Review'].includes(t.state)).length;
-}
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-id">${esc(t.id)}</div>
+    <div class="modal-title">${esc(t.title||'(无标题)')}</div>
 
-function tcard(t){
-  const hb=t.heartbeat||{status:'unknown',label:'⚪'};
-  return `<div class="tc" onclick='openTask(${JSON.stringify(t.id)})'>
-    <div class="cid">${esc(t.id)}</div>
-    <span class="corg tag ${orgCls(t.org)}">${esc(t.org||'—')}</span>
-    <div class="ctitle">${esc(t.title||'无标题')}</div>
-    <div class="cmeta">${(t.official?'👤 '+esc(t.official):'')+(t.eta&&t.eta!=='-'?' · 📅 '+esc(t.eta):'')||'&nbsp;'}</div>
-    <div class="cmeta" style="margin-bottom:4px">${t.now?esc(t.now.substring(0,60)):''}</div>
-    <div class="cfoot">
-      <span class="hb ${hb.status}">${esc(hb.label)}</span>
-      ${t.block&&t.block!=='无'?`<span class="tag pill-err">🚫 ${esc(t.block)}</span>`:''}
+    <!-- 当前阶段横幅 -->
+    ${activeStage ? `
+    <div class="cur-stage">
+      <div class="cs-icon">${activeStage.icon}</div>
+      <div class="cs-info">
+        <div class="cs-dept" style="color:${deptColor(activeStage.dept)}">${activeStage.dept}</div>
+        <div class="cs-action">当前阶段：${activeStage.action}</div>
+      </div>
+      <span class="hb ${hb.status} cs-hb">${esc(hb.label)}</span>
+    </div>` : ''}
+
+    <!-- 流程管线 -->
+    <div class="m-pipe">
+      ${stages.map((s,i) => `
+        <div class="mp-stage">
+          <div class="mp-node ${s.status}">
+            ${s.status==='done' ? '<div class="mp-done-tick">✓</div>' : ''}
+            <div class="mp-icon">${s.icon}</div>
+            <div class="mp-dept" style="${s.status==='active'?'color:var(--acc)':s.status==='done'?'color:var(--ok)':''}">${s.dept}</div>
+            <div class="mp-action">${s.action}</div>
+          </div>
+          ${i < stages.length-1 ? `<div class="mp-arrow" style="${s.status==='done'?'color:var(--ok);opacity:.6':''}">→</div>` : ''}
+        </div>
+      `).join('')}
     </div>
-  </div>`
-}
 
-/* ════════════════════════════
-   HISTORY
-════════════════════════════ */
-function renderHistory(tasks){
-  const done=(tasks||[]).filter(t=>t.state==='Done');
-  document.getElementById('tb-done').textContent=done.length;
-  const byOrg={};
-  done.forEach(t=>{const o=t.org||'未知';(byOrg[o]||(byOrg[o]=[])).push(t)});
-  const el=document.getElementById('history-content');
-  if(!done.length){el.innerHTML='<div class="empty">暂无已完成任务</div>';return}
-  el.innerHTML=Object.entries(byOrg).map(([org,items])=>`
-    <div class="hist-section">
-      <div class="dept-hdr open" onclick="toggleDept(this)">
-        <span style="font-size:18px">${ORG_EMOJI[org]||'🏛️'}</span>
-        <span style="font-size:14px;font-weight:700">${esc(org)}</span>
-        <span class="dh-arrow">▶</span>
+    <!-- 基本信息 -->
+    <div class="m-section">
+      <div class="m-rows">
+        <div class="m-row"><div class="mr-label">状态</div><div class="mr-val"><span class="tag st-${t.state}">${STATE_LABEL[t.state]||t.state}</span></div></div>
+        <div class="m-row"><div class="mr-label">执行部门</div><div class="mr-val"><span class="tag dt-${(t.org||'').replace(/\s/g,'')}">${esc(t.org||'—')}</span></div></div>
+        ${t.eta&&t.eta!=='-'?`<div class="m-row"><div class="mr-label">预计完成</div><div class="mr-val">${esc(t.eta)}</div></div>`:''}
+        ${t.block&&t.block!=='无'&&t.block!=='-'?`<div class="m-row"><div class="mr-label" style="color:var(--danger)">阻塞项</div><div class="mr-val" style="color:var(--danger)">${esc(t.block)}</div></div>`:''}
+        ${t.now&&t.now!=='-'?`<div class="m-row" style="grid-column:1/-1"><div class="mr-label">当前进展</div><div class="mr-val" style="font-weight:400;font-size:12px">${esc(t.now)}</div></div>`:''}
+        ${t.ac?`<div class="m-row" style="grid-column:1/-1"><div class="mr-label">验收标准</div><div class="mr-val" style="font-weight:400;font-size:12px">${esc(t.ac)}</div></div>`:''}
       </div>
-      <div class="dept-body open">
-        ${items.map(t=>{
-          const lm=(t.outputMeta&&t.outputMeta.lastModified)||t.updatedAt||'—';
-          const qa=t.outputMeta&&t.outputMeta.exists?'<span class="tag pill-ok">✅ 通过</span>':'<span class="tag pill-warn">⚠️ 待补</span>';
-          const hasFlow=t.flow_log&&t.flow_log.length>0;
-          return `<div>
-            <div class="hist-row" onclick="toggleFlow(this.nextElementSibling)">
-              <span class="hr-time">${esc(String(lm).substring(0,16))}</span>
-              <span style="font-weight:500">${esc(t.title||'')}</span>
-              <span class="hr-qa">${qa}</span>
-              <span class="hr-link" onclick="event.stopPropagation();openTask('${t.id}')">详情 →</span>
+    </div>
+
+    <!-- 流转日志 -->
+    ${flowLog.length ? `
+    <div class="m-section">
+      <div class="m-sec-label">流转日志（${flowLog.length} 条）</div>
+      <div class="fl-timeline">
+        ${flowLog.map(fl => {
+          const col = deptColor(fl.from||'');
+          const isOk = (fl.remark||'').includes('✅')||fl.to==='皇上';
+          const dotCls = isOk ? 'fl-ok' : (fl.from==='皇上'||fl.to==='皇上') ? 'fl-purple' : 'fl-blue';
+          return `<div class="fl-item">
+            <div class="fl-time">${fl.at?fl.at.substring(11,16):''}</div>
+            <div class="fl-dot" style="background:${col}"></div>
+            <div class="fl-content">
+              <div class="fl-who">
+                <span class="from" style="color:${col}">${esc(fl.from||'')}</span>
+                <span style="color:var(--muted)"> → </span>
+                <span class="to" style="color:${deptColor(fl.to||'')}">${esc(fl.to||'')}</span>
+              </div>
+              <div class="fl-rem ${dotCls}">${esc(fl.remark||'')}</div>
             </div>
-            ${hasFlow?`<div class="flow-log-wrap">${t.flow_log.map(fl=>`
-              <div class="fl-row">
-                <span class="fl-time">${fl.at?fl.at.substring(0,16).replace('T',' '):''}</span>
-                <span class="fl-from">${esc(fl.from||'')}</span>
-                <span class="fl-sep">→</span>
-                <span class="fl-to">${esc(fl.to||'')}</span>
-                <span class="fl-rem">${esc(fl.remark||'')}</span>
-              </div>`).join('')}</div>`:''}
           </div>`
         }).join('')}
       </div>
-    </div>`).join('');
-}
+    </div>` : '<div style="font-size:12px;color:var(--muted);padding:8px 0">暂无流转记录（任务启动后自动填充）</div>'}
 
-function toggleDept(hdr){hdr.classList.toggle('open');hdr.nextElementSibling.classList.toggle('open')}
-function toggleFlow(el){if(el&&el.classList)el.classList.toggle('open')}
-
-/* ════════════════════════════
-   TIMELINE
-════════════════════════════ */
-function renderTimeline(tasks){
-  const events=[];
-  (tasks||[]).forEach(t=>{
-    (t.flow_log||[]).forEach(fl=>{
-      events.push({at:fl.at,task:t.title,from:fl.from,to:fl.to,remark:fl.remark,org:t.org});
-    });
-  });
-  events.sort((a,b)=>(b.at||'').localeCompare(a.at||''));
-  const el=document.getElementById('timeline-content');
-  if(!events.length){el.innerHTML='<div class="empty">暂无流转记录</div>';return}
-  el.innerHTML=events.slice(0,60).map(e=>{
-    const col=ORG_COLOR[e.from]||ORG_COLOR[e.org]||'var(--acc)';
-    return `<div class="tl-item">
-      <div class="tl-time">${e.at?e.at.substring(0,16).replace('T',' '):'—'}</div>
-      <div class="tl-dot" style="background:${col};box-shadow:0 0 6px ${col}"></div>
-      <div class="tl-content">
-        <div class="tl-who"><span style="color:${col}">${esc(e.from||'')}</span> <span style="color:var(--muted)">→</span> <span style="color:var(--acc2)">${esc(e.to||'')}</span></div>
-        <div class="tl-desc">[${esc(e.task||'')}] ${esc(e.remark||'')}</div>
-      </div>
-    </div>`
-  }).join('')
-}
-
-/* ════════════════════════════
-   DRAWER
-════════════════════════════ */
-function openTask(id){
-  if(!liveStatus||!liveStatus.tasks)return;
-  const t=liveStatus.tasks.find(x=>x.id===id);
-  if(!t)return;
-  document.getElementById('dr-hdr-id').textContent=t.id;
-  document.getElementById('dr-body').innerHTML=`
-    <div class="dr-id">${esc(t.id)}</div>
-    <div class="dr-title">${esc(t.title||'')}</div>
-    <div class="sec">
-      <div class="sec-lbl">基本信息</div>
-      ${dr('省/部',t.org)}${dr('官员',t.official)}${dr('状态',STATE_LABEL[t.state]||t.state)}
-      ${dr('当前',t.now)}${dr('ETA',t.eta)}${dr('阻塞',t.block)}${dr('产出',t.output)}${dr('验收',t.ac)}
-    </div>
-    ${t.flow_log&&t.flow_log.length?`
-    <div class="sec">
-      <div class="sec-lbl">流转日志</div>
-      ${t.flow_log.map(fl=>`<div class="fl-row">
-        <span class="fl-time">${fl.at?fl.at.substring(0,16).replace('T',' '):''}</span>
-        <span class="fl-from">${esc(fl.from||'')}</span>
-        <span class="fl-sep">→</span>
-        <span class="fl-to">${esc(fl.to||'')}</span>
-        <span class="fl-rem">${esc(fl.remark||'')}</span>
-      </div>`).join('')}
-    </div>`:''}
-    ${t.activity&&t.activity.length?`
-    <div class="sec">
-      <div class="sec-lbl">最近活动（最新10条）</div>
-      <div class="act-list">
-        ${[...t.activity].reverse().slice(0,10).map(a=>`<div class="act-i">
-          <span class="act-t">${a.at?a.at.substring(11,16):''}</span>
-          <span class="ak ak-${a.kind||'tool'}">${a.kind||'tool'}</span>
-          <span class="act-tx">${esc((a.text||'').substring(0,140))}</span>
-        </div>`).join('')}
-      </div>
+    <!-- 产出物 -->
+    ${t.output&&t.output!=='-'&&t.output!==''?`
+    <div class="m-section">
+      <div class="m-sec-label">产出物</div>
+      <code>${esc(t.output)}</code>
     </div>`:''}
   `;
-  document.getElementById('overlay').classList.add('open');
-  document.getElementById('drawer').classList.add('open');
-}
-function dr(k,v){if(!v||v==='-'||v==='无')return'';return`<div class="drow"><span class="dk">${k}</span><span class="dv">${esc(String(v))}</span></div>`}
-function closeDrawer(){document.getElementById('overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open')}
 
-/* ════════════════════════════
-   MODEL CONFIG
-════════════════════════════ */
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('modal-bg')&&!e.target.classList.contains('modal-close'))return;
+  document.getElementById('modal-bg').classList.remove('open');
+}
+
+/* ══ MODEL CONFIG ══ */
 const KNOWN_MODELS=[
   {id:'anthropic/claude-sonnet-4-6',l:'Claude Sonnet 4.6',p:'Anthropic'},
   {id:'anthropic/claude-opus-4-5',l:'Claude Opus 4.5',p:'Anthropic'},
@@ -728,94 +496,56 @@ const KNOWN_MODELS=[
   {id:'google/gemini-2.0-flash',l:'Gemini 2.0 Flash',p:'Google'},
   {id:'google/gemini-2.5-pro',l:'Gemini 2.5 Pro',p:'Google'},
 ];
-
 function renderModels(cfg){
-  if(!cfg||!cfg.agents){
-    document.getElementById('model-grid').innerHTML='<div class="empty" style="grid-column:1/-1">无法加载配置，请确保本地服务器已启动</div>';return
-  }
+  if(!cfg||!cfg.agents){document.getElementById('model-grid').innerHTML='<div class="empty" style="grid-column:1/-1">请确保本地服务器已启动</div>';return}
   const opts=KNOWN_MODELS.map(m=>`<option value="${m.id}">${m.l} (${m.p})</option>`).join('');
   document.getElementById('model-grid').innerHTML=cfg.agents.map(ag=>`
-    <div class="mc-card" id="mc-${ag.id}">
-      <div class="mc-top">
-        <span class="mc-emoji">${ag.emoji||'🏛️'}</span>
-        <div><div class="mc-name">${esc(ag.label)} <span style="font-size:11px;color:var(--muted)">${esc(ag.id)}</span></div><div class="mc-role">${esc(ag.role)} · ${esc(ag.duty)}</div></div>
+    <div class="mc-card">
+      <div class="mc-top"><span class="mc-emoji">${ag.emoji||'🏛️'}</span>
+        <div><div class="mc-name">${esc(ag.label)} <span style="font-size:11px;color:var(--muted)">${esc(ag.id)}</span></div><div class="mc-role">${esc(ag.role)}</div></div>
       </div>
-      <div class="mc-cur">当前: <span>${esc(ag.model)}</span></div>
+      <div class="mc-cur">当前: <b>${esc(ag.model)}</b></div>
       <select class="msel" id="sel-${ag.id}" onchange="onMC('${ag.id}')">${opts}</select>
-      <div class="mc-btns">
-        <button class="btn btn-p" id="btn-${ag.id}" onclick="applyModel('${ag.id}')" disabled>应用更改</button>
-        <button class="btn btn-g" onclick="resetMC('${ag.id}')">重置</button>
-      </div>
-      <div class="mc-status" id="mcs-${ag.id}"></div>
+      <div class="mc-btns"><button class="btn btn-p" id="btn-${ag.id}" onclick="applyModel('${ag.id}')" disabled>应用</button><button class="btn btn-g" onclick="resetMC('${ag.id}')">重置</button></div>
+      <div class="mc-st" id="mcs-${ag.id}"></div>
     </div>`).join('');
-  cfg.agents.forEach(ag=>{const s=document.getElementById(`sel-${ag.id}`);if(s)s.value=ag.model});
+  cfg.agents.forEach(ag=>{const s=document.getElementById('sel-'+ag.id);if(s)s.value=ag.model});
 }
-function onMC(id){
-  const s=document.getElementById(`sel-${id}`),b=document.getElementById(`btn-${id}`);
-  const ag=agentConfig&&agentConfig.agents?agentConfig.agents.find(a=>a.id===id):null;
-  if(!ag||!s)return; b.disabled=s.value===ag.model;
-}
-function resetMC(id){
-  const s=document.getElementById(`sel-${id}`),b=document.getElementById(`btn-${id}`);
-  const ag=agentConfig&&agentConfig.agents?agentConfig.agents.find(a=>a.id===id):null;
-  if(!ag||!s)return; s.value=ag.model; b.disabled=true;
-}
+function onMC(id){const s=document.getElementById('sel-'+id),b=document.getElementById('btn-'+id),ag=agentConfig&&agentConfig.agents?agentConfig.agents.find(a=>a.id===id):null;if(!ag||!s)return;b.disabled=s.value===ag.model}
+function resetMC(id){const s=document.getElementById('sel-'+id),b=document.getElementById('btn-'+id),ag=agentConfig&&agentConfig.agents?agentConfig.agents.find(a=>a.id===id):null;if(!ag||!s)return;s.value=ag.model;b.disabled=true}
 async function applyModel(id){
-  const s=document.getElementById(`sel-${id}`),b=document.getElementById(`btn-${id}`),st=document.getElementById(`mcs-${id}`);
-  if(!s||!b)return; b.disabled=true;
-  st.className='mc-status pending'; st.textContent='⟳ 提交变更中…';
-  try{
-    const r=await postJ(`${API}/set-model`,{agentId:id,model:s.value});
-    if(r.ok){st.className='mc-status ok';st.textContent='✅ 已提交，Gateway 重启中（约5秒生效）';toast(`${id} → ${s.value.split('/').pop()}`,`ok`);setTimeout(()=>loadAgentConfig(),5500)}
-    else{st.className='mc-status err';st.textContent=`❌ ${r.error||'未知错误'}`;b.disabled=false}
-  }catch(e){st.className='mc-status err';st.textContent='❌ 无法连接本地服务器（python3 server.py 未运行）';b.disabled=false}
+  const s=document.getElementById('sel-'+id),b=document.getElementById('btn-'+id),st=document.getElementById('mcs-'+id);
+  if(!s||!b)return;b.disabled=true;st.className='mc-st pending';st.textContent='⟳ 提交中…';
+  try{const r=await postJ(API+'/set-model',{agentId:id,model:s.value});
+    if(r.ok){st.className='mc-st ok';st.textContent='✅ 已提交，Gateway 重启中（约5秒）';toast(id+'模型已更改','ok');setTimeout(()=>loadAgentConfig(),5500)}
+    else{st.className='mc-st err';st.textContent='❌ '+( r.error||'错误');b.disabled=false}
+  }catch(e){st.className='mc-st err';st.textContent='❌ 无法连接服务器';b.disabled=false}
 }
-
 function renderCL(log){
   const el=document.getElementById('cl-list');
-  if(!log||!log.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0">暂无变更记录</div>';return}
-  el.innerHTML=[...log].reverse().slice(0,20).map(e=>`
-    <div class="cl-row">
-      <span class="cl-t">${esc((e.at||'').substring(0,16).replace('T',' '))}</span>
-      <span class="cl-a">${esc(e.agentId||'')}</span>
-      <span class="cl-c"><b>${esc(e.oldModel||'')}</b> → <b>${esc(e.newModel||'')}</b></span>
-    </div>`).join('')
+  if(!log||!log.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0">暂无变更</div>';return}
+  el.innerHTML=[...log].reverse().slice(0,15).map(e=>`<div class="cl-row"><span class="cl-t">${esc((e.at||'').substring(0,16).replace('T',' '))}</span><span class="cl-a">${esc(e.agentId||'')}</span><span class="cl-c"><b>${esc(e.oldModel||'')}</b> → <b>${esc(e.newModel||'')}</b></span></div>`).join('')
 }
 
-/* ════════════════════════════
-   SKILLS
-════════════════════════════ */
+/* ══ SKILLS ══ */
 function renderSkills(cfg){
-  if(!cfg||!cfg.agents){document.getElementById('skills-grid').innerHTML='<div class="empty">无法加载配置</div>';return}
+  if(!cfg||!cfg.agents){document.getElementById('skills-grid').innerHTML='<div class="empty">无法加载</div>';return}
   document.getElementById('skills-grid').innerHTML=cfg.agents.map(ag=>`
-    <div class="sk-card">
-      <div class="sk-hdr">
-        <span class="sk-emoji">${ag.emoji||'🏛️'}</span>
-        <span class="sk-name">${esc(ag.label)}</span>
-        <span class="sk-cnt">${(ag.skills||[]).length} 技能</span>
-      </div>
-      <div class="sk-list">
-        ${!(ag.skills||[]).length?'<div class="sk-empty">暂无已安装的 Skills</div>':(ag.skills||[]).map(sk=>`
-          <div class="sk-item"><span class="si-name">📦 ${esc(sk.name)}</span><span class="si-desc">${esc(sk.description||'无描述')}</span></div>`).join('')}
-      </div>
-    </div>`).join('')
+    <div class="sk-card"><div class="sk-hdr"><span class="sk-emoji">${ag.emoji||'🏛️'}</span><span class="sk-name">${esc(ag.label)}</span><span class="sk-cnt">${(ag.skills||[]).length} 技能</span></div>
+    <div class="sk-list">${!(ag.skills||[]).length?'<div class="sk-empty">暂无 Skills</div>':(ag.skills||[]).map(sk=>`<div class="sk-item"><span class="si-name">📦 ${esc(sk.name)}</span><span class="si-desc">${esc(sk.description||'无描述')}</span></div>`).join('')}</div></div>`).join('')
 }
 
-/* ════════════════════════════
-   DATA LOADING
-════════════════════════════ */
+/* ══ DATA LOADING ══ */
 async function loadLive(){
   try{
-    liveStatus=await fetchJ(`${API}/live-status`);
+    liveStatus=await fetchJ(API+'/live-status');
     const tasks=liveStatus.tasks||[];
-    renderMetrics(liveStatus.metrics||{},tasks);
-    renderPipeline(tasks);
-    renderCharts(tasks);
-    renderAgentsHealth(tasks);
-    renderKanban(tasks);
-    renderHistory(tasks);
-    renderTimeline(tasks);
-    updateHeader(liveStatus);
+    const sync=liveStatus.syncStatus||{};
+    const cs=document.getElementById('chip-sync');
+    cs.textContent=sync.ok?'✅ 同步正常':'⚠️ 同步异常';
+    cs.className='chip '+(sync.ok?'ok':'warn');
+    renderEdicts(tasks);
+    renderMonitor(tasks);
   }catch(e){
     document.getElementById('chip-sync').textContent='❌ 服务器未启动';
     document.getElementById('chip-sync').className='chip err';
@@ -823,62 +553,42 @@ async function loadLive(){
 }
 async function loadAgentConfig(){
   try{
-    agentConfig=await fetchJ(`${API}/agent-config`);
+    agentConfig=await fetchJ(API+'/agent-config');
     renderModels(agentConfig);
     renderSkills(agentConfig);
-    const log=await fetchJ(`${API}/model-change-log`).catch(()=>[]);
+    const log=await fetchJ(API+'/model-change-log').catch(()=>[]);
     renderCL(log);
   }catch(e){
-    document.getElementById('model-grid').innerHTML=`<div style="grid-column:1/-1" class="empty">
-      ⚠️ 请先启动本地服务器：<br><code style="margin-top:6px;display:inline-block">python3 server.py</code>
-    </div>`;
+    document.getElementById('model-grid').innerHTML='<div class="empty" style="grid-column:1/-1">⚠️ 请先启动本地服务器：<code>python3 dashboard/server.py</code></div>';
   }
 }
 async function loadAll(){await loadLive();if(['models','skills'].includes(activeTab))await loadAgentConfig()}
 
-/* ════════════════════════════
-   TABS
-════════════════════════════ */
+/* ══ TABS ══ */
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active'); activeTab=t.dataset.tab;
-  document.getElementById(`panel-${activeTab}`).classList.add('active');
+  t.classList.add('active');activeTab=t.dataset.tab;
+  document.getElementById('panel-'+activeTab).classList.add('active');
   if(['models','skills'].includes(activeTab))loadAgentConfig();
 }));
 
-/* ════════════════════════════
-   FILTER
-════════════════════════════ */
-document.querySelectorAll('.fb').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('.fb').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active'); orgFilter=b.dataset.f;
-  if(liveStatus)renderKanban(liveStatus.tasks||[]);
-}));
-
-/* ════════════════════════════
-   REFRESH COUNTER
-════════════════════════════ */
-function startCounter(){
-  refreshCountdown=15;
-  const el=document.getElementById('next-refresh');
+/* ══ COUNTDOWN (5s) ══ */
+function startCd(){
+  countdown=5;
+  const el=document.getElementById('cd');
   const iv=setInterval(()=>{
-    refreshCountdown--;
-    el.textContent=`⟳ ${refreshCountdown}s`;
-    if(refreshCountdown<=0){clearInterval(iv);el.textContent='';loadAll();startCounter()}
+    countdown--;el.textContent='⟳ '+countdown+'s';
+    if(countdown<=0){clearInterval(iv);loadAll().then(()=>{el.textContent='';startCd()})}
   },1000);
 }
 
-/* ════════════════════════════
-   KEY
-════════════════════════════ */
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+/* ══ KEY ══ */
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('modal-bg').classList.remove('open')});
 
-/* ════════════════════════════
-   INIT
-════════════════════════════ */
+/* ══ INIT ══ */
 loadAll();
-startCounter();
+startCd();
 </script>
 </body>
 </html>
