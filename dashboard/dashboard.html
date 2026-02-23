@@ -185,6 +185,46 @@
     .toast.ok{border-color:#2ecc8a55;background:#0a1a10}.toast.err{border-color:#ff527055;background:#200a10}
     @keyframes tin{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
 
+    /* ══ OFFICIALS ══ */
+    .off-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px}
+    .os-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+    .os-val{font-size:26px;font-weight:800;margin-bottom:4px}
+    .os-label{font-size:11px;color:var(--muted)}
+    .os-val.gold{color:#f5c842}.os-val.green{color:var(--ok)}.os-val.blue{color:var(--acc)}.os-val.red{color:var(--danger)}
+
+    .off-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+    .off-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;position:relative;overflow:hidden}
+    .off-card:hover{border-color:#2e3d6a}
+    .off-rank{position:absolute;top:14px;right:14px;font-size:22px;font-weight:900;color:var(--line)}
+    .off-rank.r1{color:#ffd700}.off-rank.r2{color:#c0c0c0}.off-rank.r3{color:#cd7f32}
+    .off-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    .off-emoji{font-size:28px}
+    .off-info .off-name{font-size:16px;font-weight:800}
+    .off-info .off-role{font-size:11px;color:var(--muted);margin-top:1px}
+    .off-info .off-rank-label{font-size:10px;color:var(--acc);margin-top:2px;font-weight:600}
+    .off-hb{margin-left:auto;margin-right:30px}
+
+    .off-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+    .ostat{background:var(--panel2);border-radius:8px;padding:8px 10px;text-align:center}
+    .ostat-v{font-size:18px;font-weight:800;line-height:1}
+    .ostat-l{font-size:10px;color:var(--muted);margin-top:2px}
+
+    .off-model{font-size:11px;color:var(--muted);margin-bottom:8px;padding:6px 10px;background:var(--panel2);border-radius:6px;display:flex;justify-content:space-between;align-items:center}
+    .off-model b{color:var(--text);font-size:12px}
+
+    .off-cost{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    .cost-tag{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--panel2)}
+    .cost-tag.high{border-color:#ff527044;color:var(--danger)}.cost-tag.med{border-color:#f5c84244;color:var(--warn)}.cost-tag.low{border-color:#2ecc8a44;color:var(--ok)}
+
+    .off-merits{margin-top:8px}
+    .merit-bar-wrap{display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:4px}
+    .merit-bar-label{min-width:55px;color:var(--muted);text-align:right}
+    .merit-bar-track{flex:1;height:12px;background:#0e1320;border-radius:3px;overflow:hidden}
+    .merit-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+    .merit-bar-val{min-width:30px;text-align:right;font-weight:600;color:var(--text)}
+
+    .off-last{font-size:10px;color:var(--muted);margin-top:8px;text-align:right}
+
     /* MISC */
     .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
     .sec-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px}
@@ -212,6 +252,7 @@
   <div class="tabs">
     <div class="tab active" data-tab="edicts">📜 旨意看板 <span class="tbadge" id="tb-e">0</span></div>
     <div class="tab" data-tab="monitor">🔭 省部调度 <span class="tbadge" id="tb-m">0</span></div>
+    <div class="tab" data-tab="officials">👥 官员总览</div>
     <div class="tab" data-tab="models">⚙️ 模型配置</div>
     <div class="tab" data-tab="skills">🛠️ 技能配置</div>
   </div>
@@ -224,6 +265,12 @@
   <!-- ══ 省部调度 ══ -->
   <div class="panel" id="panel-monitor">
     <div class="dept-monitor" id="dept-monitor"></div>
+  </div>
+
+  <!-- ══ 官员总览 ══ -->
+  <div class="panel" id="panel-officials">
+    <div id="officials-summary"></div>
+    <div id="officials-grid" class="off-grid"></div>
   </div>
 
   <!-- ══ 模型配置 ══ -->
@@ -564,6 +611,103 @@ async function loadAgentConfig(){
 }
 async function loadAll(){await loadLive();if(['models','skills'].includes(activeTab))await loadAgentConfig()}
 
+/* ══ OFFICIALS ══ */
+let officialsData = null;
+async function loadOfficials(){
+  try{
+    officialsData = await fetchJ(API+'/officials-stats');
+    renderOfficials(officialsData);
+  }catch(e){
+    document.getElementById('officials-grid').innerHTML='<div class="empty" style="grid-column:1/-1">⚠️ 无法加载官员数据</div>';
+  }
+}
+
+function renderOfficials(data){
+  if(!data||!data.officials){return}
+  const officials = data.officials;
+  const totals = data.totals||{};
+  const maxMerit = Math.max(...officials.map(o=>o.merit_score),1);
+  const maxTokens = Math.max(...officials.map(o=>o.tokens_total),1);
+
+  // Summary row
+  document.getElementById('officials-summary').innerHTML = `
+    <div class="off-summary">
+      <div class="os-card"><div class="os-val blue">${officials.length}</div><div class="os-label">在职官员</div></div>
+      <div class="os-card"><div class="os-val gold">${totals.tasks_done||0}</div><div class="os-label">累计完成任务</div></div>
+      <div class="os-card"><div class="os-val green">${(totals.tokens_total||0).toLocaleString()}</div><div class="os-label">总 Token 消耗</div></div>
+      <div class="os-card"><div class="os-val ${(totals.cost_cny||0)>50?'red':(totals.cost_cny||0)>10?'gold':'green'}">¥${totals.cost_cny||0}</div><div class="os-label">累计费用</div></div>
+      <div class="os-card"><div class="os-val">${data.generatedAt||'—'}</div><div class="os-label" style="margin-top:4px">更新时间</div></div>
+    </div>`;
+
+  // Official cards
+  document.getElementById('officials-grid').innerHTML = officials.map(o => {
+    const hb = o.heartbeat||{status:'idle',label:'⚪ 待命'};
+    const costClass = o.cost_cny > 20 ? 'high' : o.cost_cny > 5 ? 'med' : 'low';
+    const rankClass = o.merit_rank<=3 ? `r${o.merit_rank}` : '';
+    // Merit bars
+    const bars = [
+      {label:'功绩分', val:o.merit_score, max:maxMerit, color:'#a07aff'},
+      {label:'Token', val:o.tokens_total, max:maxTokens, color:'#6a9eff'},
+    ];
+    return `
+    <div class="off-card">
+      <div class="off-rank ${rankClass}">${o.merit_rank<=3?['🥇','🥈','🥉'][o.merit_rank-1]:('#'+o.merit_rank)}</div>
+      <div class="off-top">
+        <div class="off-emoji">${o.emoji}</div>
+        <div class="off-info">
+          <div class="off-name">${esc(o.label)}</div>
+          <div class="off-role">${esc(o.role)} · ${esc(o.rank||'')}</div>
+          <div class="off-rank-label">功绩分 ${o.merit_score}</div>
+        </div>
+        <span class="hb ${hb.status} off-hb">${esc(hb.label)}</span>
+      </div>
+
+      <!-- 核心统计 -->
+      <div class="off-stats">
+        <div class="ostat">
+          <div class="ostat-v" style="color:var(--ok)">${o.tasks_done}</div>
+          <div class="ostat-l">已完成任务</div>
+        </div>
+        <div class="ostat">
+          <div class="ostat-v" style="color:var(--warn)">${o.tasks_active}</div>
+          <div class="ostat-l">进行中</div>
+        </div>
+        <div class="ostat">
+          <div class="ostat-v" style="color:var(--acc)">${o.flow_participations}</div>
+          <div class="ostat-l">流转参与</div>
+        </div>
+      </div>
+
+      <!-- 模型 -->
+      <div class="off-model">
+        <span>使用模型</span>
+        <b>${esc(o.model_short||o.model)}</b>
+      </div>
+
+      <!-- 费用 -->
+      <div class="off-cost">
+        <span class="cost-tag ${costClass}">💰 ¥${o.cost_cny}</span>
+        <span class="cost-tag">📤 输出 ${(o.tokens_out||0).toLocaleString()} tokens</span>
+        <span class="cost-tag">📥 输入 ${(o.tokens_in||0).toLocaleString()} tokens</span>
+        <span class="cost-tag">💬 ${o.messages||0} 条消息</span>
+        <span class="cost-tag">📁 ${o.sessions||0} 个会话</span>
+      </div>
+
+      <!-- 功绩/Token 进度条 -->
+      <div class="off-merits">
+        ${bars.map(b=>`
+        <div class="merit-bar-wrap">
+          <div class="merit-bar-label">${b.label}</div>
+          <div class="merit-bar-track"><div class="merit-bar-fill" style="width:${b.max>0?Math.round(b.val/b.max*100):0}%;background:${b.color}"></div></div>
+          <div class="merit-bar-val">${typeof b.val==='number'&&b.val>999?b.val.toLocaleString():b.val}</div>
+        </div>`).join('')}
+      </div>
+
+      ${o.last_active?`<div class="off-last">最后活跃: ${esc(o.last_active)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
 /* ══ TABS ══ */
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
@@ -571,6 +715,7 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   t.classList.add('active');activeTab=t.dataset.tab;
   document.getElementById('panel-'+activeTab).classList.add('active');
   if(['models','skills'].includes(activeTab))loadAgentConfig();
+  if(activeTab==='officials')loadOfficials();
 }));
 
 /* ══ COUNTDOWN (5s) ══ */

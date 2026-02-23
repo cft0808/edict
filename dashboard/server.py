@@ -74,6 +74,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(read_json(DATA / 'model_change_log.json', []))
         elif p == '/api/last-result':
             self.send_json(read_json(DATA / 'last_model_change_result.json', {}))
+        elif p == '/api/officials-stats':
+            self.send_json(read_json(DATA / 'officials_stats.json', {}))
         else:
             self.send_error(404)
 
