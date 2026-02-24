@@ -6,12 +6,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# 复制看板文件
+# 复制看板核心文件
 COPY dashboard/ ./dashboard/
 COPY scripts/ ./scripts/
-COPY data/.gitkeep ./data/
 
-# 注入演示数据
+# 注入演示数据（data目录由demo_data提供）
 COPY docker/demo_data/ ./data/
 
 EXPOSE 7891
