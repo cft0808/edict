@@ -98,8 +98,8 @@ This isn't a cute metaphor. It's **real separation of powers** for AI:
 <details>
 <summary>📸 More screenshots</summary>
 
-### Daily Briefing
-![Briefing](docs/screenshots/02-morning-briefing.png)
+### Agent Monitor
+![Monitor](docs/screenshots/02-monitor.png)
 
 ### Task Detail
 ![Detail](docs/screenshots/03-task-detail.png)
@@ -112,6 +112,21 @@ This isn't a cute metaphor. It's **real separation of powers** for AI:
 
 ### Officials
 ![Officials](docs/screenshots/06-official-overview.png)
+
+### Sessions
+![Sessions](docs/screenshots/07-sessions.png)
+
+### Memorials Archive
+![Memorials](docs/screenshots/08-memorials.png)
+
+### Command Templates
+![Templates](docs/screenshots/09-templates.png)
+
+### Daily Briefing
+![Briefing](docs/screenshots/10-morning-briefing.png)
+
+### Court Ceremony
+![Ceremony](docs/screenshots/11-ceremony.png)
 
 </details>
 

@@ -165,8 +165,8 @@
 <details>
 <summary>📸 展开查看更多截图</summary>
 
-### 天下要闻
-![天下要闻](docs/screenshots/02-morning-briefing.png)
+### 省部调度
+![省部调度](docs/screenshots/02-monitor.png)
 
 ### 任务流转详情
 ![任务流转详情](docs/screenshots/03-task-detail.png)
@@ -179,6 +179,21 @@
 
 ### 官员总览
 ![官员总览](docs/screenshots/06-official-overview.png)
+
+### 会话记录
+![会话记录](docs/screenshots/07-sessions.png)
+
+### 奏折归档
+![奏折归档](docs/screenshots/08-memorials.png)
+
+### 圣旨模板
+![圣旨模板](docs/screenshots/09-templates.png)
+
+### 天下要闻
+![天下要闻](docs/screenshots/10-morning-briefing.png)
+
+### 上朝仪式
+![上朝仪式](docs/screenshots/11-ceremony.png)
 
 </details>
 
