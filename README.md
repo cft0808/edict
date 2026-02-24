@@ -1,20 +1,19 @@
-<p align="center">
-  <img src="docs/screenshots/01-kanban-main.png" alt="三省六部 · 军机处看板" width="100%">
-</p>
-
 <h1 align="center">⚔️ 三省六部 · Edict</h1>
 
 <p align="center">
-  <strong>当 AI 学会了中国古代的治国术</strong><br>
-  <sub>9 个 AI Agent 组成三省六部，像治理帝国一样管理你的复杂任务</sub>
+  <strong>我用 1300 年前的帝国制度，重新设计了 AI 多 Agent 协作架构。<br>结果发现，古人比现代 AI 框架更懂分权制衡。</strong>
 </p>
 
 <p align="center">
+  <sub>9 个 AI Agent 组成三省六部：中书省规划、门下省审核封驳、尚书省派发、六部并行执行。<br>比 CrewAI 多一层<b>制度性审核</b>，比 AutoGen 多一个<b>实时看板</b>。</sub>
+</p>
+
+<p align="center">
+  <a href="#-demo">🎬 看 Demo</a> ·
+  <a href="#-30-秒快速体验">🚀 30 秒体验</a> ·
+  <a href="#-架构">🏛️ 架构</a> ·
+  <a href="#-功能全景">📋 看板功能</a> ·
   <a href="README_EN.md">English</a> ·
-  <a href="#-30-秒快速体验">快速开始</a> ·
-  <a href="#-架构">架构</a> ·
-  <a href="#-功能全景">看板功能</a> ·
-  <a href="docs/getting-started.md">详细指南</a> ·
   <a href="CONTRIBUTING.md">参与贡献</a>
 </p>
 
@@ -29,11 +28,15 @@
 
 ---
 
-## 💡 一句话定义
+## 🎬 Demo
 
-> **三省六部** 是第一个将古代帝国治理智慧应用于 AI 多 Agent 协同的开源系统。
-> 你下一道旨，中书省规划、门下省审议、尚书省派发、六部并行执行，最后汇总回奏。
-> 附带一个开箱即用的**军机处看板**，让所有流转一目了然。
+<p align="center">
+  <img src="docs/demo.gif" alt="三省六部 Demo" width="100%">
+  <br>
+  <sub>飞书下旨 → 中书省规划 → 门下省审议 → 六部并行执行 → 奏折回报（30 秒）</sub>
+</p>
+
+> 🐳 **没有 OpenClaw？** 跑一行 `docker run -p 7891:7891 cft0808/edict` 即可体验完整看板 Demo（预置模拟数据）。
 
 ---
 
@@ -66,7 +69,25 @@
 | **部署难度** | 中 | 高 | 中 | **低 · 一键安装 / Docker** |
 
 > **核心差异：制度性审核 + 完全可观测 + 实时可干预**
-> 让 AI 协作像治国一样，有规矩、有审计、有制衡。
+
+<details>
+<summary><b>🔍 为什么「门下省审核」是杀手锏？（点击展开）</b></summary>
+
+<br>
+
+CrewAI 和 AutoGen 的 Agent 协作模式是 **"做完就交"**——没有人检查产出质量。就像一个公司没有 QA 部门，工程师写完代码直接上线。
+
+三省六部的 **门下省** 专门干这件事：
+
+- 📋 **审查方案质量** —— 中书省的规划是否完备？子任务拆解是否合理？
+- 🚫 **封驳不合格的产出** —— 不是 warning，是直接打回重做
+- 🔄 **强制返工循环** —— 直到方案达标才放行
+
+这不是可选的插件——**它是架构的一部分**。每一个旨意都必须经过门下省，没有例外。
+
+这就是为什么三省六部能处理复杂任务而结果可靠：因为在送到执行层之前，有一个强制的质量关卡。1300 年前唐太宗就想明白了——**不受制约的权力必然会出错**。
+
+</details>
 
 ---
 
@@ -397,6 +418,9 @@ edict/
 
 ## 🗺️ Roadmap
 
+> 完整路线图及参与方式：[ROADMAP.md](ROADMAP.md)
+
+### Phase 1 — 核心架构 ✅
 - [x] 九部制 Agent 架构 + 权限矩阵
 - [x] 军机处实时看板（10 个功能面板）
 - [x] 任务叫停 / 取消 / 恢复
@@ -407,13 +431,19 @@ edict/
 - [x] 模型热切换 + 技能管理 + 技能添加
 - [x] 官员总览 + Token 消耗统计
 - [x] 小任务 / 会话监控
-- [ ] 功过簿（Agent 绩效评分体系）
+
+### Phase 2 — 制度深化 🚧
 - [ ] 御批模式（人工审批 + 一键准奏/封驳）
-- [ ] 国史馆（知识库检索 + 引用溯源）
+- [ ] 功过簿（Agent 绩效评分体系）
 - [ ] 急递铺（Agent 间实时消息流可视化）
+- [ ] 国史馆（知识库检索 + 引用溯源）
+
+### Phase 3 — 生态扩展
+- [ ] Docker Compose + Demo 镜像
+- [ ] Notion / Linear 适配器
 - [ ] 年度大考（Agent 年度绩效报告）
-- [ ] Docker Compose 一键部署
-- [ ] 移动端适配
+- [ ] 移动端适配 + PWA
+- [ ] ClawHub 上架
 
 ---
 
@@ -431,9 +461,25 @@ edict/
 
 ---
 
+## 📂 案例
+
+`examples/` 目录收录了真实的端到端使用案例：
+
+| 案例 | 旨意 | 涉及部门 |
+|------|------|----------|
+| [竞品分析](examples/competitive-analysis.md) | "分析 CrewAI vs AutoGen vs LangGraph" | 中书→门下→户部+兵部+礼部 |
+| [代码审查](examples/code-review.md) | "审查这段 FastAPI 代码的安全性" | 中书→门下→兵部+刑部 |
+| [周报生成](examples/weekly-report.md) | "生成本周工程团队周报" | 中书→门下→户部+礼部 |
+
+每个案例包含：完整旨意 → 中书省规划 → 门下省审核意见 → 各部执行结果 → 最终奏折。
+
+---
+
 ## ⭐ Star History
 
 如果这个项目让你会心一笑，请给个 Star ⚔️
+
+[![Star History Chart](https://api.star-history.com/svg?repos=cft0808/edict&type=Date)](https://star-history.com/#cft0808/edict&Date)
 
 [![Star History Chart](https://api.star-history.com/svg?repos=cft0808/edict&type=Date)](https://star-history.com/#cft0808/edict&Date)
 

@@ -1,19 +1,19 @@
-<p align="center">
-  <img src="docs/screenshots/01-kanban-main.png" alt="Edict Dashboard" width="100%">
-</p>
-
 <h1 align="center">⚔️ Edict · Multi-Agent Orchestration</h1>
 
 <p align="center">
-  <strong>What if AI learned statecraft from ancient China?</strong><br>
-  <sub>9 specialized AI Agents form a government — plan, review, dispatch, execute, report.</sub>
+  <strong>I modeled an AI multi-agent system after China's 1,300-year-old imperial governance.<br>Turns out, ancient bureaucracy understood separation of powers better than modern AI frameworks.</strong>
 </p>
 
 <p align="center">
+  <sub>9 AI agents form the Three Departments & Six Ministries: Planning proposes, Review vetoes, Dispatch assigns, Ministries execute.<br>Built-in <b>institutional review gates</b> that CrewAI doesn't have. A <b>real-time dashboard</b> that AutoGen doesn't have.</sub>
+</p>
+
+<p align="center">
+  <a href="#-demo">🎬 Demo</a> ·
+  <a href="#-quick-start">🚀 Quick Start</a> ·
+  <a href="#-architecture">🏛️ Architecture</a> ·
+  <a href="#-features">📋 Features</a> ·
   <a href="README.md">中文</a> ·
-  <a href="#-quick-start">Quick Start</a> ·
-  <a href="#-architecture">Architecture</a> ·
-  <a href="#-features">Dashboard</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
@@ -25,6 +25,18 @@
   <img src="https://img.shields.io/badge/License-MIT-22C55E?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/Zero_Deps-stdlib_only-EC4899?style=flat-square" alt="Zero Dependencies">
 </p>
+
+---
+
+## 🎬 Demo
+
+<p align="center">
+  <img src="docs/demo.gif" alt="Edict Demo" width="100%">
+  <br>
+  <sub>Issue command → Planning proposes → Review audits → Ministries execute → Report back (30s)</sub>
+</p>
+
+> 🐳 **No OpenClaw?** Run `docker run -p 7891:7891 cft0808/edict` to try the full dashboard with simulated data.
 
 ---
 
@@ -62,6 +74,27 @@ This isn't a cute metaphor. It's **real separation of powers** for AI:
 | **Skill management** | ❌ | ❌ | ❌ | **✅ View / Add skills** |
 | **News aggregation** | ❌ | ❌ | ❌ | **✅ Daily digest + webhook** |
 | **Setup complexity** | Med | High | Med | **Low · One-click / Docker** |
+
+> **Core differentiator: Institutional review + Full observability + Real-time intervention**
+
+<details>
+<summary><b>🔍 Why the "Review Department" is the killer feature (click to expand)</b></summary>
+
+<br>
+
+CrewAI and AutoGen agents work in a **"done, ship it"** mode — no one checks output quality. It's like a company with no QA department where engineers push code straight to production.
+
+Edict's **Review Department (门下省)** exists specifically for this:
+
+- 📋 **Audit plan quality** — Is the Planning Department's decomposition complete and sound?
+- 🚫 **Veto subpar output** — Not a warning. A hard reject that forces re-planning.
+- 🔄 **Mandatory rework loop** — Nothing passes until it meets standards.
+
+This isn't an optional plugin — **it's part of the architecture**. Every command must pass through Review. No exceptions.
+
+This is why Edict produces reliable results on complex tasks: there's a mandatory quality gate before anything reaches execution. Emperor Taizong figured this out 1,300 years ago — **unchecked power inevitably produces errors**.
+
+</details>
 
 ---
 
@@ -268,6 +301,9 @@ edict/
 
 ## 🗺️ Roadmap
 
+> Full roadmap with contribution opportunities: [ROADMAP.md](ROADMAP.md)
+
+### Phase 1 — Core Architecture ✅
 - [x] Nine-department agent architecture + permissions
 - [x] Real-time dashboard (10 panels)
 - [x] Task stop / cancel / resume
@@ -278,13 +314,19 @@ edict/
 - [x] Hot-swap LLM models + skill management
 - [x] Officials overview + token stats
 - [x] Session monitoring
-- [ ] Merit/demerit ledger (agent scoring)
+
+### Phase 2 — Institutional Depth 🚧
 - [ ] Imperial approval mode (human-in-the-loop)
-- [ ] Imperial Archives (knowledge base)
-- [ ] Express courier (inter-agent message viz)
-- [ ] Annual review (yearly reports)
-- [ ] Docker Compose deployment
-- [ ] Mobile responsive
+- [ ] Merit/demerit ledger (agent scoring)
+- [ ] Express courier (inter-agent message visualization)
+- [ ] Imperial Archives (knowledge base + citation)
+
+### Phase 3 — Ecosystem
+- [ ] Docker Compose + demo image
+- [ ] Notion / Linear adapters
+- [ ] Annual review (yearly performance reports)
+- [ ] Mobile responsive + PWA
+- [ ] ClawHub marketplace listing
 
 ---
 
@@ -301,6 +343,20 @@ All contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 
+## � Examples
+
+The `examples/` directory contains real end-to-end use cases:
+
+| Example | Command | Departments |
+|---------|---------|-------------|
+| [Competitive Analysis](examples/competitive-analysis.md) | "Analyze CrewAI vs AutoGen vs LangGraph" | Planning→Review→Finance+Engineering+Docs |
+| [Code Review](examples/code-review.md) | "Review this FastAPI code for security issues" | Planning→Review→Engineering+Compliance |
+| [Weekly Report](examples/weekly-report.md) | "Generate this week's engineering team report" | Planning→Review→Finance+Docs |
+
+Each case includes: Full command → Planning proposal → Review feedback → Ministry outputs → Final report.
+
+---
+
 ## 📄 License
 
 [MIT](LICENSE) · Built by the [OpenClaw](https://openclaw.ai) community
@@ -308,6 +364,9 @@ All contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md)
 ---
 
 <p align="center">
+  <sub>If this project made you smile, give it a ⭐</sub><br><br>
   <strong>⚔️ Governing AI with the wisdom of ancient empires</strong><br>
   <sub>以古制御新技，以智慧驾驭 AI</sub>
 </p>
+
+[![Star History Chart](https://api.star-history.com/svg?repos=cft0808/edict&type=Date)](https://star-history.com/#cft0808/edict&Date)
