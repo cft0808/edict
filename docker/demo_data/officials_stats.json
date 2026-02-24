@@ -1,0 +1,400 @@
+{
+  "generatedAt": "2026-02-24 22:13:06",
+  "officials": [
+    {
+      "id": "zhongshu",
+      "label": "中书省",
+      "role": "中书令",
+      "emoji": "📜",
+      "rank": "正一品",
+      "model": "anthropic/claude-sonnet-4-6",
+      "model_short": "claude-sonnet-4-6",
+      "sessions": 1,
+      "tokens_in": 66,
+      "tokens_out": 2712,
+      "cache_read": 1027806,
+      "cache_write": 148826,
+      "tokens_total": 2778,
+      "messages": 177,
+      "cost_usd": 0.9073,
+      "cost_cny": 6.58,
+      "last_active": "2026-02-24 22:11",
+      "heartbeat": {
+        "status": "active",
+        "label": "🟢 活跃 2分钟前",
+        "ageSec": 120
+      },
+      "tasks_done": 6,
+      "tasks_active": 2,
+      "flow_participations": 23,
+      "participated_edicts": [
+        {
+          "id": "JJC-20260224-014",
+          "title": "A计划：三省六部 GitHub 爆款项目打造",
+          "state": "Doing"
+        },
+        {
+          "id": "JJC-20260224-013",
+          "title": "电芯循环数据清洗小模型方案",
+          "state": "Zhongshu"
+        },
+        {
+          "id": "JJC-20260224-001",
+          "title": "每日早朝简报系统（7点图文新闻）",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-014",
+          "title": "看板流程合规审查 + 省部调度Tab优化",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-013",
+          "title": "官员总览看板重新设计",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-012",
+          "title": "看板增加官员总览面板",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-011",
+          "title": "三省六部制开源 GitHub 项目",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-010",
+          "title": "电芯循环测试数据预测算法设计与可视化验证",
+          "state": "Done"
+        }
+      ],
+      "merit_score": 107,
+      "merit_rank": 1
+    },
+    {
+      "id": "shangshu",
+      "label": "尚书省",
+      "role": "尚书令",
+      "emoji": "📮",
+      "rank": "正一品",
+      "model": "anthropic/claude-sonnet-4-6",
+      "model_short": "claude-sonnet-4-6",
+      "sessions": 6,
+      "tokens_in": 416,
+      "tokens_out": 50308,
+      "cache_read": 2196943,
+      "cache_write": 136506,
+      "tokens_total": 50724,
+      "messages": 187,
+      "cost_usd": 1.9268,
+      "cost_cny": 13.97,
+      "last_active": "2026-02-24 22:10",
+      "heartbeat": {
+        "status": "active",
+        "label": "🟢 活跃 2分钟前",
+        "ageSec": 165
+      },
+      "tasks_done": 1,
+      "tasks_active": 2,
+      "flow_participations": 23,
+      "participated_edicts": [
+        {
+          "id": "JJC-20260224-014",
+          "title": "A计划：三省六部 GitHub 爆款项目打造",
+          "state": "Doing"
+        },
+        {
+          "id": "JJC-20260224-001",
+          "title": "每日早朝简报系统（7点图文新闻）",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-014",
+          "title": "看板流程合规审查 + 省部调度Tab优化",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-013",
+          "title": "官员总览看板重新设计",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-012",
+          "title": "看板增加官员总览面板",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-010",
+          "title": "电芯循环测试数据预测算法设计与可视化验证",
+          "state": "Done"
+        }
+      ],
+      "merit_score": 62,
+      "merit_rank": 2
+    },
+    {
+      "id": "menxia",
+      "label": "门下省",
+      "role": "侍中",
+      "emoji": "🔍",
+      "rank": "正一品",
+      "model": "anthropic/claude-sonnet-4-6",
+      "model_short": "claude-sonnet-4-6",
+      "sessions": 0,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cache_read": 0,
+      "cache_write": 0,
+      "tokens_total": 0,
+      "messages": 0,
+      "cost_usd": 0.0,
+      "cost_cny": 0.0,
+      "last_active": null,
+      "heartbeat": {
+        "status": "idle",
+        "label": "⚪ 待命",
+        "ageSec": null
+      },
+      "tasks_done": 1,
+      "tasks_active": 0,
+      "flow_participations": 12,
+      "participated_edicts": [
+        {
+          "id": "JJC-20260224-001",
+          "title": "每日早朝简报系统（7点图文新闻）",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-014",
+          "title": "看板流程合规审查 + 省部调度Tab优化",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-013",
+          "title": "官员总览看板重新设计",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-012",
+          "title": "看板增加官员总览面板",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-010",
+          "title": "电芯循环测试数据预测算法设计与可视化验证",
+          "state": "Done"
+        }
+      ],
+      "merit_score": 34,
+      "merit_rank": 3
+    },
+    {
+      "id": "bingbu",
+      "label": "兵部",
+      "role": "兵部尚书",
+      "emoji": "⚔️",
+      "rank": "正二品",
+      "model": "anthropic/claude-sonnet-4-6",
+      "model_short": "claude-sonnet-4-6",
+      "sessions": 1,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cache_read": 0,
+      "cache_write": 0,
+      "tokens_total": 0,
+      "messages": 26,
+      "cost_usd": 0.0,
+      "cost_cny": 0.0,
+      "last_active": "2026-02-24 22:05",
+      "heartbeat": {
+        "status": "warn",
+        "label": "🟡 可能停滞 7分钟前",
+        "ageSec": 435
+      },
+      "tasks_done": 2,
+      "tasks_active": 1,
+      "flow_participations": 2,
+      "participated_edicts": [
+        {
+          "id": "JJC-20260223-010",
+          "title": "电芯循环测试数据预测算法设计与可视化验证",
+          "state": "Done"
+        }
+      ],
+      "merit_score": 25,
+      "merit_rank": 4
+    },
+    {
+      "id": "gongbu",
+      "label": "工部",
+      "role": "工部尚书",
+      "emoji": "🔧",
+      "rank": "正二品",
+      "model": "anthropic/claude-sonnet-4-6",
+      "model_short": "claude-sonnet-4-6",
+      "sessions": 1,
+      "tokens_in": 122,
+      "tokens_out": 3681,
+      "cache_read": 427760,
+      "cache_write": 36922,
+      "tokens_total": 3803,
+      "messages": 15,
+      "cost_usd": 0.3224,
+      "cost_cny": 2.34,
+      "last_active": "2026-02-24 22:07",
+      "heartbeat": {
+        "status": "warn",
+        "label": "🟡 可能停滞 5分钟前",
+        "ageSec": 312
+      },
+      "tasks_done": 0,
+      "tasks_active": 1,
+      "flow_participations": 8,
+      "participated_edicts": [
+        {
+          "id": "JJC-20260224-001",
+          "title": "每日早朝简报系统（7点图文新闻）",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-014",
+          "title": "看板流程合规审查 + 省部调度Tab优化",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-013",
+          "title": "官员总览看板重新设计",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-012",
+          "title": "看板增加官员总览面板",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-011",
+          "title": "三省六部制开源 GitHub 项目",
+          "state": "Done"
+        }
+      ],
+      "merit_score": 17,
+      "merit_rank": 5
+    },
+    {
+      "id": "libu",
+      "label": "礼部",
+      "role": "礼部尚书",
+      "emoji": "📝",
+      "rank": "正二品",
+      "model": "anthropic/claude-sonnet-4-6",
+      "model_short": "claude-sonnet-4-6",
+      "sessions": 1,
+      "tokens_in": 42,
+      "tokens_out": 6566,
+      "cache_read": 73286,
+      "cache_write": 22855,
+      "tokens_total": 6608,
+      "messages": 5,
+      "cost_usd": 0.2063,
+      "cost_cny": 1.5,
+      "last_active": "2026-02-24 22:07",
+      "heartbeat": {
+        "status": "warn",
+        "label": "🟡 可能停滞 5分钟前",
+        "ageSec": 320
+      },
+      "tasks_done": 0,
+      "tasks_active": 1,
+      "flow_participations": 4,
+      "participated_edicts": [
+        {
+          "id": "JJC-20260223-011",
+          "title": "三省六部制开源 GitHub 项目",
+          "state": "Done"
+        },
+        {
+          "id": "JJC-20260223-010",
+          "title": "电芯循环测试数据预测算法设计与可视化验证",
+          "state": "Done"
+        }
+      ],
+      "merit_score": 9,
+      "merit_rank": 6
+    },
+    {
+      "id": "hubu",
+      "label": "户部",
+      "role": "户部尚书",
+      "emoji": "💰",
+      "rank": "正二品",
+      "model": "anthropic/claude-sonnet-4-6",
+      "model_short": "claude-sonnet-4-6",
+      "sessions": 0,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cache_read": 0,
+      "cache_write": 0,
+      "tokens_total": 0,
+      "messages": 0,
+      "cost_usd": 0.0,
+      "cost_cny": 0.0,
+      "last_active": null,
+      "heartbeat": {
+        "status": "idle",
+        "label": "⚪ 待命",
+        "ageSec": null
+      },
+      "tasks_done": 0,
+      "tasks_active": 0,
+      "flow_participations": 3,
+      "participated_edicts": [
+        {
+          "id": "JJC-20260223-010",
+          "title": "电芯循环测试数据预测算法设计与可视化验证",
+          "state": "Done"
+        }
+      ],
+      "merit_score": 6,
+      "merit_rank": 7
+    },
+    {
+      "id": "xingbu",
+      "label": "刑部",
+      "role": "刑部尚书",
+      "emoji": "⚖️",
+      "rank": "正二品",
+      "model": "anthropic/claude-sonnet-4-6",
+      "model_short": "claude-sonnet-4-6",
+      "sessions": 0,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cache_read": 0,
+      "cache_write": 0,
+      "tokens_total": 0,
+      "messages": 0,
+      "cost_usd": 0.0,
+      "cost_cny": 0.0,
+      "last_active": null,
+      "heartbeat": {
+        "status": "idle",
+        "label": "⚪ 待命",
+        "ageSec": null
+      },
+      "tasks_done": 0,
+      "tasks_active": 0,
+      "flow_participations": 0,
+      "participated_edicts": [],
+      "merit_score": 0,
+      "merit_rank": 8
+    }
+  ],
+  "totals": {
+    "tokens_total": 63913,
+    "cache_total": 4070904,
+    "cost_usd": 3.36,
+    "cost_cny": 24.39,
+    "tasks_done": 10
+  },
+  "top_official": "中书省"
+}

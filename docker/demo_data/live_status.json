@@ -1,0 +1,1493 @@
+{
+  "generatedAt": "2026-02-24 22:13:18",
+  "taskSource": "tasks_source.json",
+  "officials": [
+    {
+      "name": "中书令",
+      "org": "中书省",
+      "duty": "起草任务令与优先级"
+    },
+    {
+      "name": "侍中",
+      "org": "门下省",
+      "duty": "审议与退回机制"
+    },
+    {
+      "name": "尚书令",
+      "org": "尚书省",
+      "duty": "派单与升级裁决"
+    },
+    {
+      "name": "吏部尚书",
+      "org": "吏部",
+      "duty": "编制/权限/排班"
+    },
+    {
+      "name": "户部尚书",
+      "org": "户部",
+      "duty": "资源/预算/成本"
+    },
+    {
+      "name": "礼部尚书",
+      "org": "礼部",
+      "duty": "文档/汇报/规范"
+    },
+    {
+      "name": "兵部尚书",
+      "org": "兵部",
+      "duty": "应急与巡检"
+    },
+    {
+      "name": "刑部尚书",
+      "org": "刑部",
+      "duty": "合规/审计/红线"
+    },
+    {
+      "name": "工部尚书",
+      "org": "工部",
+      "duty": "工程交付与自动化"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "JJC-20260224-014",
+      "title": "A计划：三省六部 GitHub 爆款项目打造",
+      "official": "中书令",
+      "org": "中书省",
+      "state": "Doing",
+      "now": "Week1完成：README升级/Topics/对比表已上线。待决策：①Docker Hub推送授权 ②Demo GIF录制",
+      "eta": "2026-03-24",
+      "block": "门下省disabled，皇上授权直接执行",
+      "output": "",
+      "ac": "GitHub Stars 显著增长，进入 Trending，Hacker News 上榜",
+      "review_round": 0,
+      "flow_log": [
+        {
+          "at": "2026-02-24T14:03:00.543790Z",
+          "from": "皇上",
+          "to": "中书省",
+          "remark": "下旨：执行A计划——三省六部 GitHub 爆款项目打造，30天行动计划"
+        },
+        {
+          "at": "2026-02-24T14:04:39.078564Z",
+          "from": "中书省",
+          "to": "尚书省",
+          "remark": "⚡ 皇上钦命：门下省disabled，直接转尚书省执行A计划"
+        },
+        {
+          "at": "2026-02-24T14:07:07.407940Z",
+          "from": "中书省",
+          "to": "执行中",
+          "remark": "✅ GitHub Topics(13个)已添加 ✅ README竞品对比表已push | 🔄 等待：Docker镜像、Demo GIF、HN帖子"
+        },
+        {
+          "at": "2026-02-24T14:10:41.895659Z",
+          "from": "尚书省",
+          "to": "中书省",
+          "remark": "Week1回奏：礼部README已推送(87f0313)，工部Dockerfile本地就绪，兵部截图已生成。待决策：Docker Hub授权 + GIF录制方式"
+        }
+      ],
+      "updatedAt": "2026-02-24T14:10:41.895659Z",
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-23 22:07:11"
+      },
+      "heartbeat": {
+        "status": "active",
+        "label": "🟢 活跃 2分钟前",
+        "ageSec": 157
+      }
+    },
+    {
+      "id": "JJC-20260224-013",
+      "title": "电芯循环数据清洗小模型方案",
+      "official": "中书令",
+      "org": "中书省",
+      "state": "Zhongshu",
+      "now": "中书省正在起草规划方案",
+      "eta": "-",
+      "block": "无",
+      "output": "",
+      "ac": "",
+      "review_round": 0,
+      "flow_log": [
+        {
+          "at": "2026-02-24T10:29:22.597859Z",
+          "from": "皇上",
+          "to": "中书省",
+          "remark": "下旨：电芯循环数据清洗小模型方案"
+        }
+      ],
+      "updatedAt": "2026-02-24T10:29:22.598063Z",
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-23 22:07:11"
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "JJC-20260224-001",
+      "title": "每日早朝简报系统（7点图文新闻）",
+      "official": "中书令",
+      "org": "中书省",
+      "state": "Done",
+      "now": "早朝简报系统已上线：20条新闻，今晚首次运行成功",
+      "eta": "-",
+      "block": "无",
+      "output": "http://127.0.0.1:7891 → 🌅 早朝简报",
+      "ac": "",
+      "review_round": 1,
+      "flow_log": [
+        {
+          "at": "2026-02-23T16:03:04.183711Z",
+          "from": "皇上",
+          "to": "中书省",
+          "remark": "下旨：每日7:00早朝看板，含政治/军事/经济/AI大模型新闻，图文并茂"
+        },
+        {
+          "at": "2026-02-23T16:03:42.611779Z",
+          "from": "中书省",
+          "to": "门下省",
+          "remark": "📋 提交第1轮：新闻采集脚本+定时触发+早朝Tab，串行执行"
+        },
+        {
+          "at": "2026-02-23T16:10:11.354802Z",
+          "from": "门下省",
+          "to": "中书省",
+          "remark": "🟡 附条件准奏：①Brave API直调+降级②schema契约③去重④存档⑤图片本地化⑥时效过滤"
+        },
+        {
+          "at": "2026-02-23T16:10:11.354802Z",
+          "from": "尚书省",
+          "to": "六部",
+          "remark": "📮 派发：礼部→采集脚本，工部→看板Tab+定时触发"
+        },
+        {
+          "at": "2026-02-23T16:18:33.625030Z",
+          "from": "工部",
+          "to": "尚书省",
+          "remark": "✅ 完成：早朝Tab上线，zaochao cron已注册每日6:00，20条新闻采集成功"
+        },
+        {
+          "at": "2026-02-23T16:18:33.625030Z",
+          "from": "尚书省",
+          "to": "皇上",
+          "remark": "✅ 回奏：早朝简报系统已就绪，明日7:00可见4板块20条图文新闻"
+        }
+      ],
+      "updatedAt": "2026-02-23T16:18:33.625030Z",
+      "outputMeta": {
+        "exists": false,
+        "lastModified": null
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "JJC-20260223-014",
+      "title": "看板流程合规审查 + 省部调度Tab优化",
+      "official": "中书令",
+      "org": "中书省",
+      "state": "Done",
+      "now": "三项全部完成：六部SOUL合规/省部调度重设计/续流修复",
+      "eta": "-",
+      "block": "无",
+      "output": "agents/*/SOUL.md + dashboard.html省部调度Tab",
+      "ac": "",
+      "review_round": 1,
+      "flow_log": [
+        {
+          "at": "2026-02-23T15:52:11.651567Z",
+          "from": "皇上",
+          "to": "中书省",
+          "remark": "下旨：①检查各部看板更新合规性②优化省部调度Tab，违者罚俸1月"
+        },
+        {
+          "at": "2026-02-23T15:52:40.196390Z",
+          "from": "中书省",
+          "to": "门下省",
+          "remark": "📋 提交第1轮方案：六部SOUL合规+省部调度Tab重设计+看板审计"
+        },
+        {
+          "at": "2026-02-23T15:56:00.668461Z",
+          "from": "门下省",
+          "to": "中书省",
+          "remark": "⚠️ 附条件准奏：①吏部漏列②礼部自审矛盾③审计漏洞④数据源不明"
+        },
+        {
+          "at": "2026-02-23T15:56:00.668461Z",
+          "from": "中书省",
+          "to": "门下省",
+          "remark": "✅ 四条全部采纳：吏部由尚书省兼管/中书统一模板/last_kanban_update强制项/数据源明确为tasks_source.json"
+        },
+        {
+          "at": "2026-02-23T15:56:00.668461Z",
+          "from": "尚书省",
+          "to": "六部",
+          "remark": "📮 三路并行派发：礼部→六部SOUL模板；工部→省部调度重设计+审计字段"
+        },
+        {
+          "at": "2026-02-23T15:58:06.705347Z",
+          "from": "工部",
+          "to": "皇上",
+          "remark": "✅ 回奏：①六部SOUL.md已补正（强制look板更新+罚俸机制）②省部调度改为当班一览③中书省续流铁律已写入SOUL"
+        }
+      ],
+      "updatedAt": "2026-02-23T15:58:06.705347Z",
+      "outputMeta": {
+        "exists": false,
+        "lastModified": null
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "JJC-20260223-013",
+      "title": "官员总览看板重新设计",
+      "official": "中书令",
+      "org": "中书省",
+      "state": "Done",
+      "now": "官员总览全面重设计完成：左右分栏+品级排行+参与旨意+费用准确",
+      "eta": "-",
+      "block": "无",
+      "output": "http://127.0.0.1:7891 → 👥 官员总览",
+      "ac": "",
+      "review_round": 1,
+      "flow_log": [
+        {
+          "at": "2026-02-23T15:25:50.576961Z",
+          "from": "皇上",
+          "to": "中书省",
+          "remark": "下旨：官员总览看板朕不满意，重新设计，门下省不得摸鱼"
+        },
+        {
+          "at": "2026-02-23T15:27:02.331755Z",
+          "from": "中书省",
+          "to": "门下省",
+          "remark": "📋 提交规划方案第1轮：官员总览重设计（布局重构/数据修复/历史旨意反查）"
+        },
+        {
+          "at": "2026-02-23T15:39:00Z",
+          "from": "门下省",
+          "to": "中书省",
+          "remark": "⚠️ 附条件准奏：需补充①刷新机制②旨意数据源③Token扫描回归范围，三项明确后无需二次审议"
+        },
+        {
+          "at": "2026-02-23T15:42:33.704207Z",
+          "from": "中书省",
+          "to": "门下省",
+          "remark": "✅ 三条件回应：①5秒轮询+15秒refresh loop；②从tasks_source.json的flow_log反查；③仅改sync_officials_stats.py，不影响其他模块"
+        },
+        {
+          "at": "2026-02-23T15:42:33.704207Z",
+          "from": "尚书省",
+          "to": "工部",
+          "remark": "📮 派发：官员总览重设计，含布局重构/Token扫描修复/历史旨意反查"
+        },
+        {
+          "at": "2026-02-23T15:46:00.352147Z",
+          "from": "工部",
+          "to": "皇上",
+          "remark": "✅ 回奏：官员总览重设计完成，含品级排行榜/旨意参与/Token/缓存费用拆分，请皇上御览"
+        }
+      ],
+      "updatedAt": "2026-02-23T15:46:00.352147Z",
+      "outputMeta": {
+        "exists": false,
+        "lastModified": null
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "JJC-20260223-012",
+      "title": "看板增加官员总览面板",
+      "official": "中书令",
+      "org": "中书省",
+      "state": "Done",
+      "now": "官员总览 Tab 已上线：功绩排行/Token费用/心跳监控",
+      "eta": "2026-02-23 23:10",
+      "block": "无",
+      "output": "http://127.0.0.1:7891 → 👥 官员总览",
+      "ac": "官员总览Tab上线，含模型费用/功绩统计/监控项",
+      "flow_log": [
+        {
+          "at": "2026-02-23T14:57:23Z",
+          "from": "皇上",
+          "to": "中书省",
+          "remark": "下旨：看板增加官员总览 - 模型额度/功绩统计/监控项"
+        },
+        {
+          "at": "2026-02-23T14:58:10Z",
+          "from": "中书省",
+          "to": "门下省",
+          "remark": "📋 提交规划方案：官员总览Tab，含Token统计/费用估算/功绩排名/心跳监控"
+        },
+        {
+          "at": "2026-02-23T14:58:40Z",
+          "from": "门下省",
+          "to": "尚书省",
+          "remark": "✅ 准奏：方案可行，无风险，转尚书省派发执行"
+        },
+        {
+          "at": "2026-02-23T14:59:05Z",
+          "from": "尚书省",
+          "to": "工部",
+          "remark": "📮 派发：工部负责构建官员统计同步脚本与看板Tab"
+        },
+        {
+          "at": "2026-02-23T15:16:00Z",
+          "from": "工部",
+          "to": "尚书省",
+          "remark": "完成：scripts/sync_officials_stats.py + 官员总览Tab，API已验证"
+        },
+        {
+          "at": "2026-02-23T15:16:30Z",
+          "from": "尚书省",
+          "to": "皇上",
+          "remark": "✅ 回奏：官员总览上线，含功绩排行/实际费用/Token统计/心跳监控"
+        }
+      ],
+      "updatedAt": "2026-02-23T15:20:31.690832Z",
+      "outputMeta": {
+        "exists": false,
+        "lastModified": null
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "JJC-20260223-011",
+      "title": "三省六部制开源 GitHub 项目",
+      "official": "中书令",
+      "org": "中书省",
+      "state": "Done",
+      "now": "已完成：项目已推送至 https://github.com/cft0808/openclaw-sansheng-liubu",
+      "eta": "2026-02-23 22:37",
+      "block": "无",
+      "output": "https://github.com/cft0808/openclaw-sansheng-liubu",
+      "ac": "看板增强、文档完整、一键安装、GitHub推送",
+      "flow_log": [
+        {
+          "at": "2026-02-23T14:51:33Z",
+          "from": "皇上",
+          "to": "中书省",
+          "remark": "下旨：把三省六部制做成开源GitHub项目，补全看板功能，写好文档"
+        },
+        {
+          "at": "2026-02-23T14:53:00Z",
+          "from": "中书省",
+          "to": "工部",
+          "remark": "执行：构建 dashboard.html + server.py + 全套脚本"
+        },
+        {
+          "at": "2026-02-23T15:00:00Z",
+          "from": "工部",
+          "to": "礼部",
+          "remark": "执行：撰写 README.md（中英双版）"
+        },
+        {
+          "at": "2026-02-23T15:37:00Z",
+          "from": "中书省",
+          "to": "皇上",
+          "remark": "✅ 回奏：https://github.com/cft0808/openclaw-sansheng-liubu 已上线"
+        }
+      ],
+      "updatedAt": "2026-02-23T15:16:22.408230Z",
+      "outputMeta": {
+        "exists": false,
+        "lastModified": null
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "JJC-20260223-010",
+      "title": "电芯循环测试数据预测算法设计与可视化验证",
+      "official": "尚书令",
+      "org": "尚书省",
+      "state": "Done",
+      "now": "全部完成，已回奏皇上",
+      "eta": "2026-02-23 21:30",
+      "block": "无",
+      "output": "/Users/bingsen/.openclaw/workspace-shangshu/",
+      "flow_log": [
+        {
+          "at": "2026-02-23T12:23:15Z",
+          "from": "皇上",
+          "to": "尚书省",
+          "remark": "下旨：设计电芯循环测试数据预测算法并可视化验证"
+        },
+        {
+          "at": "2026-02-23T12:23:15Z",
+          "from": "尚书省",
+          "to": "中书省",
+          "remark": "请求规划拆解"
+        },
+        {
+          "at": "2026-02-23T12:43:00Z",
+          "from": "中书省",
+          "to": "门下省",
+          "remark": "规划方案提交审核（户部→兵部串行+礼部并行）"
+        },
+        {
+          "at": "2026-02-23T12:55:00Z",
+          "from": "门下省",
+          "to": "尚书省",
+          "remark": "✅ 准奏：方案完整，路线合理，可执行"
+        },
+        {
+          "at": "2026-02-23T12:57:00Z",
+          "from": "尚书省",
+          "to": "户部",
+          "remark": "派发：构造电芯循环测试模拟数据"
+        },
+        {
+          "at": "2026-02-23T12:57:00Z",
+          "from": "尚书省",
+          "to": "礼部",
+          "remark": "并行派发：起草算法说明文档框架"
+        },
+        {
+          "at": "2026-02-23T13:21:50.426121+00:00",
+          "from": "尚书省",
+          "to": "户部",
+          "remark": "正式派发：生成电芯循环测试模拟数据"
+        },
+        {
+          "at": "2026-02-23T13:21:50.426121+00:00",
+          "from": "尚书省",
+          "to": "礼部",
+          "remark": "正式派发（并行）：撰写算法说明文档"
+        },
+        {
+          "at": "2026-02-23T13:26:44.518730+00:00",
+          "from": "户部",
+          "to": "尚书省",
+          "remark": "✅ 完成：battery_cycle_data.csv（1000行）"
+        },
+        {
+          "at": "2026-02-23T13:26:44.518730+00:00",
+          "from": "礼部",
+          "to": "尚书省",
+          "remark": "✅ 完成：algorithm_report.md"
+        },
+        {
+          "at": "2026-02-23T13:26:44.518730+00:00",
+          "from": "尚书省",
+          "to": "兵部",
+          "remark": "派发：实现RandomForest预测算法 + 可视化图表"
+        },
+        {
+          "at": "2026-02-23T13:31:08.577447+00:00",
+          "from": "兵部",
+          "to": "尚书省",
+          "remark": "✅ 完成：battery_predictor.py + 3张可视化图，R²=0.9641"
+        },
+        {
+          "at": "2026-02-23T13:31:08.577447+00:00",
+          "from": "尚书省",
+          "to": "皇上",
+          "remark": "✅ 全流程完成，回奏"
+        }
+      ],
+      "ac": "Python脚本可运行，图表可查，文档完整",
+      "updatedAt": "2026-02-23T13:34:19.393358+00:00",
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-23 21:27:18"
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "JJC-ZHONGSHU-001",
+      "title": "中书省：并行流程规划",
+      "official": "中书令",
+      "org": "中书省",
+      "state": "Done",
+      "now": "已完成：三省六部并行流程规划",
+      "eta": "已完成 2026-02-23 10:27",
+      "block": "无",
+      "output": "/Users/bingsen/clawd/junjichu-v2/docs/三省六部-OpenClaw实施指南-实装版-v1.md",
+      "flow": {
+        "draft": "已起草",
+        "review": "门下通过",
+        "dispatch": "已归档"
+      },
+      "ac": "形成可执行步骤与验收口径",
+      "updatedAt": "2026-02-23T13:34:19.393358+00:00",
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-23 10:05:17"
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "JJC-BINGBU-002",
+      "title": "兵部：看板细节渲染修复",
+      "official": "兵部尚书",
+      "org": "兵部",
+      "state": "Done",
+      "now": "已完成：抽屉细节与事件流渲染",
+      "eta": "已完成 2026-02-23 10:27",
+      "block": "无",
+      "output": "/Users/bingsen/clawd/junjichu-v2/dashboard.html",
+      "flow": {
+        "draft": "尚书令指令",
+        "review": "门下通过",
+        "dispatch": "已归档"
+      },
+      "ac": "详情页可见最近事件",
+      "updatedAt": "2026-02-23T13:34:19.393358+00:00",
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-24 21:51:23"
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "JJC-MENXIA-003",
+      "title": "门下省：并行任务审议",
+      "official": "侍中",
+      "org": "门下省",
+      "state": "Done",
+      "now": "已完成：准奏并归档",
+      "eta": "已完成 2026-02-23 10:27",
+      "block": "无",
+      "output": "/Users/bingsen/clawd/junjichu-v2/data/live_status.json",
+      "flow": {
+        "draft": "审议立案",
+        "review": "通过",
+        "dispatch": "准奏"
+      },
+      "ac": "给出准奏结论",
+      "updatedAt": "2026-02-23T13:34:19.393358+00:00",
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-24 22:13:11"
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "OC-zhongshu-af6ad7f2",
+      "title": "褚凤天 会话",
+      "official": "中书令",
+      "org": "中书省",
+      "state": "Review",
+      "now": "feishu/direct · 模型 claude-sonnet-4-6",
+      "eta": "2026-02-24 22:11:03",
+      "block": "无",
+      "output": "/Users/bingsen/.openclaw/agents/zhongshu/sessions/af6ad7f2-0130-4d88-81f0-dad420cc0dc7.jsonl",
+      "flow": {
+        "draft": "agent=zhongshu",
+        "review": "updatedAt=2026-02-24 22:11:03",
+        "dispatch": "sessionKey=agent:zhongshu:main"
+      },
+      "ac": "来自 OpenClaw runtime sessions 的实时映射",
+      "activity": [
+        {
+          "at": "2026-02-24T14:11:30.989Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:11:42.050Z",
+          "kind": "assistant",
+          "text": "Screen Recording 权限未授权。换方案——用 `ffmpeg` + `screencapture` 组合录制："
+        },
+        {
+          "at": "2026-02-24T14:11:42.131Z",
+          "kind": "tool",
+          "text": "exec completed (code=1)"
+        },
+        {
+          "at": "2026-02-24T14:12:05.109Z",
+          "kind": "tool",
+          "text": "exec completed (code=None)"
+        },
+        {
+          "at": "2026-02-24T14:12:12.461Z",
+          "kind": "tool",
+          "text": "process completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:12:45.663Z",
+          "kind": "assistant",
+          "text": "Screen Recording 权限不足。换方案：用 **Playwright 无头浏览器**直接录制看板，无需系统权限："
+        },
+        {
+          "at": "2026-02-24T14:12:45.677Z",
+          "kind": "tool",
+          "text": "write completed (code=None)"
+        },
+        {
+          "at": "2026-02-24T14:12:55.277Z",
+          "kind": "tool",
+          "text": "exec completed (code=None)"
+        },
+        {
+          "at": "2026-02-24T14:13:06.413Z",
+          "kind": "assistant",
+          "text": "兵部 GIF 录制进行中，同步准备 Dockerfile："
+        },
+        {
+          "at": "2026-02-24T14:13:06.430Z",
+          "kind": "tool",
+          "text": "write completed (code=None)"
+        }
+      ],
+      "sourceMeta": {
+        "agentId": "zhongshu",
+        "sessionKey": "agent:zhongshu:main",
+        "sessionId": "af6ad7f2-0130-4d88-81f0-dad420cc0dc7",
+        "updatedAt": 1771942263194,
+        "ageMs": 123373,
+        "systemSent": true,
+        "abortedLastRun": false,
+        "inputTokens": 66,
+        "outputTokens": 2712,
+        "totalTokens": 148834
+      },
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-24 22:13:06"
+      },
+      "heartbeat": {
+        "status": "active",
+        "label": "🟢 活跃 2分钟前",
+        "ageSec": 135
+      }
+    },
+    {
+      "id": "OC-mc-gateway-2f631e27-511b-45db-8d59-791c8c2cd4a5-7df8432c",
+      "title": "heartbeat 会话",
+      "official": "尚书令",
+      "org": "尚书省",
+      "state": "Review",
+      "now": "-/direct · 模型 claude-sonnet-4-6",
+      "eta": "2026-02-24 22:10:35",
+      "block": "无",
+      "output": "/Users/bingsen/.openclaw/agents/mc-gateway-2f631e27-511b-45db-8d59-791c8c2cd4a5/sessions/7df8432c-ff6e-4b4c-99f2-1301c2daebc3.jsonl",
+      "flow": {
+        "draft": "agent=mc-gateway-2f631e27-511b-45db-8d59-791c8c2cd4a5",
+        "review": "updatedAt=2026-02-24 22:10:35",
+        "dispatch": "sessionKey=agent:mc-gateway-2f631e27-511b-45db-8d59-791c8c2cd4a5:main"
+      },
+      "ac": "来自 OpenClaw runtime sessions 的实时映射",
+      "activity": [
+        {
+          "at": "2026-02-24T13:37:43.673Z",
+          "kind": "tool",
+          "text": "exec completed (code=52)"
+        },
+        {
+          "at": "2026-02-24T13:37:47.447Z",
+          "kind": "assistant",
+          "text": "Check-in failed — `BASE_URL` is still `REPLACE_WITH_BASE_URL`. No `HEARTBEAT_OK`, no memory writes. Please configure the"
+        },
+        {
+          "at": "2026-02-24T13:47:44.284Z",
+          "kind": "tool",
+          "text": "exec completed (code=52)"
+        },
+        {
+          "at": "2026-02-24T13:47:47.405Z",
+          "kind": "assistant",
+          "text": "Check-in failed — `BASE_URL` is still `REPLACE_WITH_BASE_URL`. No `HEARTBEAT_OK`, no memory writes. Please configure the"
+        },
+        {
+          "at": "2026-02-24T13:53:41.144Z",
+          "kind": "tool",
+          "text": "exec completed (code=52)"
+        },
+        {
+          "at": "2026-02-24T13:53:44.932Z",
+          "kind": "assistant",
+          "text": "Check-in failed — `BASE_URL` is still `REPLACE_WITH_BASE_URL`. No `HEARTBEAT_OK`, no memory writes. Please configure the"
+        },
+        {
+          "at": "2026-02-24T14:07:42.347Z",
+          "kind": "tool",
+          "text": "exec completed (code=52)"
+        },
+        {
+          "at": "2026-02-24T14:07:45.391Z",
+          "kind": "assistant",
+          "text": "Check-in failed — `BASE_URL` is still `REPLACE_WITH_BASE_URL`. No `HEARTBEAT_OK`, no memory writes. Please configure the"
+        },
+        {
+          "at": "2026-02-24T14:10:32.157Z",
+          "kind": "tool",
+          "text": "exec completed (code=52)"
+        },
+        {
+          "at": "2026-02-24T14:10:35.416Z",
+          "kind": "assistant",
+          "text": "Check-in failed — `BASE_URL` is still `REPLACE_WITH_BASE_URL`. No `HEARTBEAT_OK`, no memory writes. Please configure the"
+        }
+      ],
+      "sourceMeta": {
+        "agentId": "mc-gateway-2f631e27-511b-45db-8d59-791c8c2cd4a5",
+        "sessionKey": "agent:mc-gateway-2f631e27-511b-45db-8d59-791c8c2cd4a5:main",
+        "sessionId": "7df8432c-ff6e-4b4c-99f2-1301c2daebc3",
+        "updatedAt": 1771942235439,
+        "ageMs": 151128,
+        "systemSent": true,
+        "abortedLastRun": false,
+        "inputTokens": 18,
+        "outputTokens": 292,
+        "totalTokens": 59134
+      },
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-24 22:10:35"
+      },
+      "heartbeat": {
+        "status": "active",
+        "label": "🟢 活跃 2分钟前",
+        "ageSec": 163
+      }
+    },
+    {
+      "id": "OC-shangshu-8be927fe",
+      "title": "agent:shangshu:main 会话",
+      "official": "尚书令",
+      "org": "尚书省",
+      "state": "Review",
+      "now": "feishu/- · 模型 claude-sonnet-4-6",
+      "eta": "2026-02-24 22:10:18",
+      "block": "无",
+      "output": "/Users/bingsen/.openclaw/agents/shangshu/sessions/8be927fe-8360-449e-b02d-4c7d70d9f141.jsonl",
+      "flow": {
+        "draft": "agent=shangshu",
+        "review": "updatedAt=2026-02-24 22:10:18",
+        "dispatch": "sessionKey=agent:shangshu:main"
+      },
+      "ac": "来自 OpenClaw runtime sessions 的实时映射",
+      "activity": [
+        {
+          "at": "2026-02-24T14:08:13.069Z",
+          "kind": "assistant",
+          "text": "NO_REPLY  ✅ Subagent bingbu finished  ✅ 兵部完成 任务ID: JJC-20260224-014 产出: - `/Users/bingsen/clawd/junjichu-v2/docs/screens"
+        },
+        {
+          "at": "2026-02-24T14:08:21.354Z",
+          "kind": "assistant",
+          "text": "三部全部完成，更新看板并回奏："
+        },
+        {
+          "at": "2026-02-24T14:08:21.538Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:08:35.038Z",
+          "kind": "assistant",
+          "text": "📜 **奏折 · JJC-20260224-014 Week1 全部完成**  A计划——三省六部 GitHub 爆款项目打造，四项任务已全部交付：  ---  **① ✅ Docker 演示镜像（工部）** - `junjichu-v2/"
+        },
+        {
+          "at": "2026-02-24T14:08:35.061Z",
+          "kind": "tool",
+          "text": "message completed (code=None)"
+        },
+        {
+          "at": "2026-02-24T14:08:45.903Z",
+          "kind": "tool",
+          "text": "sessions_send completed (code=None)"
+        },
+        {
+          "at": "2026-02-24T14:08:49.235Z",
+          "kind": "assistant",
+          "text": "⏱️ Subagent bingbu timed out  所有产出文件就绪。任务完成。  ---  ✅ **兵部完成** **任务ID**: JJC-20260224-014  **产出文件**: | 文件 | 大小 | 内容 | |--"
+        },
+        {
+          "at": "2026-02-24T14:08:54.212Z",
+          "kind": "tool",
+          "text": "sessions_list completed (code=None)"
+        },
+        {
+          "at": "2026-02-24T14:09:09.110Z",
+          "kind": "tool",
+          "text": "sessions_send completed (code=None)"
+        },
+        {
+          "at": "2026-02-24T14:09:13.843Z",
+          "kind": "assistant",
+          "text": "NO_REPLY"
+        }
+      ],
+      "sourceMeta": {
+        "agentId": "shangshu",
+        "sessionKey": "agent:shangshu:main",
+        "sessionId": "8be927fe-8360-449e-b02d-4c7d70d9f141",
+        "updatedAt": 1771942218056,
+        "ageMs": 168511,
+        "systemSent": true,
+        "abortedLastRun": false,
+        "inputTokens": 50,
+        "outputTokens": 1930,
+        "totalTokens": 184496
+      },
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-24 22:10:18"
+      },
+      "heartbeat": {
+        "status": "warn",
+        "label": "🟡 可能停滞 3分钟前",
+        "ageSec": 180
+      }
+    },
+    {
+      "id": "OC-gongbu-77f5e08c",
+      "title": "agent:gongbu:subagent:de641ed5-fefa-4d35-9ca1-6895fa103447 会话",
+      "official": "工部尚书",
+      "org": "工部",
+      "state": "Review",
+      "now": "webchat/- · 模型 claude-sonnet-4-6",
+      "eta": "2026-02-24 22:07:50",
+      "block": "无",
+      "output": "/Users/bingsen/.openclaw/agents/gongbu/sessions/77f5e08c-e75c-4094-b4db-071eae702f7d.jsonl",
+      "flow": {
+        "draft": "agent=gongbu",
+        "review": "updatedAt=2026-02-24 22:07:50",
+        "dispatch": "sessionKey=agent:gongbu:subagent:de641ed5-fefa-4d35-9ca1-6895fa103447"
+      },
+      "ac": "来自 OpenClaw runtime sessions 的实时映射",
+      "activity": [
+        {
+          "at": "2026-02-24T14:06:50.309Z",
+          "kind": "assistant",
+          "text": "验证 Topics 是否已写入："
+        },
+        {
+          "at": "2026-02-24T14:06:52.554Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:06:59.820Z",
+          "kind": "assistant",
+          "text": "10 个 Topics 全部成功（另有 ai-orchestration/dashboard/openclaw 是原有 topics，已保留）。  快速验证 docker build 语法无误："
+        },
+        {
+          "at": "2026-02-24T14:07:00.115Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:07:03.720Z",
+          "kind": "assistant",
+          "text": "实际构建验证："
+        },
+        {
+          "at": "2026-02-24T14:07:13.762Z",
+          "kind": "tool",
+          "text": "exec completed (code=None)"
+        },
+        {
+          "at": "2026-02-24T14:07:34.472Z",
+          "kind": "tool",
+          "text": "process completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:07:38.180Z",
+          "kind": "assistant",
+          "text": "构建成功（exit code 0）。清理测试镜像："
+        },
+        {
+          "at": "2026-02-24T14:07:38.240Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:07:50.919Z",
+          "kind": "assistant",
+          "text": "---  ✅ **工部完成** **任务ID: JJC-20260224-014**  ---  **① Docker 演示镜像**  | 文件 | 路径 | |------|------| | Dockerfile | `/Users/b"
+        }
+      ],
+      "sourceMeta": {
+        "agentId": "gongbu",
+        "sessionKey": "agent:gongbu:subagent:de641ed5-fefa-4d35-9ca1-6895fa103447",
+        "sessionId": "77f5e08c-e75c-4094-b4db-071eae702f7d",
+        "updatedAt": 1771942070958,
+        "ageMs": 315609,
+        "systemSent": false,
+        "abortedLastRun": false,
+        "inputTokens": 122,
+        "outputTokens": 3681,
+        "totalTokens": 36930
+      },
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-24 22:07:50"
+      },
+      "heartbeat": {
+        "status": "warn",
+        "label": "🟡 可能停滞 5分钟前",
+        "ageSec": 327
+      }
+    },
+    {
+      "id": "OC-libu-2f31143a",
+      "title": "agent:libu:subagent:9a63ae48-0851-4d63-8a37-0326007a24ff 会话",
+      "official": "礼部尚书",
+      "org": "礼部",
+      "state": "Review",
+      "now": "webchat/- · 模型 claude-sonnet-4-6",
+      "eta": "2026-02-24 22:07:43",
+      "block": "无",
+      "output": "/Users/bingsen/.openclaw/agents/libu/sessions/2f31143a-11f7-47fc-a2ef-86a65596486f.jsonl",
+      "flow": {
+        "draft": "agent=libu",
+        "review": "updatedAt=2026-02-24 22:07:43",
+        "dispatch": "sessionKey=agent:libu:subagent:9a63ae48-0851-4d63-8a37-0326007a24ff"
+      },
+      "ac": "来自 OpenClaw runtime sessions 的实时映射",
+      "activity": [
+        {
+          "at": "2026-02-24T14:05:54.062Z",
+          "kind": "assistant",
+          "text": "已接旨。开始执行任务③：README 升级。"
+        },
+        {
+          "at": "2026-02-24T14:05:57.601Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:05:57.617Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:07:15.612Z",
+          "kind": "assistant",
+          "text": "本地仓库存在，已获取完整 README。现在生成更新后的内容并写入本地文件。"
+        },
+        {
+          "at": "2026-02-24T14:07:15.632Z",
+          "kind": "tool",
+          "text": "write completed (code=None)"
+        },
+        {
+          "at": "2026-02-24T14:07:23.206Z",
+          "kind": "assistant",
+          "text": "文件已写入，现在通过 git 提交并推送到 GitHub。"
+        },
+        {
+          "at": "2026-02-24T14:07:23.308Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:07:32.736Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:07:43.725Z",
+          "kind": "assistant",
+          "text": "推送成功。  ---  ✅ 礼部完成 **任务ID**: JJC-20260224-014 **产出**: README.md 已更新并推送至 `main` 分支（commit `87f0313`）  **变更说明**：  1. **🆚 竞"
+        }
+      ],
+      "sourceMeta": {
+        "agentId": "libu",
+        "sessionKey": "agent:libu:subagent:9a63ae48-0851-4d63-8a37-0326007a24ff",
+        "sessionId": "2f31143a-11f7-47fc-a2ef-86a65596486f",
+        "updatedAt": 1771942063789,
+        "ageMs": 322778,
+        "systemSent": false,
+        "abortedLastRun": false,
+        "inputTokens": 42,
+        "outputTokens": 6566,
+        "totalTokens": 22863
+      },
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-24 22:07:43"
+      },
+      "heartbeat": {
+        "status": "warn",
+        "label": "🟡 可能停滞 5分钟前",
+        "ageSec": 335
+      }
+    },
+    {
+      "id": "OC-bingbu-53af4339",
+      "title": "agent:bingbu:subagent:36d6c4fc-66c7-49f1-bf15-b4ce9613c0ba 会话",
+      "official": "兵部尚书",
+      "org": "兵部",
+      "state": "Review",
+      "now": "webchat/- · 模型 -",
+      "eta": "2026-02-24 22:05:48",
+      "block": "无",
+      "output": "/Users/bingsen/.openclaw/agents/bingbu/sessions/53af4339-e3f9-49ec-8162-9880d0c51e26.jsonl",
+      "flow": {
+        "draft": "agent=bingbu",
+        "review": "updatedAt=2026-02-24 22:05:48",
+        "dispatch": "sessionKey=agent:bingbu:subagent:36d6c4fc-66c7-49f1-bf15-b4ce9613c0ba"
+      },
+      "ac": "来自 OpenClaw runtime sessions 的实时映射",
+      "activity": [
+        {
+          "at": "2026-02-24T14:08:00.781Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:08:08.885Z",
+          "kind": "assistant",
+          "text": "现在截取任务时间轴（点击任务卡片后的弹窗）："
+        },
+        {
+          "at": "2026-02-24T14:08:09.776Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:08:20.076Z",
+          "kind": "assistant",
+          "text": "三张截图完成！再截几张丰富动画内容（省部调度、早朝简报）："
+        },
+        {
+          "at": "2026-02-24T14:08:24.006Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:08:35.256Z",
+          "kind": "assistant",
+          "text": "5张截图全部就绪。现在用 ffmpeg 合成 GIF（约30秒，每帧停留6秒）："
+        },
+        {
+          "at": "2026-02-24T14:08:36.519Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-24T14:08:40.890Z",
+          "kind": "assistant",
+          "text": "GIF 生成成功！36秒，676K。确认所有产出文件："
+        },
+        {
+          "at": "2026-02-24T14:08:40.929Z",
+          "kind": "tool",
+          "text": "exec completed (code=1)"
+        },
+        {
+          "at": "2026-02-24T14:08:48.124Z",
+          "kind": "assistant",
+          "text": "所有产出文件就绪。任务完成。  ---  ✅ **兵部完成** **任务ID**: JJC-20260224-014  **产出文件**: | 文件 | 大小 | 内容 | |------|------|------| | `/Users/"
+        }
+      ],
+      "sourceMeta": {
+        "agentId": "bingbu",
+        "sessionKey": "agent:bingbu:subagent:36d6c4fc-66c7-49f1-bf15-b4ce9613c0ba",
+        "sessionId": "53af4339-e3f9-49ec-8162-9880d0c51e26",
+        "updatedAt": 1771941948040,
+        "ageMs": 438527,
+        "systemSent": false,
+        "abortedLastRun": false,
+        "inputTokens": null,
+        "outputTokens": null,
+        "totalTokens": null
+      },
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-24 22:09:01"
+      },
+      "heartbeat": {
+        "status": "warn",
+        "label": "🟡 可能停滞 7分钟前",
+        "ageSec": 450
+      }
+    },
+    {
+      "id": "OC-shangshu-ef5d83a2",
+      "title": "agent:shangshu:cron:3d21409f-eb0b-4f13-9f00-283e249e1704 会话",
+      "official": "尚书令",
+      "org": "尚书省",
+      "state": "Next",
+      "now": "-/- · 模型 -",
+      "eta": "2026-02-24 06:19:47",
+      "block": "无",
+      "output": "",
+      "flow": {
+        "draft": "agent=shangshu",
+        "review": "updatedAt=2026-02-24 06:19:47",
+        "dispatch": "sessionKey=agent:shangshu:cron:3d21409f-eb0b-4f13-9f00-283e249e1704"
+      },
+      "ac": "来自 OpenClaw runtime sessions 的实时映射",
+      "activity": [],
+      "sourceMeta": {
+        "agentId": "shangshu",
+        "sessionKey": "agent:shangshu:cron:3d21409f-eb0b-4f13-9f00-283e249e1704",
+        "sessionId": "ef5d83a2-9e5a-42f1-b16c-396ab2f8b871",
+        "updatedAt": 1771885187176,
+        "ageMs": 57199391,
+        "systemSent": true,
+        "abortedLastRun": false,
+        "inputTokens": null,
+        "outputTokens": null,
+        "totalTokens": null
+      },
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-23 22:07:11"
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "OC-shangshu-ef5d83a2",
+      "title": "agent:shangshu:cron:3d21409f-eb0b-4f13-9f00-283e249e1704:run:ef5d83a2-9e5a-42f1-b16c-396ab2f8b871 会话",
+      "official": "尚书令",
+      "org": "尚书省",
+      "state": "Next",
+      "now": "-/- · 模型 -",
+      "eta": "2026-02-24 06:19:47",
+      "block": "无",
+      "output": "",
+      "flow": {
+        "draft": "agent=shangshu",
+        "review": "updatedAt=2026-02-24 06:19:47",
+        "dispatch": "sessionKey=agent:shangshu:cron:3d21409f-eb0b-4f13-9f00-283e249e1704:run:ef5d83a2-9e5a-42f1-b16c-396ab2f8b871"
+      },
+      "ac": "来自 OpenClaw runtime sessions 的实时映射",
+      "activity": [],
+      "sourceMeta": {
+        "agentId": "shangshu",
+        "sessionKey": "agent:shangshu:cron:3d21409f-eb0b-4f13-9f00-283e249e1704:run:ef5d83a2-9e5a-42f1-b16c-396ab2f8b871",
+        "sessionId": "ef5d83a2-9e5a-42f1-b16c-396ab2f8b871",
+        "updatedAt": 1771885187130,
+        "ageMs": 57199437,
+        "systemSent": true,
+        "abortedLastRun": false,
+        "inputTokens": null,
+        "outputTokens": null,
+        "totalTokens": null
+      },
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-23 22:07:11"
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "OC-shangshu-5d3c50db",
+      "title": "agent:shangshu:cron:b03078fe-c25d-4a65-a05a-2f7a9453ddb2 会话",
+      "official": "尚书令",
+      "org": "尚书省",
+      "state": "Next",
+      "now": "-/- · 模型 claude-sonnet-4-6",
+      "eta": "2026-02-24 06:03:01",
+      "block": "无",
+      "output": "",
+      "flow": {
+        "draft": "agent=shangshu",
+        "review": "updatedAt=2026-02-24 06:03:01",
+        "dispatch": "sessionKey=agent:shangshu:cron:b03078fe-c25d-4a65-a05a-2f7a9453ddb2"
+      },
+      "ac": "来自 OpenClaw runtime sessions 的实时映射",
+      "activity": [],
+      "sourceMeta": {
+        "agentId": "shangshu",
+        "sessionKey": "agent:shangshu:cron:b03078fe-c25d-4a65-a05a-2f7a9453ddb2",
+        "sessionId": "5d3c50db-0b91-4ff0-a9eb-26114ffb4339",
+        "updatedAt": 1771884181137,
+        "ageMs": 58205430,
+        "systemSent": true,
+        "abortedLastRun": false,
+        "inputTokens": 122,
+        "outputTokens": 16126,
+        "totalTokens": 43619
+      },
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-23 22:07:11"
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "OC-shangshu-5d3c50db",
+      "title": "agent:shangshu:cron:b03078fe-c25d-4a65-a05a-2f7a9453ddb2:run:5d3c50db-0b91-4ff0-a9eb-26114ffb4339 会话",
+      "official": "尚书令",
+      "org": "尚书省",
+      "state": "Next",
+      "now": "-/- · 模型 claude-sonnet-4-6",
+      "eta": "2026-02-24 06:03:01",
+      "block": "无",
+      "output": "",
+      "flow": {
+        "draft": "agent=shangshu",
+        "review": "updatedAt=2026-02-24 06:03:01",
+        "dispatch": "sessionKey=agent:shangshu:cron:b03078fe-c25d-4a65-a05a-2f7a9453ddb2:run:5d3c50db-0b91-4ff0-a9eb-26114ffb4339"
+      },
+      "ac": "来自 OpenClaw runtime sessions 的实时映射",
+      "activity": [],
+      "sourceMeta": {
+        "agentId": "shangshu",
+        "sessionKey": "agent:shangshu:cron:b03078fe-c25d-4a65-a05a-2f7a9453ddb2:run:5d3c50db-0b91-4ff0-a9eb-26114ffb4339",
+        "sessionId": "5d3c50db-0b91-4ff0-a9eb-26114ffb4339",
+        "updatedAt": 1771884181137,
+        "ageMs": 58205430,
+        "systemSent": true,
+        "abortedLastRun": false,
+        "inputTokens": 122,
+        "outputTokens": 16126,
+        "totalTokens": 43619
+      },
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-23 22:07:11"
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "OC-shangshu-aaa29ca8",
+      "title": "agent:shangshu:cron:b03078fe-c25d-4a65-a05a-2f7a9453ddb2:run:aaa29ca8-46d1-4dfd-87a8-c474f9bb8227 会话",
+      "official": "尚书令",
+      "org": "尚书省",
+      "state": "Next",
+      "now": "-/- · 模型 claude-sonnet-4-6",
+      "eta": "2026-02-24 00:12:22",
+      "block": "无",
+      "output": "",
+      "flow": {
+        "draft": "agent=shangshu",
+        "review": "updatedAt=2026-02-24 00:12:22",
+        "dispatch": "sessionKey=agent:shangshu:cron:b03078fe-c25d-4a65-a05a-2f7a9453ddb2:run:aaa29ca8-46d1-4dfd-87a8-c474f9bb8227"
+      },
+      "ac": "来自 OpenClaw runtime sessions 的实时映射",
+      "activity": [],
+      "sourceMeta": {
+        "agentId": "shangshu",
+        "sessionKey": "agent:shangshu:cron:b03078fe-c25d-4a65-a05a-2f7a9453ddb2:run:aaa29ca8-46d1-4dfd-87a8-c474f9bb8227",
+        "sessionId": "aaa29ca8-46d1-4dfd-87a8-c474f9bb8227",
+        "updatedAt": 1771863142993,
+        "ageMs": 79243574,
+        "systemSent": true,
+        "abortedLastRun": false,
+        "inputTokens": 122,
+        "outputTokens": 16126,
+        "totalTokens": 43619
+      },
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-23 22:07:11"
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "MC-adf92a7e",
+      "title": "兵部：Mission Control 映射验收",
+      "official": "兵部尚书",
+      "org": "兵部",
+      "state": "Done",
+      "now": "Mission Control 映射已验收完成，系统正常运行",
+      "eta": "-",
+      "block": "无",
+      "output": "mission-control://boards/2ed2acde-f66f-46f9-ad3b-bc502dfffa83/tasks/adf92a7e-def5-4e67-b304-666ec74aaa34",
+      "flow": {
+        "draft": "board=军机处-兵部",
+        "review": "门下通过",
+        "dispatch": "mission-control"
+      },
+      "ac": "Mission Control 映射；审批 pending=0, rejected=0",
+      "sourceMeta": {
+        "source": "mission_control",
+        "boardId": "2ed2acde-f66f-46f9-ad3b-bc502dfffa83",
+        "taskId": "adf92a7e-def5-4e67-b304-666ec74aaa34",
+        "approvalPending": 0,
+        "approvalRejected": 0,
+        "updatedAt": 1771857504947
+      },
+      "updatedAt": "2026-02-23T22:55:13.612669",
+      "outputMeta": {
+        "exists": false,
+        "lastModified": null
+      },
+      "heartbeat": null
+    },
+    {
+      "id": "OC-main-de50c4d8",
+      "title": "褚凤天 会话",
+      "official": "工部尚书",
+      "org": "工部",
+      "state": "Next",
+      "now": "feishu/direct · 模型 gpt-5.3-codex",
+      "eta": "2026-02-23 15:20:53",
+      "block": "无",
+      "output": "/Users/bingsen/.openclaw/agents/main/sessions/de50c4d8-6d36-470f-8a32-a55973726117.jsonl",
+      "flow": {
+        "draft": "agent=main",
+        "review": "updatedAt=2026-02-23 15:20:53",
+        "dispatch": "sessionKey=agent:main:main"
+      },
+      "ac": "来自 OpenClaw runtime sessions 的实时映射",
+      "activity": [
+        {
+          "at": "2026-02-23T07:19:47.493Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-23T07:19:53.313Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-23T07:20:00.800Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-23T07:20:09.848Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-23T07:20:16.787Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-23T07:20:20.771Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-23T07:20:27.075Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-23T07:20:37.053Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-23T07:20:44.651Z",
+          "kind": "tool",
+          "text": "exec completed (code=0)"
+        },
+        {
+          "at": "2026-02-23T07:20:53.112Z",
+          "kind": "assistant",
+          "text": "[[reply_to_current]]回父皇：**好了**，已打通。😊  刚才您看不到 Pair/Approve 的根因，儿臣已代为走完： - 用 CLI 批准了挂起配对请求（`openclaw devices approve --lat"
+        }
+      ],
+      "sourceMeta": {
+        "agentId": "main",
+        "sessionKey": "agent:main:main",
+        "sessionId": "de50c4d8-6d36-470f-8a32-a55973726117",
+        "updatedAt": 1771831253211,
+        "ageMs": 111133356,
+        "systemSent": true,
+        "abortedLastRun": false,
+        "inputTokens": 443258,
+        "outputTokens": 2354,
+        "totalTokens": 148178
+      },
+      "outputMeta": {
+        "exists": true,
+        "lastModified": "2026-02-23 15:20:53"
+      },
+      "heartbeat": null
+    }
+  ],
+  "history": [
+    {
+      "at": "未知",
+      "official": "中书令",
+      "task": "每日早朝简报系统（7点图文新闻）",
+      "out": "http://127.0.0.1:7891 → 🌅 早朝简报",
+      "qa": "待补成果"
+    },
+    {
+      "at": "未知",
+      "official": "中书令",
+      "task": "看板流程合规审查 + 省部调度Tab优化",
+      "out": "agents/*/SOUL.md + dashboard.html省部调度Tab",
+      "qa": "待补成果"
+    },
+    {
+      "at": "未知",
+      "official": "中书令",
+      "task": "官员总览看板重新设计",
+      "out": "http://127.0.0.1:7891 → 👥 官员总览",
+      "qa": "待补成果"
+    },
+    {
+      "at": "未知",
+      "official": "中书令",
+      "task": "看板增加官员总览面板",
+      "out": "http://127.0.0.1:7891 → 👥 官员总览",
+      "qa": "待补成果"
+    },
+    {
+      "at": "未知",
+      "official": "中书令",
+      "task": "三省六部制开源 GitHub 项目",
+      "out": "https://github.com/cft0808/openclaw-sansheng-liubu",
+      "qa": "待补成果"
+    },
+    {
+      "at": "2026-02-23 21:27:18",
+      "official": "尚书令",
+      "task": "电芯循环测试数据预测算法设计与可视化验证",
+      "out": "/Users/bingsen/.openclaw/workspace-shangshu/",
+      "qa": "通过"
+    },
+    {
+      "at": "2026-02-23 10:05:17",
+      "official": "中书令",
+      "task": "中书省：并行流程规划",
+      "out": "/Users/bingsen/clawd/junjichu-v2/docs/三省六部-OpenClaw实施指南-实装版-v1.md",
+      "qa": "通过"
+    },
+    {
+      "at": "2026-02-24 21:51:23",
+      "official": "兵部尚书",
+      "task": "兵部：看板细节渲染修复",
+      "out": "/Users/bingsen/clawd/junjichu-v2/dashboard.html",
+      "qa": "通过"
+    },
+    {
+      "at": "2026-02-24 22:13:11",
+      "official": "侍中",
+      "task": "门下省：并行任务审议",
+      "out": "/Users/bingsen/clawd/junjichu-v2/data/live_status.json",
+      "qa": "通过"
+    },
+    {
+      "at": "未知",
+      "official": "兵部尚书",
+      "task": "兵部：Mission Control 映射验收",
+      "out": "mission-control://boards/2ed2acde-f66f-46f9-ad3b-bc502dfffa83/tasks/adf92a7e-def5-4e67-b304-666ec74aaa34",
+      "qa": "待补成果"
+    }
+  ],
+  "metrics": {
+    "officialCount": 9,
+    "todayDone": 10,
+    "inProgress": 13,
+    "blocked": 0
+  },
+  "syncStatus": {
+    "ok": true,
+    "statusLevel": "ok",
+    "consecutiveFailures": 0,
+    "lastSuccessAt": "2026-02-24 22:13:06",
+    "lastSyncAt": "2026-02-24 22:13:06",
+    "durationMs": 4720,
+    "source": "openclaw_runtime_to_feishu_bitable",
+    "recordCount": 24,
+    "created": 0,
+    "updated": 3,
+    "skipped": 21,
+    "archived": 0,
+    "missingFields": {},
+    "error": null
+  },
+  "health": {
+    "syncOk": true,
+    "syncLatencyMs": 4720,
+    "missingFieldCount": 0
+  }
+}

@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  sansheng-demo:
+    image: cft0808/sansheng-demo:latest
+    ports:
+      - "7891:7891"
+    environment:
+      - DEMO_MODE=true
+    restart: unless-stopped
+
+# 启动: docker compose up
+# 访问: http://localhost:7891

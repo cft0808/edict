@@ -1,0 +1,244 @@
+{
+  "generatedAt": "2026-02-24 22:13:06",
+  "defaultModel": "anthropic/claude-sonnet-4-6",
+  "knownModels": [
+    {
+      "id": "anthropic/claude-sonnet-4-6",
+      "label": "Claude Sonnet 4.6",
+      "provider": "Anthropic"
+    },
+    {
+      "id": "anthropic/claude-opus-4-5",
+      "label": "Claude Opus 4.5",
+      "provider": "Anthropic"
+    },
+    {
+      "id": "anthropic/claude-haiku-3-5",
+      "label": "Claude Haiku 3.5",
+      "provider": "Anthropic"
+    },
+    {
+      "id": "openai/gpt-4o",
+      "label": "GPT-4o",
+      "provider": "OpenAI"
+    },
+    {
+      "id": "openai/gpt-4o-mini",
+      "label": "GPT-4o Mini",
+      "provider": "OpenAI"
+    },
+    {
+      "id": "openai-codex/gpt-5.3-codex",
+      "label": "GPT-5.3 Codex",
+      "provider": "OpenAI Codex"
+    },
+    {
+      "id": "google/gemini-2.0-flash",
+      "label": "Gemini 2.0 Flash",
+      "provider": "Google"
+    },
+    {
+      "id": "google/gemini-2.5-pro",
+      "label": "Gemini 2.5 Pro",
+      "provider": "Google"
+    }
+  ],
+  "agents": [
+    {
+      "id": "shangshu",
+      "label": "尚书省",
+      "role": "尚书令",
+      "duty": "派单与升级裁决",
+      "emoji": "📮",
+      "model": "anthropic/claude-sonnet-4-6",
+      "defaultModel": "anthropic/claude-sonnet-4-6",
+      "isDefaultModel": true,
+      "workspace": "/Users/bingsen/.openclaw/workspace-shangshu",
+      "skills": [
+        {
+          "name": "dispatch",
+          "path": "/Users/bingsen/.openclaw/workspace-shangshu/skills/dispatch/SKILL.md",
+          "exists": true,
+          "description": "---"
+        },
+        {
+          "name": "kanban-local",
+          "path": "/Users/bingsen/.openclaw/workspace-shangshu/skills/kanban-local/SKILL.md",
+          "exists": true,
+          "description": "---"
+        },
+        {
+          "name": "organization-governance",
+          "path": "/Users/bingsen/.openclaw/workspace-shangshu/skills/organization-governance/SKILL.md",
+          "exists": true,
+          "description": "---"
+        }
+      ],
+      "allowAgents": [
+        "zhongshu",
+        "menxia",
+        "hubu",
+        "libu",
+        "bingbu",
+        "xingbu",
+        "gongbu"
+      ]
+    },
+    {
+      "id": "zhongshu",
+      "label": "中书省",
+      "role": "中书令",
+      "duty": "起草任务令与优先级",
+      "emoji": "📜",
+      "model": "anthropic/claude-sonnet-4-6",
+      "defaultModel": "anthropic/claude-sonnet-4-6",
+      "isDefaultModel": true,
+      "workspace": "/Users/bingsen/.openclaw/workspace-zhongshu",
+      "skills": [
+        {
+          "name": "planning",
+          "path": "/Users/bingsen/.openclaw/workspace-zhongshu/skills/planning/SKILL.md",
+          "exists": true,
+          "description": "---"
+        }
+      ],
+      "allowAgents": [
+        "menxia",
+        "shangshu"
+      ]
+    },
+    {
+      "id": "menxia",
+      "label": "门下省",
+      "role": "侍中",
+      "duty": "审议与退回机制",
+      "emoji": "🔍",
+      "model": "anthropic/claude-sonnet-4-6",
+      "defaultModel": "anthropic/claude-sonnet-4-6",
+      "isDefaultModel": true,
+      "workspace": "/Users/bingsen/.openclaw/workspace-menxia",
+      "skills": [
+        {
+          "name": "review",
+          "path": "/Users/bingsen/.openclaw/workspace-menxia/skills/review/SKILL.md",
+          "exists": true,
+          "description": "---"
+        }
+      ],
+      "allowAgents": [
+        "shangshu",
+        "zhongshu"
+      ]
+    },
+    {
+      "id": "hubu",
+      "label": "户部",
+      "role": "户部尚书",
+      "duty": "资源/预算/成本",
+      "emoji": "💰",
+      "model": "anthropic/claude-sonnet-4-6",
+      "defaultModel": "anthropic/claude-sonnet-4-6",
+      "isDefaultModel": true,
+      "workspace": "/Users/bingsen/.openclaw/workspace-hubu",
+      "skills": [
+        {
+          "name": "data-analysis",
+          "path": "/Users/bingsen/.openclaw/workspace-hubu/skills/data-analysis/SKILL.md",
+          "exists": true,
+          "description": "---"
+        }
+      ],
+      "allowAgents": [
+        "shangshu"
+      ]
+    },
+    {
+      "id": "libu",
+      "label": "礼部",
+      "role": "礼部尚书",
+      "duty": "文档/汇报/规范",
+      "emoji": "📝",
+      "model": "anthropic/claude-sonnet-4-6",
+      "defaultModel": "anthropic/claude-sonnet-4-6",
+      "isDefaultModel": true,
+      "workspace": "/Users/bingsen/.openclaw/workspace-libu",
+      "skills": [
+        {
+          "name": "doc-writer",
+          "path": "/Users/bingsen/.openclaw/workspace-libu/skills/doc-writer/SKILL.md",
+          "exists": true,
+          "description": "---"
+        }
+      ],
+      "allowAgents": [
+        "shangshu"
+      ]
+    },
+    {
+      "id": "bingbu",
+      "label": "兵部",
+      "role": "兵部尚书",
+      "duty": "应急与巡检",
+      "emoji": "⚔️",
+      "model": "anthropic/claude-sonnet-4-6",
+      "defaultModel": "anthropic/claude-sonnet-4-6",
+      "isDefaultModel": true,
+      "workspace": "/Users/bingsen/.openclaw/workspace-bingbu",
+      "skills": [
+        {
+          "name": "coding",
+          "path": "/Users/bingsen/.openclaw/workspace-bingbu/skills/coding/SKILL.md",
+          "exists": true,
+          "description": "---"
+        }
+      ],
+      "allowAgents": [
+        "shangshu"
+      ]
+    },
+    {
+      "id": "xingbu",
+      "label": "刑部",
+      "role": "刑部尚书",
+      "duty": "合规/审计/红线",
+      "emoji": "⚖️",
+      "model": "anthropic/claude-sonnet-4-6",
+      "defaultModel": "anthropic/claude-sonnet-4-6",
+      "isDefaultModel": true,
+      "workspace": "/Users/bingsen/.openclaw/workspace-xingbu",
+      "skills": [
+        {
+          "name": "security-review",
+          "path": "/Users/bingsen/.openclaw/workspace-xingbu/skills/security-review/SKILL.md",
+          "exists": true,
+          "description": "---"
+        }
+      ],
+      "allowAgents": [
+        "shangshu"
+      ]
+    },
+    {
+      "id": "gongbu",
+      "label": "工部",
+      "role": "工部尚书",
+      "duty": "工程交付与自动化",
+      "emoji": "🔧",
+      "model": "anthropic/claude-sonnet-4-6",
+      "defaultModel": "anthropic/claude-sonnet-4-6",
+      "isDefaultModel": true,
+      "workspace": "/Users/bingsen/.openclaw/workspace-gongbu",
+      "skills": [
+        {
+          "name": "ops",
+          "path": "/Users/bingsen/.openclaw/workspace-gongbu/skills/ops/SKILL.md",
+          "exists": true,
+          "description": "---"
+        }
+      ],
+      "allowAgents": [
+        "shangshu"
+      ]
+    }
+  ]
+}
