@@ -65,6 +65,7 @@
     .st-Review{border-color:#f5c84244;color:#f5c842;background:#201a08}
     .st-Done{border-color:#2ecc8a44;color:var(--ok);background:#0a2018}
     .st-Blocked{border-color:#ff527044;color:var(--danger);background:#200a10}
+    .st-Cancelled{border-color:#88888844;color:#888;background:#1a1a1a}
     .st-Next{border-color:#4a9adf44;color:#4a9adf;background:#0a1424}
 
     /* dept colors */
@@ -197,6 +198,53 @@
     .sk-item{display:flex;gap:8px;padding:6px 8px;border-radius:7px;font-size:12px;margin-bottom:3px}.sk-item:hover{background:var(--panel2)}
     .si-name{font-weight:600;min-width:100px}.si-desc{color:var(--muted);flex:1;line-height:1.4}
     .sk-empty{font-size:12px;color:var(--muted);padding:12px;text-align:center;opacity:.6}
+
+    /* ══ TASK ACTIONS ══ */
+    .task-actions{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+    .btn-action{font-size:12px;padding:7px 16px;border-radius:8px;border:none;cursor:pointer;font-weight:700;transition:all .15s}
+    .btn-stop{background:#ff527022;color:#ff5270;border:1px solid #ff527044}.btn-stop:hover{background:#ff527044}
+    .btn-cancel{background:#88888822;color:#888;border:1px solid #88888844}.btn-cancel:hover{background:#88888844}
+    .btn-resume{background:#2ecc8a22;color:#2ecc8a;border:1px solid #2ecc8a44}.btn-resume:hover{background:#2ecc8a44}
+    .btn-action:disabled{opacity:.4;cursor:not-allowed}
+
+    /* card-level mini actions */
+    .ec-actions{display:flex;gap:4px;margin-top:8px}
+    .ec-actions .mini-act{font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid var(--line);background:transparent;cursor:pointer;color:var(--muted);transition:all .12s}
+    .ec-actions .mini-act:hover{border-color:var(--acc);color:var(--text)}
+    .ec-actions .mini-act.danger:hover{border-color:#ff5270;color:#ff5270}
+
+    /* ══ TODO LIST ══ */
+    .todo-section{margin-bottom:18px}
+    .todo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .todo-progress{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+    .todo-bar{width:120px;height:6px;background:#0e1320;border-radius:3px;overflow:hidden}
+    .todo-bar-fill{height:100%;border-radius:3px;background:var(--ok);transition:width .3s}
+    .todo-list{display:flex;flex-direction:column;gap:4px}
+    .todo-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--panel2);border-radius:8px;font-size:12px;transition:opacity .15s}
+    .todo-item.done{opacity:.55}
+    .todo-item .t-icon{font-size:14px;flex-shrink:0}
+    .todo-item .t-id{color:var(--muted);font-size:10px;min-width:20px}
+    .todo-item .t-title{flex:1;color:var(--text)}
+    .todo-item.done .t-title{text-decoration:line-through;color:var(--muted)}
+    .todo-item .t-status{font-size:10px;padding:2px 6px;border-radius:4px}
+    .todo-item .t-status.s-done{color:var(--ok);background:#0a2018;border:1px solid #2ecc8a44}
+    .todo-item .t-status.s-progress{color:var(--acc);background:#0a1228;border:1px solid #6a9eff44}
+    .todo-item .t-status.s-notstarted{color:var(--muted);background:var(--panel);border:1px solid var(--line)}
+
+    /* card todo mini-bar */
+    .ec-todo-bar{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-top:6px}
+    .ec-todo-track{flex:1;max-width:80px;height:4px;background:#0e1320;border-radius:2px;overflow:hidden}
+    .ec-todo-fill{height:100%;background:var(--ok);border-radius:2px}
+
+    /* ══ CONFIRM DIALOG ══ */
+    .confirm-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;backdrop-filter:blur(3px)}
+    .confirm-bg.open{display:flex;align-items:center;justify-content:center}
+    .confirm-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+    .confirm-title{font-size:16px;font-weight:700;margin-bottom:8px}
+    .confirm-msg{font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5}
+    .confirm-input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:7px;color:var(--text);padding:8px 10px;font-size:12px;outline:none;margin-bottom:14px}
+    .confirm-input:focus{border-color:var(--acc)}
+    .confirm-btns{display:flex;gap:8px;justify-content:flex-end}
 
     /* TOAST */
     #toaster{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:300}
@@ -422,6 +470,19 @@
   </div>
 </div>
 
+<!-- CONFIRM DIALOG -->
+<div class="confirm-bg" id="confirm-bg">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title"></div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <input class="confirm-input" id="confirm-reason" placeholder="原因（可选）"/>
+    <div class="confirm-btns">
+      <button class="btn btn-g" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-p" id="confirm-ok" onclick="doConfirm()">确认</button>
+    </div>
+  </div>
+</div>
+
 <div id="toaster"></div>
 
 <script>
@@ -439,7 +500,7 @@ const PIPE = [
   {key:'Review',   dept:'尚书省', icon:'🔎', action:'汇总'},
   {key:'Done',     dept:'回奏',   icon:'✅', action:'完成'},
 ];
-const PIPE_STATE_IDX = {Inbox:0,Zhongshu:1,Menxia:2,Assigned:3,Doing:4,Review:5,Done:6,Blocked:4,Next:3};
+const PIPE_STATE_IDX = {Inbox:0,Zhongshu:1,Menxia:2,Assigned:3,Doing:4,Review:5,Done:6,Blocked:4,Cancelled:4,Next:3};
 
 /* ══ DEPT COLORS ══ */
 const DEPT_COLOR = {'中书省':'#a07aff','门下省':'#6a9eff','尚书省':'#6aef9a','礼部':'#f5c842','户部':'#ff9a6a','兵部':'#ff5270','刑部':'#cc4444','工部':'#44aaff','皇上':'#ffd700','回奏':'#2ecc8a'};
@@ -450,7 +511,7 @@ const esc=s=>s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g
 async function fetchJ(u){const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw Error(r.status);return r.json()}
 async function postJ(u,d){const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});return r.json()}
 function toast(msg,type='ok',ms=3000){const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;document.getElementById('toaster').appendChild(el);setTimeout(()=>el.remove(),ms)}
-const STATE_LABEL={Inbox:'收件',Zhongshu:'中书规划',Menxia:'门下审议',Assigned:'已派发',Doing:'执行中',Review:'待审查',Done:'已完成',Blocked:'阻塞',Next:'待执行'};
+const STATE_LABEL={Inbox:'收件',Zhongshu:'中书规划',Menxia:'门下审议',Assigned:'已派发',Doing:'执行中',Review:'待审查',Done:'已完成',Blocked:'阻塞',Cancelled:'已取消',Next:'待执行'};
 // 根据轮次动态生成状态标签
 function stateLabel(t){
   const r = t.review_round||0;
@@ -491,7 +552,7 @@ function miniPipe(t){
 /* ══ EDICT CARDS ══ */
 function renderEdicts(tasks){
   const edicts = tasks.filter(isEdict).sort((a,b) => {
-    const order = {Doing:0,Review:1,Assigned:2,Menxia:3,Zhongshu:4,Inbox:5,Blocked:6,Next:7,Done:8};
+    const order = {Doing:0,Review:1,Assigned:2,Menxia:3,Zhongshu:4,Inbox:5,Blocked:6,Next:7,Done:8,Cancelled:9};
     return (order[a.state]??9) - (order[b.state]??9);
   });
   document.getElementById('tb-e').textContent = edicts.length;
@@ -507,6 +568,11 @@ function renderEdicts(tasks){
     const stCls = 'st-'+(t.state||'');
     const isBlocked = t.block && t.block !== '无' && t.block !== '-';
     const curStage = PIPE.find((_,i) => getPipeStatus(t)[i].status === 'active');
+    const todos = t.todos||[];
+    const todoDone = todos.filter(x=>x.status==='completed').length;
+    const todoTotal = todos.length;
+    const canStop = !['Done','Blocked','Cancelled'].includes(t.state);
+    const canResume = ['Blocked','Cancelled'].includes(t.state);
     return `
     <div class="edict-card" onclick='openTask(${JSON.stringify(t.id)})'>
       ${miniPipe(t)}
@@ -522,10 +588,20 @@ function renderEdicts(tasks){
         ${Array.from({length:t.review_round||0},(_,i)=>`<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${i<(t.review_round||0)-1?'#1a3a6a':'var(--acc)'}22;border:1px solid ${i<(t.review_round||0)-1?'#2a4a8a':'var(--acc)'};font-size:9px;text-align:center;line-height:13px;margin-right:2px;color:${i<(t.review_round||0)-1?'#4a6aaa':'var(--acc)'}">${i+1}</span>`).join('')}
         <span style="color:var(--muted);font-size:10px">第 ${t.review_round} 轮磋商</span>
       </div>` : ''}
+      ${todoTotal ? `<div class="ec-todo-bar">
+        <span>📋 ${todoDone}/${todoTotal}</span>
+        <div class="ec-todo-track"><div class="ec-todo-fill" style="width:${Math.round(todoDone/todoTotal*100)}%"></div></div>
+        <span>${todoDone===todoTotal?'✅ 全部完成':'🔄 进行中'}</span>
+      </div>` : ''}
       <div class="ec-footer">
         <span class="hb ${hb.status}">${esc(hb.label)}</span>
         ${isBlocked ? `<span class="tag" style="border-color:#ff527044;color:var(--danger);background:#200a10">🚫 ${esc(t.block)}</span>` : ''}
         ${t.eta && t.eta !== '-' ? `<span style="font-size:11px;color:var(--muted)">📅 ${esc(t.eta)}</span>` : ''}
+      </div>
+      <div class="ec-actions" onclick="event.stopPropagation()">
+        ${canStop ? `<button class="mini-act" onclick="confirmAction('${esc(t.id)}','stop')">⏸ 叫停</button>
+        <button class="mini-act danger" onclick="confirmAction('${esc(t.id)}','cancel')">🚫 取消</button>` : ''}
+        ${canResume ? `<button class="mini-act" onclick="taskAction('${esc(t.id)}','resume','恢复执行')">▶ 恢复</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -618,6 +694,11 @@ function openTask(id){
   const activeStage = stages.find(s=>s.status==='active');
   const hb = t.heartbeat||{status:'unknown',label:'⚪ 无数据'};
   const flowLog = t.flow_log||[];
+  const todos = t.todos||[];
+  const todoDone = todos.filter(x=>x.status==='completed').length;
+  const todoTotal = todos.length;
+  const canStop = !['Done','Blocked','Cancelled'].includes(t.state);
+  const canResume = ['Blocked','Cancelled'].includes(t.state);
 
   document.getElementById('modal-body').innerHTML = `
     <div class="modal-id">${esc(t.id)}</div>
@@ -648,6 +729,39 @@ function openTask(id){
         </div>
       `).join('')}
     </div>
+
+    <!-- 操作按钮 -->
+    <div class="task-actions">
+      ${canStop ? `<button class="btn-action btn-stop" onclick="confirmAction('${esc(t.id)}','stop')">⏸ 叫停任务</button>
+      <button class="btn-action btn-cancel" onclick="confirmAction('${esc(t.id)}','cancel')">🚫 取消任务</button>` : ''}
+      ${canResume ? `<button class="btn-action btn-resume" onclick="taskAction('${esc(t.id)}','resume','恢复执行')">▶️ 恢复执行</button>` : ''}
+    </div>
+
+    <!-- Todo 子任务 -->
+    ${todoTotal ? `
+    <div class="todo-section">
+      <div class="todo-header">
+        <div class="m-sec-label" style="margin-bottom:0;border:none;padding:0">子任务清单（${todoDone}/${todoTotal}）</div>
+        <div class="todo-progress">
+          <div class="todo-bar"><div class="todo-bar-fill" style="width:${Math.round(todoDone/todoTotal*100)}%"></div></div>
+          <span>${Math.round(todoDone/todoTotal*100)}%</span>
+        </div>
+      </div>
+      <div class="todo-list">
+        ${todos.map(td => {
+          const ico = td.status==='completed'?'✅':td.status==='in-progress'?'🔄':'⬜';
+          const stCls = td.status==='completed'?'s-done':td.status==='in-progress'?'s-progress':'s-notstarted';
+          const stLabel = td.status==='completed'?'已完成':td.status==='in-progress'?'进行中':'待开始';
+          const itemCls = td.status==='completed'?'done':'';
+          return `<div class="todo-item ${itemCls}">
+            <span class="t-icon">${ico}</span>
+            <span class="t-id">#${td.id||''}</span>
+            <span class="t-title">${esc(td.title||'')}</span>
+            <span class="t-status ${stCls}">${stLabel}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : ''}
 
     <!-- 基本信息 -->
     <div class="m-section">
@@ -999,6 +1113,33 @@ function selectOfficial(id, el){
             <span class="tag st-${e.state} oe-state">${STATE_LABEL[e.state]||e.state}</span>
           </div>`).join('')}</div>`}
     </div>`;
+}
+
+/* ══ TASK ACTIONS ══ */
+let _confirmCb = null;
+function confirmAction(taskId, action){
+  const titles = {stop:'⏸ 叫停任务', cancel:'🚫 取消任务'};
+  const msgs = {stop:`确定要叫停 <b>${esc(taskId)}</b> 吗？任务将暂停，可稍后恢复。`, cancel:`确定要取消 <b>${esc(taskId)}</b> 吗？任务将标记为已取消。`};
+  document.getElementById('confirm-title').innerHTML = titles[action]||action;
+  document.getElementById('confirm-msg').innerHTML = msgs[action]||'';
+  document.getElementById('confirm-reason').value = '';
+  document.getElementById('confirm-ok').className = action==='cancel'?'btn btn-action btn-cancel':'btn btn-action btn-stop';
+  document.getElementById('confirm-ok').textContent = action==='cancel'?'确认取消':'确认叫停';
+  document.getElementById('confirm-bg').classList.add('open');
+  _confirmCb = () => {
+    const reason = document.getElementById('confirm-reason').value.trim();
+    taskAction(taskId, action, reason);
+  };
+}
+function closeConfirm(){ document.getElementById('confirm-bg').classList.remove('open'); _confirmCb=null; }
+function doConfirm(){ if(_confirmCb) _confirmCb(); closeConfirm(); }
+
+async function taskAction(taskId, action, reason){
+  try{
+    const r = await postJ(API+'/task-action', {taskId, action, reason: reason||''});
+    if(r.ok){ toast(r.message,'ok'); loadAll(); /* close modal if open */ document.getElementById('modal-bg').classList.remove('open'); }
+    else toast(r.error||'操作失败','err');
+  }catch(e){ toast('服务器连接失败','err'); }
 }
 
 /* ══ TABS ══ */

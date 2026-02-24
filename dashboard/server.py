@@ -11,12 +11,13 @@ Endpoints:
   GET  /api/model-change-log   → data/model_change_log.json
   GET  /api/last-result        → data/last_model_change_result.json
 """
-import json, pathlib, subprocess, sys, threading, argparse
+import json, pathlib, subprocess, sys, threading, argparse, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 
 BASE = pathlib.Path(__file__).parent
 DATA = BASE.parent / 'data'
+SCRIPTS = BASE.parent / 'scripts'
 
 
 def read_json(path, default=None):
@@ -30,6 +31,72 @@ def cors_headers(h):
     h.send_header('Access-Control-Allow-Origin', '*')
     h.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
     h.send_header('Access-Control-Allow-Headers', 'Content-Type')
+
+
+def now_iso():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00', 'Z')
+
+
+def load_tasks():
+    return read_json(DATA / 'tasks_source.json', [])
+
+
+def save_tasks(tasks):
+    (DATA / 'tasks_source.json').write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
+    # Trigger refresh
+    subprocess.Popen(['python3', str(SCRIPTS / 'refresh_live_data.py')])
+
+
+def handle_task_action(task_id, action, reason):
+    """Stop/cancel/resume a task from the dashboard."""
+    tasks = load_tasks()
+    task = next((t for t in tasks if t.get('id') == task_id), None)
+    if not task:
+        return {'ok': False, 'error': f'任务 {task_id} 不存在'}
+
+    old_state = task.get('state', '')
+
+    if action == 'stop':
+        task['state'] = 'Blocked'
+        task['block'] = reason or '皇上叫停'
+        task['now'] = f'⏸️ 已暂停：{reason}'
+    elif action == 'cancel':
+        task['state'] = 'Cancelled'
+        task['block'] = reason or '皇上取消'
+        task['now'] = f'🚫 已取消：{reason}'
+    elif action == 'resume':
+        # Resume to previous active state or Doing
+        task['state'] = task.get('_prev_state', 'Doing')
+        task['block'] = '无'
+        task['now'] = f'▶️ 已恢复执行'
+
+    if action in ('stop', 'cancel'):
+        task['_prev_state'] = old_state  # Save for resume
+
+    task.setdefault('flow_log', []).append({
+        'at': now_iso(),
+        'from': '皇上',
+        'to': task.get('org', ''),
+        'remark': f'{"⏸️ 叫停" if action == "stop" else "🚫 取消" if action == "cancel" else "▶️ 恢复"}：{reason}'
+    })
+    task['updatedAt'] = now_iso()
+
+    save_tasks(tasks)
+    label = {'stop': '已叫停', 'cancel': '已取消', 'resume': '已恢复'}[action]
+    return {'ok': True, 'message': f'{task_id} {label}'}
+
+
+def update_task_todos(task_id, todos):
+    """Update the todos list for a task."""
+    tasks = load_tasks()
+    task = next((t for t in tasks if t.get('id') == task_id), None)
+    if not task:
+        return {'ok': False, 'error': f'任务 {task_id} 不存在'}
+
+    task['todos'] = todos
+    task['updatedAt'] = now_iso()
+    save_tasks(tasks)
+    return {'ok': True, 'message': f'{task_id} todos 已更新'}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -95,9 +162,29 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if p == '/api/morning-brief/refresh':
-            scripts_dir = BASE.parent / 'scripts'
-            subprocess.Popen(['python3', str(scripts_dir / 'fetch_morning_news.py')])
+            subprocess.Popen(['python3', str(SCRIPTS / 'fetch_morning_news.py')])
             self.send_json({'ok': True, 'message': '采集已触发，约30-60秒后刷新'})
+            return
+
+        if p == '/api/task-action':
+            task_id = body.get('taskId', '').strip()
+            action = body.get('action', '').strip()  # stop, cancel, resume
+            reason = body.get('reason', '').strip() or f'皇上从看板{action}'
+            if not task_id or action not in ('stop', 'cancel', 'resume'):
+                self.send_json({'ok': False, 'error': 'taskId and action(stop/cancel/resume) required'}, 400)
+                return
+            result = handle_task_action(task_id, action, reason)
+            self.send_json(result)
+            return
+
+        if p == '/api/task-todos':
+            task_id = body.get('taskId', '').strip()
+            todos = body.get('todos', [])  # [{id, title, status}]
+            if not task_id:
+                self.send_json({'ok': False, 'error': 'taskId required'}, 400)
+                return
+            result = update_task_todos(task_id, todos)
+            self.send_json(result)
             return
 
         if p == '/api/set-model':

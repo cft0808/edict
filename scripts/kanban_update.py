@@ -14,6 +14,10 @@
 
   # 完成任务
   python3 kanban_update.py done JJC-20260223-012 "/path/to/output" "任务完成摘要"
+
+  # 添加/更新子任务 todo
+  python3 kanban_update.py todo JJC-20260223-012 1 "实现API接口" in-progress
+  python3 kanban_update.py todo JJC-20260223-012 1 "" completed
 """
 import json, pathlib, datetime, sys, subprocess
 
@@ -143,6 +147,37 @@ def cmd_block(task_id, reason):
     save(tasks)
     print(f'[看板] ⚠️ {task_id} 已阻塞: {reason}')
 
+def cmd_todo(task_id, todo_id, title, status='not-started'):
+    """添加或更新子任务 todo
+
+    status: not-started / in-progress / completed
+    """
+    tasks = load()
+    t = find_task(tasks, task_id)
+    if not t:
+        print(f'[看板] ❌ 任务 {task_id} 不存在')
+        return
+    if 'todos' not in t:
+        t['todos'] = []
+
+    existing = next((td for td in t['todos'] if str(td.get('id')) == str(todo_id)), None)
+    if existing:
+        existing['status'] = status
+        if title:
+            existing['title'] = title
+    else:
+        t['todos'].append({
+            'id': todo_id,
+            'title': title,
+            'status': status,
+        })
+
+    t['updatedAt'] = now_iso()
+    save(tasks)
+
+    done = sum(1 for td in t['todos'] if td.get('status') == 'completed')
+    total = len(t['todos'])
+    print(f'[看板] ✅ {task_id} todo [{done}/{total}]: {todo_id} → {status}')
 
 if __name__ == '__main__':
     args = sys.argv[1:]
@@ -160,5 +195,7 @@ if __name__ == '__main__':
         cmd_done(args[1], args[2] if len(args)>2 else '', args[3] if len(args)>3 else '')
     elif cmd == 'block' and len(args) >= 3:
         cmd_block(args[1], args[2])
+    elif cmd == 'todo' and len(args) >= 4:
+        cmd_todo(args[1], args[2], args[3] if len(args) > 3 else '', args[4] if len(args) > 4 else 'not-started')
     else:
         print(__doc__)
