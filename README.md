@@ -1,273 +1,296 @@
-# ⚔️ Edict · Multi-Agent Orchestration System
+<p align="center">
+  <img src="docs/screenshots/01-kanban-main.png" alt="三省六部 · 军机处看板" width="100%">
+</p>
+
+<h1 align="center">⚔️ 三省六部 · Edict</h1>
 
 <p align="center">
-  <img src="docs/screenshots/01-kanban-main.png" alt="三省六部看板总览" width="100%">
+  <strong>当 AI 学会了中国古代的治国术</strong><br>
+  <sub>9 个 AI Agent 组成三省六部，像治理帝国一样管理你的复杂任务</sub>
 </p>
 
 <p align="center">
   <a href="README_EN.md">English</a> ·
-  <a href="#快速开始">快速开始</a> ·
-  <a href="#架构">架构</a> ·
-  <a href="#看板功能">看板功能</a> ·
-  <a href="#配置">配置</a>
+  <a href="#-30-秒快速体验">快速开始</a> ·
+  <a href="#-架构">架构</a> ·
+  <a href="#-功能全景">看板功能</a> ·
+  <a href="docs/getting-started.md">详细指南</a> ·
+  <a href="CONTRIBUTING.md">参与贡献</a>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/OpenClaw-Required-blue?style=flat-square" alt="OpenClaw">
-  <img src="https://img.shields.io/badge/Python-3.9+-green?style=flat-square" alt="Python">
-  <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="License">
-  <img src="https://img.shields.io/badge/Agents-9-purple?style=flat-square" alt="Agents">
+  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Agents-9_Specialized-8B5CF6?style=flat-square" alt="Agents">
+  <img src="https://img.shields.io/badge/Dashboard-Real--time-F59E0B?style=flat-square" alt="Dashboard">
+  <img src="https://img.shields.io/badge/License-MIT-22C55E?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/Zero_Deps-stdlib_only-EC4899?style=flat-square" alt="Zero Dependencies">
 </p>
 
-![Demo](docs/demo.gif)
-> 🎬 完整演示视频：[YouTube 链接](待补充)
+---
+
+## 💡 一句话定义
+
+> **三省六部** 是第一个将古代帝国治理智慧应用于 AI 多 Agent 协同的开源系统。
+> 你下一道旨，中书省规划、门下省审议、尚书省派发、六部并行执行，最后汇总回奏。
+> 附带一个开箱即用的**军机处看板**，让所有流转一目了然。
 
 ---
 
-**三省六部**是一套基于 [OpenClaw](https://openclaw.ai) 的**多 Agent 协同编排系统**，借鉴中国古代三省六部制的分权协作思想，将复杂任务在多个专职 AI Agent 之间流转执行，并通过实时看板统一监控和管理。
+## 🤔 为什么是三省六部？
 
-> 皇上一道旨意 → 中书省规划 → 门下省审议 → 尚书省派发 → 六部执行 → 回奏
+大多数 Multi-Agent 框架的套路是：
 
-## 🚀 Quick Start（30秒体验）
+> *"来，你们几个 AI 自己聊，聊完把结果给我。"*
 
-```bash
-docker run -p 7891:7891 cft0808/edict
+然后你拿到一坨不知道经过了什么处理的结果，无法复现，无法审计，无法干预。
+
+**三省六部的思路完全不同** —— 我们用了一个在中国存在 1400 年的制度架构：
+
+```
+你 (皇上) → 中书省 (规划) → 门下省 (审议) → 尚书省 (派发) → 六部 (执行) → 回奏
 ```
 
-然后打开 http://localhost:7891 查看军机处看板演示。
+这不是花哨的 metaphor，这是**真正的分权制衡**：
+
+| | CrewAI | MetaGPT | AutoGen | **三省六部** |
+|---|:---:|:---:|:---:|:---:|
+| **审核机制** | ❌ 无 | ⚠️ 可选 | ⚠️ Human-in-loop | **✅ 门下省专职审核 · 可封驳** |
+| **实时看板** | ❌ | ❌ | ❌ | **✅ 军机处 Kanban + 时间线** |
+| **任务干预** | ❌ | ❌ | ❌ | **✅ 叫停 / 取消 / 恢复** |
+| **流转审计** | ⚠️ | ⚠️ | ❌ | **✅ 完整奏折存档** |
+| **Agent 健康监控** | ❌ | ❌ | ❌ | **✅ 心跳 + 活跃度检测** |
+| **热切换模型** | ❌ | ❌ | ❌ | **✅ 看板内一键切换 LLM** |
+| **技能管理** | ❌ | ❌ | ❌ | **✅ 查看 / 添加 Skills** |
+| **新闻聚合推送** | ❌ | ❌ | ❌ | **✅ 天下要闻 + 飞书推送** |
+| **部署难度** | 中 | 高 | 中 | **低 · 一键安装 / Docker** |
+
+> **核心差异：制度性审核 + 完全可观测 + 实时可干预**
+> 让 AI 协作像治国一样，有规矩、有审计、有制衡。
 
 ---
 
-## 🤔 Why 三省六部？
+## ✨ 功能全景
 
-与现有多 Agent 框架相比，三省六部在**审核机制**与**可观测性**上独树一帜：
+### 🏛️ 九部制 Agent 架构
+- **三省**（中书·门下·尚书）负责规划、审议、派发
+- **六部**（户·礼·兵·刑·工 + 早朝官）负责专项执行
+- 严格的权限矩阵 —— 谁能给谁发消息，白纸黑字
+- 每个 Agent 独立 Workspace · 独立 Skills · 独立模型
 
-| 维度 | CrewAI | MetaGPT | AutoGen | **三省六部** |
-|------|:------:|:-------:|:-------:|:-----------:|
-| **任务拆解方式** | 角色分工，线性流水线 | 预定义 SOP 流程 | 对话驱动，动态协商 | **三省审议 + 尚书派发，结构化分权** |
-| **审核机制** | ❌ 无内置审核 | ⚠️ 人工审核可选 | ⚠️ 依赖 Human-in-loop | **✅ 门下省专职审核，可封驳重规划** |
-| **看板可视化** | ❌ 无 | ❌ 无 | ❌ 无 | **✅ 实时 Kanban，含时间线 & 健康监控** |
-| **并行执行** | ⚠️ 有限支持 | ⚠️ 基于流程图 | ✅ 支持 | **✅ 六部可并行接旨执行** |
-| **部署复杂度** | 中（需自建编排） | 高（环境依赖多） | 中（需配置对话拓扑） | **低（一键安装 / Docker 30秒启动）** |
+### 📋 军机处看板（10 个功能面板）
 
-> 三省六部的核心差异：**制度性审核 + 实时可观测**，让 AI 协作像治理国家一样有章法。
+<table>
+<tr><td width="50%">
+
+**📋 旨意看板 · Kanban**
+- 按状态列展示全部任务
+- 省部过滤 + 全文搜索
+- 心跳徽章（🟢活跃 🟡停滞 🔴告警）
+- 任务详情 + 完整流转链
+- 叫停 / 取消 / 恢复操作
+
+</td><td width="50%">
+
+**🔭 省部调度 · Monitor**
+- 可视化各状态任务数量
+- 部门分布横向条形图
+- Agent 健康状态实时卡片
+
+</td></tr>
+<tr><td>
+
+**📜 奏折阁 · Memorials**
+- 已完成旨意自动归档为奏折
+- 五阶段时间线：圣旨→中书→门下→六部→回奏
+- 一键复制为 Markdown
+- 按状态筛选
+
+</td><td>
+
+**📜 旨库 · Template Library**
+- 9 个预设圣旨模板
+- 分类筛选 · 参数表单 · 预估时间和费用
+- 预览旨意 → 一键下旨
+
+</td></tr>
+<tr><td>
+
+**👥 官员总览 · Officials**
+- Token 消耗排行榜
+- 活跃度 · 完成数 · 会话统计
+
+</td><td>
+
+**📰 天下要闻 · News**
+- 每日自动采集科技/财经资讯
+- 分类订阅管理 + 飞书推送
+
+</td></tr>
+<tr><td>
+
+**⚙️ 模型配置 · Models**
+- 每个 Agent 独立切换 LLM
+- 应用后自动重启 Gateway（~5秒生效）
+
+</td><td>
+
+**🛠️ 技能配置 · Skills**
+- 各省部已安装 Skills 一览
+- 查看详情 + 添加新技能
+
+</td></tr>
+<tr><td>
+
+**💬 小任务 · Sessions**
+- OC-* 会话实时监控
+- 来源渠道 · 心跳 · 消息预览
+
+</td><td>
+
+**🎬 上朝仪式 · Ceremony**
+- 每日首次打开播放开场动画
+- 今日统计 · 3.5秒自动消失
+
+</td></tr>
+</table>
 
 ---
 
-## ✨ 特性
-
-| 功能 | 说明 |
-|------|------|
-| 🏛️ **9 个专职 Agent** | 中书省·门下省·尚书省 + 户·礼·兵·刑·工 六部 |
-| 📋 **实时看板** | Kanban 看板，按状态/省部过滤，支持全文搜索 |
-| 📊 **工作记录** | 按部门分组的完成历史，含完整流转日志 |
-| ⏱️ **时间线视图** | 全局事件时间线，可视化任务流转过程 |
-| ⚙️ **模型配置** | 直接从看板修改各 Agent 使用的 LLM 模型，实时生效 |
-| 🛠️ **技能配置** | 查看各 Agent 已安装的 Skills |
-| 💊 **心跳监控** | Agent 健康状态实时显示（活跃/停滞/告警） |
-| 🔄 **自动刷新** | 每15秒数据自动同步，倒计时显示 |
-
-## 🖼️ 看板截图
+## 🖼️ 截图
 
 ### 旨意看板
-任务以卡片形式展示，支持按省/部过滤、全文搜索，心跳徽章实时显示 Agent 状态。
-
 ![旨意看板](docs/screenshots/01-kanban-main.png)
 
 <details>
-<summary>展开查看更多截图</summary>
+<summary>📸 展开查看更多截图</summary>
 
-### 早朝简报
-每日自动抓取科技/财经资讯，汇总展示。
-
-![早朝简报](docs/screenshots/02-morning-briefing.png)
+### 天下要闻
+![天下要闻](docs/screenshots/02-morning-briefing.png)
 
 ### 任务流转详情
-点击任意任务卡片，展开完整流转日志，追踪从下旨到回奏的每一步。
-
 ![任务流转详情](docs/screenshots/03-task-detail.png)
 
 ### 模型配置
-一键切换各省/部 Agent 使用的 LLM 模型，更改后自动重启 Gateway（约5秒生效）。
-
 ![模型配置](docs/screenshots/04-model-config.png)
 
 ### 技能配置
-展示各省/部已安装的 OpenClaw Skills，一览各 Agent 的能力边界。
-
 ![技能配置](docs/screenshots/05-skills-config.png)
 
 ### 官员总览
-功绩排行榜 + 各官员 Token 消耗、活跃状态、完成旨意数全面统计。
-
 ![官员总览](docs/screenshots/06-official-overview.png)
 
 </details>
 
 ---
 
-## 🚀 快速开始
+## 🚀 30 秒快速体验
 
-### 前置条件
+### Docker 一键启动
 
-- [OpenClaw](https://openclaw.ai) 已安装并完成初始化
+```bash
+docker run -p 7891:7891 cft0808/edict
+```
+打开 http://localhost:7891 即可体验军机处看板。
+
+### 完整安装
+
+#### 前置条件
+- [OpenClaw](https://openclaw.ai) 已安装
 - Python 3.9+
 - macOS / Linux
 
-### 一键安装
+#### 安装
 
 ```bash
 git clone https://github.com/cft0808/edict.git
 cd edict
-chmod +x install.sh
-./install.sh
+chmod +x install.sh && ./install.sh
 ```
 
-安装脚本会自动完成：
-1. ✅ 创建 9 个 Agent Workspace（`~/.openclaw/workspace-*`）
-2. ✅ 写入各省部的 SOUL.md（角色人格）
-3. ✅ 在 `openclaw.json` 中注册 Agent 及权限矩阵
-4. ✅ 初始化数据目录
-5. ✅ 执行首次数据同步
-6. ✅ 重启 Gateway 使配置生效
+安装脚本自动完成：
+- ✅ 创建 9 个 Agent Workspace（`~/.openclaw/workspace-*`）
+- ✅ 写入各省部 SOUL.md（角色人格 + 工作流规则）
+- ✅ 注册 Agent 及权限矩阵到 `openclaw.json`
+- ✅ 初始化数据目录 + 首次数据同步
+- ✅ 重启 Gateway 使配置生效
 
-### 启动看板
+#### 启动
 
 ```bash
-# 终端 1：启动数据刷新循环（每15秒同步一次）
+# 终端 1：数据刷新循环
 bash scripts/run_loop.sh
 
-# 终端 2：启动看板服务器
+# 终端 2：看板服务器
 python3 dashboard/server.py
 
 # 打开浏览器
 open http://127.0.0.1:7891
 ```
 
+> 💡 详细教程请看 [Getting Started 指南](docs/getting-started.md)
+
 ---
 
 ## 🏛️ 架构
 
 ```
-                         ┌─────────────────────────────┐
-                         │         皇上（用户）          │
-                         │   通过 Feishu / Telegram 下旨  │
-                         └──────────────┬──────────────┘
-                                        │
-                         ┌──────────────▼──────────────┐
-                         │        📜 中书省              │
-                         │   接旨 → 规划 → 拆解任务      │
-                         └──────────────┬──────────────┘
-                                        │ 提交审核
-                         ┌──────────────▼──────────────┐
-                         │        🔍 门下省              │
-                         │   审议方案 → 准奏 / 封驳      │
-                         └──────────────┬──────────────┘
-                                        │ 准奏
-                         ┌──────────────▼──────────────┐
-                         │        📮 尚书省              │
-                         │   派发任务 → 汇总结果 → 回奏  │
-                         └───────┬──────────────┬───────┘
-                    ┌────────────┼──────────────┼────────────┐
-                    │            │              │            │
-          ┌─────────▼──┐ ┌──────▼─────┐ ┌─────▼──────┐ ┌──▼──────┐
-          │  📝 礼部   │ │  💰 户部   │ │  ⚔️ 兵部   │ │ 🔧 工部 │
-          │  文档/规范  │ │  数据/资源  │ │  工程实现  │ │ 基础设施 │
-          └────────────┘ └────────────┘ └────────────┘ └─────────┘
-                              ⚖️ 刑部（合规审计，随时介入）
+                           ┌───────────────────────────────────┐
+                           │          👑 皇上（你）              │
+                           │     Feishu · Telegram · Signal     │
+                           └─────────────────┬─────────────────┘
+                                             │ 下旨
+                           ┌─────────────────▼─────────────────┐
+                           │          📜 中书省 (zhongshu)       │
+                           │       接旨 → 规划 → 拆解子任务       │
+                           └─────────────────┬─────────────────┘
+                                             │ 提交审核
+                           ┌─────────────────▼─────────────────┐
+                           │          🔍 门下省 (menxia)         │
+                           │       审议方案 → 准奏 / 封驳 🚫      │
+                           └─────────────────┬─────────────────┘
+                                             │ 准奏 ✅
+                           ┌─────────────────▼─────────────────┐
+                           │          📮 尚书省 (shangshu)       │
+                           │     派发任务 → 协调六部 → 汇总回奏    │
+                           └───┬──────┬──────┬──────┬──────┬───┘
+                               │      │      │      │      │
+                         ┌─────▼┐ ┌───▼───┐ ┌▼─────┐ ┌───▼─┐ ┌▼─────┐
+                         │💰 户部│ │📝 礼部│ │⚔️ 兵部│ │⚖️ 刑部│ │🔧 工部│
+                         │ 数据  │ │ 文档  │ │ 工程  │ │ 合规  │ │ 基建  │
+                         └──────┘ └──────┘ └──────┘ └─────┘ └──────┘
 ```
 
 ### 各省部职责
 
-| 部门 | Agent ID | 职责 |
-|------|----------|------|
-| 📜 中书省 | `zhongshu` | 接旨、规划任务、生成执行方案 |
-| 🔍 门下省 | `menxia` | 审议方案、把关质量、准奏/封驳 |
-| 📮 尚书省 | `shangshu` | 派发任务、协调六部、汇总回奏 |
-| 📝 礼部 | `libu` | 文档撰写、报告生成、规范制定 |
-| 💰 户部 | `hubu` | 数据处理、资源生成、成本核算 |
-| ⚔️ 兵部 | `bingbu` | 代码实现、算法开发、系统巡检 |
-| ⚖️ 刑部 | `xingbu` | 安全审计、合规检查、红线管控 |
-| 🔧 工部 | `gongbu` | CI/CD、基础设施、自动化工具 |
+| 部门 | Agent ID | 职责 | 擅长领域 |
+|------|----------|------|---------|
+| 📜 **中书省** | `zhongshu` | 接旨、规划、拆解 | 需求理解、任务分解、方案设计 |
+| 🔍 **门下省** | `menxia` | 审议、把关、封驳 | 质量评审、风险识别、标准把控 |
+| 📮 **尚书省** | `shangshu` | 派发、协调、汇总 | 任务调度、进度跟踪、结果整合 |
+| 💰 **户部** | `hubu` | 数据、资源、核算 | 数据处理、报表生成、成本分析 |
+| 📝 **礼部** | `libu` | 文档、规范、报告 | 技术文档、API 文档、规范制定 |
+| ⚔️ **兵部** | `bingbu` | 代码、算法、巡检 | 功能开发、Bug 修复、代码审查 |
+| ⚖️ **刑部** | `xingbu` | 安全、合规、审计 | 安全扫描、合规检查、红线管控 |
+| 🔧 **工部** | `gongbu` | CI/CD、部署、工具 | Docker 配置、流水线、自动化 |
 
-### 权限矩阵（能发消息给谁）
+### 权限矩阵
 
-| From → To | 中书 | 门下 | 尚书 | 户 | 礼 | 兵 | 刑 | 工 |
-|-----------|:----:|:----:|:----:|:--:|:--:|:--:|:--:|:--:|
-| 中书省 | — | ✅ | ✅ | | | | | |
-| 门下省 | ✅ | — | ✅ | | | | | |
-| 尚书省 | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 六部 | | | ✅ | | | | | |
+> 不是想发就能发 —— 真正的分权制衡
 
----
-
-## 📋 看板功能
-
-### 🏠 总览
-- **流程管线**：可视化各状态的任务数量
-- **任务分布图**：按省/部和状态的横向条形图
-- **Agent 健康卡**：实时显示各 Agent 心跳状态与当前模型
-
-### 📋 任务看板
-- **Kanban 列视图**：Inbox / 中书规划 / 门下审议 / 已派发 / 执行中 / 待审查 / 已完成 / 阻塞
-- **省部过滤**：一键只看某个省或部的任务
-- **全文搜索**：跨任务ID/标题/官员/省部
-- **心跳徽章**：绿色=活跃，黄色=可能停滞，红色闪烁=已停滞
-- **详情抽屉**：点击任务卡片，侧边展开完整信息+活动日志
-
-### 📊 工作记录
-- 按省/部分组展示所有已完成任务
-- 点击展开流转日志（完整的流转链路）
-- 产出物验收状态
-
-### ⏱️ 时间线
-- 全局事件时间线，按时间倒序排列
-- 彩色节点标注来源省/部
-- 展示完整流转链路
-
-### ⚙️ 模型配置
-- 展示每个 Agent 当前使用的 LLM 模型
-- 下拉选择新模型后点击"应用更改"
-- **自动**写入 `openclaw.json` 并重启 Gateway（约5秒生效）
-- 变更记录永久存档
-
-### 🛠️ 技能配置
-- 展示各省/部已安装的 OpenClaw Skills
-- 技能名称与描述一览
-
----
-
-## ⚙️ 配置
+| From ↓ \ To → | 中书 | 门下 | 尚书 | 户 | 礼 | 兵 | 刑 | 工 |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **中书省** | — | ✅ | ✅ | | | | | |
+| **门下省** | ✅ | — | ✅ | | | | | |
+| **尚书省** | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **六部** | | | ✅ | | | | | |
 
 ### 任务状态流转
 
 ```
-Inbox → Zhongshu → Menxia → Assigned → Doing → Review → Done
-                                                        ↗
-                                              Blocked ──
-```
-
-### 自定义 Agent
-
-在 `agents/<id>/SOUL.md` 中修改 Agent 的人格、职责和输出格式。
-
-### 添加新的六部成员
-
-1. 在 `agents/` 下新建目录，添加 `SOUL.md`
-2. 在 `install.sh` 的 `AGENTS` 数组中添加新 ID
-3. 在 `scripts/sync_agent_config.py` 的 `ID_LABEL` 中添加元信息
-4. 重新运行 `./install.sh`
-
-### 数据目录结构
-
-```
-data/
-├── live_status.json          # 实时看板数据（每15秒更新）
-├── agent_config.json         # Agent 配置（模型、Skills）
-├── tasks_source.json         # 手动任务数据源
-├── pending_model_changes.json # 待执行的模型变更
-├── model_change_log.json     # 模型变更历史
-└── sync_status.json          # 同步状态
+收件 Inbox → 中书规划 → 门下审议 → 已派发 → 执行中 → 待审查 → ✅ 已完成
+                 ↑          │                              │
+                 └──── 封驳 ─┘                    阻塞 Blocked
 ```
 
 ---
@@ -276,41 +299,42 @@ data/
 
 ```
 edict/
-├── README.md                  # 本文件
-├── README_EN.md               # English docs
-├── LICENSE                    # MIT License
-├── CONTRIBUTING.md            # 贡献指南
-├── install.sh                 # 一键安装脚本
-├── agents/                    # Agent 配置模板
-│   ├── zhongshu/SOUL.md       # 中书省人格
-│   ├── menxia/SOUL.md         # 门下省人格
-│   ├── shangshu/SOUL.md       # 尚书省人格
-│   └── [hubu|libu|bingbu|xingbu|gongbu]/SOUL.md
+├── agents/                     # 9 个 Agent 的人格模板
+│   ├── zhongshu/SOUL.md        # 中书省 · 规划中枢
+│   ├── menxia/SOUL.md          # 门下省 · 审议把关
+│   ├── shangshu/SOUL.md        # 尚书省 · 调度大脑
+│   ├── hubu/SOUL.md            # 户部 · 数据资源
+│   ├── libu/SOUL.md            # 礼部 · 文档规范
+│   ├── bingbu/SOUL.md          # 兵部 · 工程实现
+│   ├── xingbu/SOUL.md          # 刑部 · 合规审计
+│   ├── gongbu/SOUL.md          # 工部 · 基础设施
+│   └── zaochao/SOUL.md         # 早朝官 · 情报枢纽
 ├── dashboard/
-│   ├── dashboard.html         # 看板前端（单文件，无依赖）
-│   └── server.py              # 本地 API 服务器（Python标准库）
+│   ├── dashboard.html          # 军机处看板（单文件 · 零依赖 · ~2200 行）
+│   └── server.py               # API 服务器（Python 标准库 · 零依赖）
 ├── scripts/
-│   ├── sync_from_openclaw_runtime.py  # 从 OpenClaw 会话同步任务
-│   ├── sync_agent_config.py           # 同步 Agent 配置
-│   ├── apply_model_changes.py         # 应用模型变更
-│   ├── refresh_live_data.py           # 生成 live_status.json
-│   └── run_loop.sh                    # 自动刷新循环（每15秒）
-├── docs/
-│   ├── getting-started.md     # 详细上手指南
-│   ├── architecture.md        # 架构深度解析
-│   ├── configuration.md       # 配置参考
-│   └── screenshots/           # 截图
-└── data/                      # 运行时数据（gitignored）
-    └── .gitkeep
+│   ├── run_loop.sh             # 数据刷新循环（每 15 秒）
+│   ├── sync_from_openclaw_runtime.py
+│   ├── sync_agent_config.py
+│   ├── sync_officials_stats.py
+│   ├── fetch_morning_news.py
+│   ├── refresh_live_data.py
+│   ├── apply_model_changes.py
+│   └── kanban_update.py
+├── data/                       # 运行时数据（gitignored）
+├── docs/                       # 文档 + 截图
+├── install.sh                  # 一键安装脚本
+├── CONTRIBUTING.md             # 贡献指南
+└── LICENSE                     # MIT License
 ```
 
 ---
 
-## 🔧 使用方法
+## 🎯 使用方法
 
 ### 向 AI 下旨
 
-通过你配置的消息渠道（Feishu/Telegram/Signal）发送消息给 `zhongshu` Agent：
+通过 Feishu / Telegram / Signal 给中书省发消息：
 
 ```
 给我设计一个用户注册系统，要求：
@@ -321,44 +345,82 @@ edict/
 5. 部署文档
 ```
 
-中书省会自动：
-1. 回复确认收旨
-2. 规划子任务分配给各部门
-3. 发给门下省审核
-4. 审核通过后由尚书省统一派发
-5. 各部并行/串行执行
-6. 汇总结果回奏
+**然后坐好，看戏：**
 
-### 手动创建任务
+1. 📜 中书省接旨，规划子任务分配方案
+2. 🔍 门下省审议，通过 / 封驳打回重规划
+3. 📮 尚书省准奏，派发给兵部 + 工部 + 礼部
+4. ⚔️ 各部并行执行，进度实时可见
+5. 📮 尚书省汇总结果，回奏给你
 
-直接编辑 `data/tasks_source.json`：
+全程可在**军机处看板**实时监控，随时可以**叫停、取消、恢复**。
 
-```json
-[
-  {
-    "id": "JJC-20240101-001",
-    "title": "任务标题",
-    "official": "兵部尚书",
-    "org": "兵部",
-    "state": "Doing",
-    "now": "当前进展描述",
-    "eta": "2024-01-02 18:00",
-    "block": "无",
-    "output": "/path/to/output",
-    "ac": "验收标准"
-  }
-]
-```
+### 使用圣旨模板
+
+> 看板 → 📜 旨库 → 选模板 → 填参数 → 下旨
+
+9 个预设模板：周报生成 · 代码审查 · API 设计 · 竞品分析 · 数据报告 · 博客文章 · 部署方案 · 邮件文案 · 站会摘要
+
+### 自定义 Agent
+
+编辑 `agents/<id>/SOUL.md` 即可修改 Agent 的人格、职责和输出规范。
 
 ---
 
-## 🤝 贡献
+## 🔧 技术亮点
 
-欢迎贡献！请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
+| 特点 | 说明 |
+|------|------|
+| **零依赖** | 看板 + 服务器完全基于 Python 标准库 + 原生 HTML/CSS/JS |
+| **单文件前端** | `dashboard.html` 一个文件，零外部依赖 |
+| **纯 stdlib 后端** | `server.py` 基于 `http.server`，无需 pip install |
+| **一键安装** | `install.sh` 自动完成全部配置 |
+| **15 秒同步** | 数据自动刷新，看板倒计时显示 |
+| **每日仪式** | 首次打开播放上朝开场动画 |
 
-- 🐛 [提交 Bug](https://github.com/cft0808/edict/issues/new?template=bug_report.md)
-- 💡 [功能建议](https://github.com/cft0808/edict/issues/new?template=feature_request.md)
-- 🔧 [提交 PR](https://github.com/cft0808/edict/pulls)
+---
+
+## 🗺️ Roadmap
+
+- [x] 九部制 Agent 架构 + 权限矩阵
+- [x] 军机处实时看板（10 个功能面板）
+- [x] 任务叫停 / 取消 / 恢复
+- [x] 奏折系统（自动归档 + 五阶段时间线）
+- [x] 圣旨模板库（9 个预设 + 参数表单）
+- [x] 上朝仪式感动画
+- [x] 天下要闻 + 飞书推送 + 订阅管理
+- [x] 模型热切换 + 技能管理 + 技能添加
+- [x] 官员总览 + Token 消耗统计
+- [x] 小任务 / 会话监控
+- [ ] 功过簿（Agent 绩效评分体系）
+- [ ] 御批模式（人工审批 + 一键准奏/封驳）
+- [ ] 国史馆（知识库检索 + 引用溯源）
+- [ ] 急递铺（Agent 间实时消息流可视化）
+- [ ] 年度大考（Agent 年度绩效报告）
+- [ ] Docker Compose 一键部署
+- [ ] 移动端适配
+
+---
+
+## 🤝 参与贡献
+
+欢迎任何形式的贡献！详见 [CONTRIBUTING.md](CONTRIBUTING.md)
+
+特别欢迎的方向：
+- 🎨 **UI 增强**：深色/浅色主题、响应式、动画优化
+- 🤖 **新 Agent**：适合特定场景的专职 Agent 角色
+- 📦 **Skills 生态**：各部门专用技能包
+- 🔗 **集成扩展**：Notion · Jira · Linear · GitHub Issues
+- 🌐 **国际化**：日文 · 韩文 · 西班牙文
+- 📱 **移动端**：响应式适配、PWA
+
+---
+
+## ⭐ Star History
+
+如果这个项目让你会心一笑，请给个 Star ⚔️
+
+[![Star History Chart](https://api.star-history.com/svg?repos=cft0808/edict&type=Date)](https://star-history.com/#cft0808/edict&Date)
 
 ---
 
@@ -369,5 +431,6 @@ edict/
 ---
 
 <p align="center">
-  <sub>⚔️ 以古制御新技，以智慧驾驭 AI</sub>
+  <strong>⚔️ 以古制御新技，以智慧驾驭 AI</strong><br>
+  <sub>Governing AI with the wisdom of ancient empires</sub>
 </p>

@@ -134,16 +134,61 @@ def main():
             return
     lock_file.touch()
 
+    # 读取用户配置
+    config_file = DATA / 'morning_brief_config.json'
+    config = {}
+    try:
+        config = json.loads(config_file.read_text())
+    except Exception:
+        pass
+
+    # 已启用的分类
+    enabled_cats = set()
+    if config.get('categories'):
+        for c in config['categories']:
+            if c.get('enabled', True):
+                enabled_cats.add(c['name'])
+    else:
+        enabled_cats = set(FEEDS.keys())
+
+    # 用户自定义关键词（全局加权）
+    user_keywords = [kw.lower() for kw in config.get('keywords', [])]
+
+    # 合并自定义 RSS 源
+    custom_feeds = config.get('custom_feeds', [])
+    merged_feeds = {}
+    for cat, feeds in FEEDS.items():
+        if cat in enabled_cats:
+            merged_feeds[cat] = list(feeds)
+    for cf in custom_feeds:
+        cat = cf.get('category', '')
+        if cat in enabled_cats:
+            merged_feeds.setdefault(cat, []).append((cf.get('name', '自定义'), cf.get('url', '')))
+
     print(f'[朝报] 开始采集 {today}...')
+    print(f'  启用分类: {", ".join(enabled_cats)}')
+    if user_keywords:
+        print(f'  关注词: {", ".join(user_keywords)}')
+    if custom_feeds:
+        print(f'  自定义源: {len(custom_feeds)} 个')
+
     result = {
         'date': today,
         'generated_at': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'categories': {}
     }
 
-    for category, feeds in FEEDS.items():
+    for category, feeds in merged_feeds.items():
         print(f'  采集 {category}...', end='', flush=True)
         items = fetch_category(category, feeds)
+        # Boost items matching user keywords
+        if user_keywords:
+            for item in items:
+                text = (item.get('title', '') + ' ' + item.get('summary', '')).lower()
+                item['_kw_hits'] = sum(1 for kw in user_keywords if kw in text)
+            items.sort(key=lambda x: x.get('_kw_hits', 0), reverse=True)
+            for item in items:
+                item.pop('_kw_hits', None)
         result['categories'][category] = items
         print(f' {len(items)} 条')
 

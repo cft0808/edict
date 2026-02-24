@@ -195,9 +195,48 @@
     .sk-hdr{display:flex;align-items:center;gap:9px;padding:11px 14px;background:var(--panel2);border-bottom:1px solid var(--line)}
     .sk-emoji{font-size:18px}.sk-name{font-size:14px;font-weight:700}.sk-cnt{font-size:11px;color:var(--muted);margin-left:auto}
     .sk-list{padding:10px}
-    .sk-item{display:flex;gap:8px;padding:6px 8px;border-radius:7px;font-size:12px;margin-bottom:3px}.sk-item:hover{background:var(--panel2)}
+    .sk-item{display:flex;gap:8px;padding:8px 10px;border-radius:7px;font-size:12px;margin-bottom:3px;cursor:pointer;border:1px solid transparent;transition:all .12s}
+    .sk-item:hover{background:var(--panel2);border-color:var(--line)}
     .si-name{font-weight:600;min-width:100px}.si-desc{color:var(--muted);flex:1;line-height:1.4}
+    .si-arrow{color:var(--muted);font-size:14px;opacity:.3;transition:opacity .12s}.sk-item:hover .si-arrow{opacity:1}
     .sk-empty{font-size:12px;color:var(--muted);padding:12px;text-align:center;opacity:.6}
+    .sk-add{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;font-size:12px;color:var(--acc);cursor:pointer;border-top:1px solid var(--line);transition:background .12s}
+    .sk-add:hover{background:var(--panel2)}
+
+    /* skill detail modal */
+    .sk-modal-body{max-height:70vh;overflow-y:auto}
+    .sk-md{font-size:13px;line-height:1.7;color:var(--text)}
+    .sk-md h1,.sk-md h2,.sk-md h3{margin:16px 0 8px;color:var(--text)}
+    .sk-md h1{font-size:18px}.sk-md h2{font-size:15px;border-bottom:1px solid var(--line);padding-bottom:6px}.sk-md h3{font-size:13px}
+    .sk-md p{margin:6px 0}
+    .sk-md ul,.sk-md ol{padding-left:20px;margin:6px 0}
+    .sk-md li{margin:3px 0}
+    .sk-md code{font-size:11px;background:var(--panel2);padding:2px 6px;border-radius:4px;font-family:monospace}
+    .sk-md pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;margin:8px 0}
+    .sk-md pre code{background:none;padding:0}
+    .sk-md table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0}
+    .sk-md th,.sk-md td{padding:6px 10px;border:1px solid var(--line);text-align:left}
+    .sk-md th{background:var(--panel2)}
+    .sk-md hr{border:none;border-top:1px solid var(--line);margin:14px 0}
+    .sk-path{font-size:10px;color:var(--muted);padding:8px 0;word-break:break-all;border-top:1px solid var(--line);margin-top:12px}
+
+    /* ══ SESSIONS TAB ══ */
+    .sess-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+    .sess-filter{font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .12s}
+    .sess-filter:hover{border-color:var(--acc);color:var(--text)}
+    .sess-filter.active{border-color:var(--acc);color:var(--acc);background:#0a1228}
+    .sess-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
+    .sess-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;transition:border-color .12s}
+    .sess-card:hover{border-color:#2e3d6a}
+    .sc-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .sc-emoji{font-size:20px}
+    .sc-agent{font-size:13px;font-weight:700}
+    .sc-org{font-size:11px;color:var(--muted)}
+    .sc-title{font-size:13px;font-weight:600;margin-bottom:6px;line-height:1.4}
+    .sc-now{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px}
+    .sc-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .sc-id{font-size:10px;color:var(--acc);font-weight:600}
+    .sc-time{font-size:10px;color:var(--muted);margin-left:auto}
 
     /* ══ TASK ACTIONS ══ */
     .task-actions{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
@@ -411,9 +450,91 @@
     .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
     .sec-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px}
     code{font-size:11px;background:var(--panel2);padding:2px 6px;border-radius:4px;font-family:monospace}
+
+    /* ══ COURT CEREMONY ══ */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&display=swap');
+    .ceremony-bg{position:fixed;inset:0;z-index:9999;background:#07090f;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;animation:crmFadeIn .6s ease forwards;cursor:pointer}
+    .ceremony-bg.out{animation:crmFadeOut .5s ease forwards}
+    .crm-glow{position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(106,158,255,.08),transparent 70%);animation:crmPulse 3s ease-in-out infinite}
+    .crm-line1{font-family:'Noto Serif SC',serif;font-size:52px;font-weight:900;color:#dde4f8;letter-spacing:.15em;opacity:0;transform:translateY(20px)}
+    .crm-line2{font-family:'Noto Serif SC',serif;font-size:22px;font-weight:700;color:var(--acc);letter-spacing:.2em;margin-top:12px;opacity:0;transform:translateY(15px)}
+    .crm-line3{font-size:14px;color:var(--muted);margin-top:24px;opacity:0;letter-spacing:.05em}
+    .crm-date{font-size:12px;color:#2a3555;margin-top:40px;opacity:0;letter-spacing:.08em}
+    .crm-skip{font-size:11px;color:#2a3555;margin-top:18px;opacity:0;animation:crmChar .4s 2.5s forwards}
+    .crm-line1.in{animation:crmSlideUp .6s .3s ease forwards}
+    .crm-line2.in{animation:crmSlideUp .5s 1.1s ease forwards}
+    .crm-line3.in{animation:crmSlideUp .5s 1.6s ease forwards}
+    .crm-date.in{animation:crmChar .4s 2s ease forwards}
+    @keyframes crmFadeIn{to{opacity:1}}
+    @keyframes crmFadeOut{to{opacity:0;pointer-events:none}}
+    @keyframes crmSlideUp{to{opacity:1;transform:translateY(0)}}
+    @keyframes crmChar{to{opacity:1}}
+    @keyframes crmPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:.8}}
+
+    /* ══ MEMORIAL TAB ══ */
+    .mem-list{display:flex;flex-direction:column;gap:8px}
+    .mem-card{display:flex;gap:14px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .12s}
+    .mem-card:hover{border-color:var(--acc)}
+    .mem-icon{font-size:28px;flex-shrink:0;margin-top:2px}
+    .mem-info{flex:1;min-width:0}
+    .mem-title{font-size:14px;font-weight:700;margin-bottom:4px}
+    .mem-sub{font-size:11px;color:var(--muted);line-height:1.5}
+    .mem-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+    .mem-tag{font-size:10px;padding:2px 8px;border-radius:4px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+    .mem-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+    .mem-date{font-size:10px;color:var(--muted)}
+    .mem-cost{font-size:10px;color:var(--acc)}
+    .mem-empty{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+
+    /* memorial detail */
+    .md-timeline{position:relative;padding-left:24px;margin:16px 0}
+    .md-timeline::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--line)}
+    .md-tl-item{position:relative;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+    .md-tl-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+    .md-tl-dot{position:absolute;left:-20px;top:3px;width:10px;height:10px;border-radius:50%;background:var(--acc);border:2px solid var(--bg)}
+    .md-tl-dot.green{background:var(--ok)}
+    .md-tl-dot.yellow{background:var(--warn)}
+    .md-tl-dot.red{background:var(--danger)}
+    .md-tl-from{font-size:11px;font-weight:700;color:var(--acc)}
+    .md-tl-to{font-size:11px;color:var(--muted)}
+    .md-tl-remark{font-size:12px;margin-top:3px;line-height:1.5}
+    .md-tl-time{font-size:10px;color:var(--muted);margin-top:2px}
+
+    /* ══ TEMPLATE TAB ══ */
+    .tpl-cats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+    .tpl-cat{font-size:12px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .12s}
+    .tpl-cat:hover{border-color:var(--acc);color:var(--text)}
+    .tpl-cat.active{border-color:var(--acc);color:var(--acc);background:#0a1228}
+    .tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+    .tpl-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;transition:border-color .12s;cursor:pointer;display:flex;flex-direction:column}
+    .tpl-card:hover{border-color:var(--acc)}
+    .tpl-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .tpl-icon{font-size:24px}
+    .tpl-name{font-size:14px;font-weight:700}
+    .tpl-pop{font-size:10px;color:var(--muted);margin-left:auto}
+    .tpl-desc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px;flex:1}
+    .tpl-footer{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .tpl-dept{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--panel2);color:var(--acc)}
+    .tpl-est{font-size:10px;color:var(--muted);margin-left:auto}
+    .tpl-go{font-size:11px;padding:5px 14px;border-radius:6px;background:var(--acc);color:#fff;border:none;cursor:pointer;font-weight:600;margin-left:8px;transition:opacity .12s}
+    .tpl-go:hover{opacity:.85}
+    .tpl-form{margin-top:18px}
+    .tpl-field{margin-bottom:14px}
+    .tpl-label{font-size:12px;font-weight:600;display:block;margin-bottom:6px}
+    .tpl-input{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);font-size:13px;outline:none}
   </style>
 </head>
 <body>
+<!-- COURT CEREMONY -->
+<div class="ceremony-bg" id="ceremony" style="display:none" onclick="skipCeremony()">
+  <div class="crm-glow"></div>
+  <div class="crm-line1" id="crm-l1">早朝开始</div>
+  <div class="crm-line2" id="crm-l2">各部听旨</div>
+  <div class="crm-line3" id="crm-l3"></div>
+  <div class="crm-date" id="crm-date"></div>
+  <div class="crm-skip">点击任意处跳过</div>
+</div>
+
 <div class="wrap">
 
   <!-- HEADER -->
@@ -437,6 +558,9 @@
     <div class="tab" data-tab="officials">👥 官员总览</div>
     <div class="tab" data-tab="models">⚙️ 模型配置</div>
     <div class="tab" data-tab="skills">🛠️ 技能配置</div>
+    <div class="tab" data-tab="sessions">💬 小任务 <span class="tbadge" id="tb-s">0</span></div>
+    <div class="tab" data-tab="memorials">📜 奏折阁 <span class="tbadge" id="tb-mem">0</span></div>
+    <div class="tab" data-tab="templates">📜 旨库</div>
     <div class="tab" data-tab="morning">📰 天下要闻</div>
   </div>
 
@@ -470,8 +594,53 @@
 
   <!-- ══ 技能配置 ══ -->
   <div class="panel" id="panel-skills">
-    <div class="sec-title" style="margin-bottom:14px">各省部 · Skills 配置</div>
+    <div class="sec-title" style="margin-bottom:14px">各省部 · Skills 配置 <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--muted)">— 点击技能查看详情，底部可添加新技能</span></div>
     <div class="skills-grid" id="skills-grid"></div>
+  </div>
+
+  <!-- ══ 小任务/会话监控 ══ -->
+  <div class="panel" id="panel-sessions">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">飞书/Telegram 中的日常对话与小任务 · 非JJC圣旨类任务</div>
+    <div class="sess-filters">
+      <span style="font-size:11px;color:var(--muted)">筛选：</span>
+      <span class="sess-filter active" data-sf="all" onclick="filterSessions('all',this)">全部</span>
+      <span class="sess-filter" data-sf="active" onclick="filterSessions('active',this)">进行中</span>
+      <span class="sess-filter" data-sf="zhongshu" onclick="filterSessions('zhongshu',this)">中书省</span>
+      <span class="sess-filter" data-sf="shangshu" onclick="filterSessions('shangshu',this)">尚书省</span>
+      <span class="sess-filter" data-sf="libu" onclick="filterSessions('libu',this)">礼部</span>
+      <span class="sess-filter" data-sf="hubu" onclick="filterSessions('hubu',this)">户部</span>
+      <span class="sess-filter" data-sf="bingbu" onclick="filterSessions('bingbu',this)">兵部</span>
+      <span class="sess-filter" data-sf="gongbu" onclick="filterSessions('gongbu',this)">工部</span>
+    </div>
+    <div id="sess-grid" class="sess-grid"></div>
+  </div>
+
+  <!-- ══ 奏折阁 ══ -->
+  <div class="panel" id="panel-memorials">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="flex:1">
+        <div class="sec-title" style="margin-bottom:2px">📜 奏折阁 · 旨意存档</div>
+        <div style="font-size:11px;color:var(--muted)">任务完成后自动生成奏折，记录从下旨到完成的完整过程</div>
+      </div>
+      <select id="mem-filter" onchange="renderMemorials()" style="font-size:11px;padding:4px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;color:var(--text);outline:none">
+        <option value="all">全部</option>
+        <option value="Done">已完成</option>
+        <option value="Cancelled">已取消</option>
+      </select>
+    </div>
+    <div id="mem-list" class="mem-list"></div>
+  </div>
+
+  <!-- ══ 圣旨模板库 ══ -->
+  <div class="panel" id="panel-templates">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="flex:1">
+        <div class="sec-title" style="margin-bottom:2px">📜 旨库 · 圣旨模板</div>
+        <div style="font-size:11px;color:var(--muted)">选择模板、填写参数、一键下旨 — 降低使用门槛，快速启动任务</div>
+      </div>
+    </div>
+    <div class="tpl-cats" id="tpl-cats"></div>
+    <div class="tpl-grid" id="tpl-grid"></div>
   </div>
 
   <!-- ══ 天下要闻 ══ -->
@@ -927,7 +1096,122 @@ function renderSkills(cfg){
   if(!cfg||!cfg.agents){document.getElementById('skills-grid').innerHTML='<div class="empty">无法加载</div>';return}
   document.getElementById('skills-grid').innerHTML=cfg.agents.map(ag=>`
     <div class="sk-card"><div class="sk-hdr"><span class="sk-emoji">${ag.emoji||'🏛️'}</span><span class="sk-name">${esc(ag.label)}</span><span class="sk-cnt">${(ag.skills||[]).length} 技能</span></div>
-    <div class="sk-list">${!(ag.skills||[]).length?'<div class="sk-empty">暂无 Skills</div>':(ag.skills||[]).map(sk=>`<div class="sk-item"><span class="si-name">📦 ${esc(sk.name)}</span><span class="si-desc">${esc(sk.description||'无描述')}</span></div>`).join('')}</div></div>`).join('')
+    <div class="sk-list">${!(ag.skills||[]).length?'<div class="sk-empty">暂无 Skills</div>':(ag.skills||[]).map(sk=>`<div class="sk-item" onclick="openSkill('${esc(ag.id)}','${esc(sk.name)}')"><span class="si-name">📦 ${esc(sk.name)}</span><span class="si-desc">${esc(sk.description||'无描述')}</span><span class="si-arrow">›</span></div>`).join('')}</div>
+    <div class="sk-add" onclick="openAddSkillForm('${esc(ag.id)}','${esc(ag.label)}')">＋ 添加技能</div></div>`).join('')
+}
+
+/* skill detail modal — 写入 modal-body (复用已有 modal) */
+async function openSkill(agentId, skillName){
+  document.getElementById('modal-body').innerHTML=`
+    <div style="font-size:11px;color:var(--acc);font-weight:700;letter-spacing:.04em;margin-bottom:4px">${esc(agentId.toUpperCase())}</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:16px">📦 ${esc(skillName)}</div>
+    <div id="sk-modal-content" class="sk-modal-body"><div style="color:var(--muted);font-size:12px;padding:24px;text-align:center">⟳ 加载中…</div></div>`;
+  document.getElementById('modal-bg').classList.add('open');
+  try{
+    const r = await fetchJ(API+'/skill-content/'+encodeURIComponent(agentId)+'/'+encodeURIComponent(skillName));
+    const el = document.getElementById('sk-modal-content');
+    if(!el) return;
+    if(r.ok){
+      const html = simpleMarkdown(r.content||'');
+      el.innerHTML = `<div class="sk-md">${html}</div><div class="sk-path">📂 ${esc(r.path||'')}</div>`;
+    } else {
+      el.innerHTML = `<div style="color:#ff5270;font-size:13px;padding:16px">❌ ${esc(r.error||'无法读取')}</div>`;
+    }
+  }catch(e){
+    const el = document.getElementById('sk-modal-content');
+    if(el) el.innerHTML = `<div style="color:#ff5270;font-size:13px;padding:16px">❌ 服务器连接失败</div>`;
+  }
+}
+
+/* simple markdown → HTML */
+function simpleMarkdown(md){
+  let h = esc(md);
+  h = h.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+  h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  h = h.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  h = h.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  h = h.replace(/\*(.+?)\*/g, '<i>$1</i>');
+  h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+  h = h.replace(/^---$/gm, '<hr>');
+  h = h.replace(/^\|(.+)\|$/gm, (m,row)=>{
+    const cells=row.split('|').map(c=>c.trim());
+    return '<tr>'+cells.map(c=>`<td>${c}</td>`).join('')+'</tr>';
+  });
+  h = h.replace(/(<tr>.*<\/tr>\n?)+/g, '<table>$&</table>');
+  h = h.replace(/^- (.+)$/gm, '<li>$1</li>');
+  h = h.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
+  h = h.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+  h = h.replace(/\n\n/g, '</p><p>');
+  h = '<p>' + h + '</p>';
+  h = h.replace(/<p><\/p>/g, '');
+  h = h.replace(/<p>(<h[123]>)/g, '$1');
+  h = h.replace(/(<\/h[123]>)<\/p>/g, '$1');
+  h = h.replace(/<p>(<pre>)/g, '$1');
+  h = h.replace(/(<\/pre>)<\/p>/g, '$1');
+  h = h.replace(/<p>(<ul>)/g, '$1');
+  h = h.replace(/(<\/ul>)<\/p>/g, '$1');
+  h = h.replace(/<p>(<table>)/g, '$1');
+  h = h.replace(/(<\/table>)<\/p>/g, '$1');
+  h = h.replace(/<p>(<hr>)<\/p>/g, '$1');
+  return h;
+}
+
+/* ══ ADD SKILL FORM (规范化表单) ══ */
+function openAddSkillForm(agentId, agentLabel){
+  document.getElementById('modal-body').innerHTML=`
+    <div style="font-size:11px;color:var(--acc);font-weight:700;letter-spacing:.04em;margin-bottom:4px">为 ${esc(agentLabel)} 添加技能</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:18px">＋ 新增 Skill</div>
+    <div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:18px;font-size:12px;line-height:1.7;color:var(--muted)">
+      <b style="color:var(--text)">📋 Skill 规范说明</b><br>
+      • 技能名称使用<b style="color:var(--text)">小写英文 + 连字符</b>，如 <code style="background:var(--bg);padding:2px 6px;border-radius:4px">data-analysis</code>、<code style="background:var(--bg);padding:2px 6px;border-radius:4px">code-review</code><br>
+      • 创建后会在 <code style="background:var(--bg);padding:2px 6px;border-radius:4px">~/.openclaw/workspace-${esc(agentId)}/skills/{name}/SKILL.md</code> 生成模板文件<br>
+      • SKILL.md 使用 <b style="color:var(--text)">YAML frontmatter</b> 头部（name + description），正文为 Markdown 格式<br>
+      • 技能会在 agent 收到相关任务时<b style="color:var(--text)">自动激活</b>，无需手动触发
+    </div>
+    <form onsubmit="submitAddSkill(event,'${esc(agentId)}','${esc(agentLabel)}')" style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">技能名称 <span style="color:#ff5270">*</span></label>
+        <input id="ask-name" type="text" required placeholder="如 data-analysis, code-review, doc-writer"
+          pattern="[a-z0-9][a-z0-9\\-]*[a-z0-9]" title="小写英文+连字符，至少2个字符"
+          style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);font-size:13px;outline:none"
+          oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9\\-]/g,'')">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">技能描述 <span style="color:var(--muted);font-weight:400">(一句话说明用途)</span></label>
+        <input id="ask-desc" type="text" placeholder="如：负责代码审查与质量检测，发现潜在Bug和安全风险"
+          style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);font-size:13px;outline:none">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">触发条件 <span style="color:var(--muted);font-weight:400">(可选，何时激活此技能)</span></label>
+        <input id="ask-trigger" type="text" placeholder="如：当任务涉及代码质量、安全审查时激活"
+          style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);font-size:13px;outline:none">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px">
+        <button type="button" class="btn btn-g" onclick="closeModal()" style="padding:8px 20px;font-size:13px">取消</button>
+        <button type="submit" id="ask-submit" class="btn" style="padding:8px 20px;font-size:13px;background:var(--acc);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">📦 创建技能</button>
+      </div>
+    </form>`;
+  document.getElementById('modal-bg').classList.add('open');
+  document.getElementById('ask-name').focus();
+}
+
+async function submitAddSkill(e, agentId, agentLabel){
+  e.preventDefault();
+  const name = document.getElementById('ask-name').value.trim();
+  const desc = document.getElementById('ask-desc').value.trim();
+  const trigger = document.getElementById('ask-trigger').value.trim();
+  if(!name) return;
+  const btn = document.getElementById('ask-submit');
+  btn.disabled=true; btn.textContent='⟳ 创建中…';
+  try{
+    const r = await postJ(API+'/add-skill', {agentId, skillName:name, description:desc, trigger:trigger});
+    if(r.ok){
+      toast(`✅ 技能 ${name} 已添加到 ${agentLabel}`, 'ok');
+      closeModal();
+      loadAgentConfig();
+    } else { toast(r.error||'添加失败','err'); btn.disabled=false; btn.textContent='📦 创建技能'; }
+  }catch(e){ toast('服务器连接失败','err'); btn.disabled=false; btn.textContent='📦 创建技能'; }
 }
 
 /* ══ DATA LOADING ══ */
@@ -941,6 +1225,7 @@ async function loadLive(){
     cs.className='chip '+(sync.ok?'ok':'warn');
     renderEdicts(tasks);
     renderMonitor(tasks);
+    renderSessions(tasks);
   }catch(e){
     document.getElementById('chip-sync').textContent='❌ 服务器未启动';
     document.getElementById('chip-sync').className='chip err';
@@ -957,7 +1242,228 @@ async function loadAgentConfig(){
     document.getElementById('model-grid').innerHTML='<div class="empty" style="grid-column:1/-1">⚠️ 请先启动本地服务器：<code>python3 dashboard/server.py</code></div>';
   }
 }
-async function loadAll(){await loadLive();if(['models','skills'].includes(activeTab))await loadAgentConfig()}
+async function loadAll(){
+  await loadLive();
+  if(['models','skills'].includes(activeTab))await loadAgentConfig();
+  if(activeTab==='sessions')renderSessions(liveStatus?liveStatus.tasks:[]);
+  if(activeTab==='memorials')renderMemorials();
+  if(activeTab==='templates')renderTemplates();
+}
+
+/* ══ SESSIONS / 小任务 ══ */
+const AGENT_EMOJI_MAP = {};
+const AGENT_LABEL_MAP = {};
+let sessFilter = 'all';
+
+function isEdict(t){ return (t.id||'').startsWith('JJC-'); }
+
+/* 从 title 和 sourceMeta 中提取人类可读名称 */
+function humanTitle(t){
+  let title = t.title||'';
+  // "褚凤天 会话" → ok, keep
+  // "agent:shangshu:main 会话" → "尚书省 主会话"
+  // "agent:gongbu:subagent:xxx 会话" → "工部 子任务"
+  // "agent:shangshu:cron:xxx 会话" → "尚书省 定时任务"
+  // "heartbeat 会话" → "心跳检测"
+  if(title==='heartbeat 会话') return '💓 心跳检测';
+  const m = title.match(/^agent:(\w+):(\w+)/);
+  if(m){
+    const agLabel = AGENT_LABEL_MAP[m[1]] || m[1];
+    if(m[2]==='main') return agLabel+' · 主会话';
+    if(m[2]==='subagent') return agLabel+' · 子任务执行';
+    if(m[2]==='cron') return agLabel+' · 定时任务';
+    return agLabel+' · '+m[2];
+  }
+  // "兵部：Mission Control 映射验收" — already nice
+  return title.replace(/ 会话$/, '') || t.id;
+}
+
+/* 提取来源渠道 */
+function channelLabel(t){
+  const now = t.now||'';
+  if(now.includes('feishu/direct')) return {icon:'💬', text:'飞书对话'};
+  if(now.includes('feishu'))        return {icon:'💬', text:'飞书'};
+  if(now.includes('webchat'))       return {icon:'🌐', text:'WebChat'};
+  if(now.includes('cron'))          return {icon:'⏰', text:'定时'};
+  if(now.includes('direct'))        return {icon:'📨', text:'直连'};
+  return {icon:'🔗', text:'会话'};
+}
+
+/* 提取最后一条有意义的 assistant 消息 */
+function lastMessage(t){
+  const acts = t.activity||[];
+  for(let i=acts.length-1;i>=0;i--){
+    const a=acts[i];
+    if(a.kind==='assistant'){
+      let txt = a.text||'';
+      if(txt.startsWith('NO_REPLY')) continue;
+      if(txt.startsWith('Reasoning:')) continue;
+      // 清理 markdown 和 [[reply_to_current]]
+      txt = txt.replace(/\[\[.*?\]\]/g,'').replace(/\*\*/g,'').replace(/^#+\s/gm,'').trim();
+      return txt.substring(0,120) + (txt.length>120?'…':'');
+    }
+  }
+  return '';
+}
+
+function renderSessions(tasks){
+  if(!tasks) tasks=[];
+  // build agent maps from agentConfig if available
+  if(agentConfig && agentConfig.agents){
+    agentConfig.agents.forEach(a=>{
+      AGENT_EMOJI_MAP[a.id] = a.emoji||'🏛️';
+      AGENT_LABEL_MAP[a.id] = a.label||a.id;
+    });
+  }
+  const sessions = tasks.filter(t=>!isEdict(t));
+  document.getElementById('tb-s').textContent = sessions.length;
+  // apply filter
+  let filtered = sessions;
+  if(sessFilter === 'active') filtered = sessions.filter(t=>!['Done','Cancelled'].includes(t.state));
+  else if(sessFilter !== 'all') filtered = sessions.filter(t=>extractAgent(t) === sessFilter);
+
+  const grid = document.getElementById('sess-grid');
+  if(!filtered.length){
+    grid.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:24px;text-align:center;grid-column:1/-1">暂无小任务/会话数据</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(t=>{
+    const agent = extractAgent(t);
+    const emoji = AGENT_EMOJI_MAP[agent] || '🏛️';
+    const agLabel = AGENT_LABEL_MAP[agent] || t.org || agent;
+    const hb = t.heartbeat||{};
+    const sm = t.sourceMeta||{};
+    const ch = channelLabel(t);
+    const title = humanTitle(t);
+    const msg = lastMessage(t);
+    const totalTk = sm.totalTokens||0;
+    const updatedAt = t.eta||''; // eta is actually the last update time in our data
+    const hbDot = hb.status==='active'?'🟢':hb.status==='warn'?'🟡':hb.status==='stalled'?'🔴':'⚪';
+    const hbText = hb.label ? hb.label.replace(/^[🟢🟡🔴⚪]\s*/,'') : '未知';
+    const model = (t.now||'').match(/模型\s*(\S+)/);
+    const modelStr = model ? model[1] : '';
+    const st = t.state||'Unknown';
+
+    return `<div class="sess-card" onclick="openSessionDetail(${JSON.stringify(JSON.stringify(t))})">
+      <div class="sc-top">
+        <span class="sc-emoji">${emoji}</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="sc-agent">${esc(agLabel)}</span>
+            <span style="font-size:10px;color:var(--muted);background:var(--panel2);padding:2px 6px;border-radius:4px">${ch.icon} ${ch.text}</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span title="${esc(hbText)}">${hbDot}</span>
+          <span class="tag st-${st}" style="font-size:10px">${STATE_LABEL[st]||st}</span>
+        </div>
+      </div>
+      <div class="sc-title">${esc(title)}</div>
+      ${msg?`<div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px;border-left:2px solid var(--line);padding-left:8px;max-height:40px;overflow:hidden">${esc(msg)}</div>`:''}
+      <div class="sc-meta">
+        ${modelStr?`<span style="font-size:10px;color:var(--acc);font-weight:600">${esc(modelStr)}</span>`:''}
+        ${totalTk?`<span style="font-size:10px;color:var(--muted)">🪙 ${totalTk.toLocaleString()} tokens</span>`:''}
+        ${updatedAt?`<span class="sc-time">${timeAgo(updatedAt)}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* 会话详情弹窗 */
+function openSessionDetail(jsonStr){
+  const t = JSON.parse(jsonStr);
+  const agent = extractAgent(t);
+  const agLabel = AGENT_LABEL_MAP[agent] || t.org || agent;
+  const emoji = AGENT_EMOJI_MAP[agent] || '🏛️';
+  const title = humanTitle(t);
+  const ch = channelLabel(t);
+  const hb = t.heartbeat||{};
+  const sm = t.sourceMeta||{};
+  const acts = t.activity||[];
+  const model = (t.now||'').match(/模型\s*(\S+)/);
+  const st = t.state||'Unknown';
+
+  document.getElementById('modal-body').innerHTML=`
+    <div style="font-size:11px;color:var(--acc);font-weight:700;letter-spacing:.04em;margin-bottom:4px">${esc(t.id)}</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:6px">${emoji} ${esc(title)}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+      <span class="tag st-${st}">${STATE_LABEL[st]||st}</span>
+      <span style="font-size:11px;color:var(--muted)">${ch.icon} ${ch.text}</span>
+      <span style="font-size:11px;color:var(--muted)">${esc(agLabel)}</span>
+      ${model?`<span style="font-size:11px;color:var(--acc)">${esc(model[1])}</span>`:''}
+      ${hb.label?`<span style="font-size:11px">${esc(hb.label)}</span>`:''}
+    </div>
+
+    <!-- 统计 -->
+    <div style="display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap">
+      ${sm.totalTokens?`<div style="background:var(--panel2);padding:10px 16px;border-radius:8px;font-size:12px"><div style="font-size:16px;font-weight:700;color:var(--acc)">${sm.totalTokens.toLocaleString()}</div><div style="color:var(--muted);font-size:10px">总 Tokens</div></div>`:''}
+      ${sm.inputTokens!=null?`<div style="background:var(--panel2);padding:10px 16px;border-radius:8px;font-size:12px"><div style="font-size:16px;font-weight:700">${(sm.inputTokens||0).toLocaleString()}</div><div style="color:var(--muted);font-size:10px">输入</div></div>`:''}
+      ${sm.outputTokens!=null?`<div style="background:var(--panel2);padding:10px 16px;border-radius:8px;font-size:12px"><div style="font-size:16px;font-weight:700">${(sm.outputTokens||0).toLocaleString()}</div><div style="color:var(--muted);font-size:10px">输出</div></div>`:''}
+    </div>
+
+    <!-- 最近活动 -->
+    <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--text)">📋 最近活动 <span style="font-weight:400;color:var(--muted)">(${acts.length} 条)</span></div>
+    <div style="max-height:350px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel2)">
+      ${!acts.length?'<div style="padding:16px;color:var(--muted);font-size:12px;text-align:center">暂无活动记录</div>'
+       :acts.slice(-15).reverse().map(a=>{
+        const kind = a.kind||'';
+        const kIcon = kind==='assistant'?'🤖':kind==='tool'?'🔧':kind==='user'?'👤':'📝';
+        const kLabel = kind==='assistant'?'回复':kind==='tool'?'工具':kind==='user'?'用户':'事件';
+        let txt = (a.text||'').replace(/\[\[.*?\]\]/g,'').replace(/\*\*/g,'').trim();
+        if(txt.length>200) txt=txt.substring(0,200)+'…';
+        const time = (a.at||'').substring(11,19);
+        return `<div style="padding:8px 12px;border-bottom:1px solid var(--line);font-size:12px;line-height:1.5">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span>${kIcon}</span>
+            <span style="font-weight:600;font-size:11px">${kLabel}</span>
+            <span style="color:var(--muted);font-size:10px;margin-left:auto">${time}</span>
+          </div>
+          <div style="color:var(--muted)">${esc(txt)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    ${t.output&&t.output!=='-'?`<div style="font-size:10px;color:var(--muted);margin-top:12px;word-break:break-all;border-top:1px solid var(--line);padding-top:8px">📂 ${esc(t.output)}</div>`:''}
+  `;
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function extractAgent(t){
+  const m = (t.id||'').match(/^OC-(\w+)-/);
+  if(m) return m[1];
+  // MC-* or other prefixes: check sourceMeta
+  const sm = t.sourceMeta||{};
+  if(sm.agentId){
+    // "mc-gateway-xxx" → try to match known agents
+    const known = ['zhongshu','menxia','shangshu','hubu','libu','bingbu','xingbu','gongbu','zaochao'];
+    for(const k of known){ if(sm.agentId.includes(k)) return k; }
+  }
+  return (t.org||'').replace(/省|部/g,'').toLowerCase();
+}
+
+function timeAgo(iso){
+  if(!iso) return '';
+  try{
+    const d = new Date(iso.includes('T')?iso:iso.replace(' ','T')+'Z');
+    if(isNaN(d.getTime())) return '';
+    const diff = Date.now() - d.getTime();
+    const mins = Math.floor(diff/60000);
+    if(mins<0) return '刚刚';
+    if(mins<1) return '刚刚';
+    if(mins<60) return mins+'分钟前';
+    const hrs = Math.floor(mins/60);
+    if(hrs<24) return hrs+'小时前';
+    return Math.floor(hrs/24)+'天前';
+  }catch(e){ return ''; }
+}
+
+function filterSessions(filter, el){
+  sessFilter = filter;
+  document.querySelectorAll('.sess-filter').forEach(x=>x.classList.remove('active'));
+  if(el) el.classList.add('active');
+  renderSessions(liveStatus?liveStatus.tasks:[]);
+}
 
 /* ══ MORNING BRIEF (天下要闻) ══ */
 const CAT_META = {
@@ -1345,6 +1851,9 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   if(['models','skills'].includes(activeTab))loadAgentConfig();
   if(activeTab==='officials')loadOfficials();
   if(activeTab==='morning')loadMorning();
+  if(activeTab==='sessions')renderSessions(liveStatus?liveStatus.tasks:[]);
+  if(activeTab==='memorials')renderMemorials();
+  if(activeTab==='templates')renderTemplates();
 }));
 
 /* ══ COUNTDOWN (5s) ══ */
@@ -1360,8 +1869,338 @@ function startCd(){
 /* ══ KEY ══ */
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('modal-bg').classList.remove('open')});
 
+/* ══ COURT CEREMONY (上朝仪式感) ══ */
+function showCeremony(){
+  const lastOpen = localStorage.getItem('openclaw_court_date');
+  const today = new Date().toISOString().substring(0,10);
+  const pref = JSON.parse(localStorage.getItem('openclaw_court_pref')||'{"enabled":true}');
+  if(!pref.enabled || lastOpen === today) return;
+  localStorage.setItem('openclaw_court_date', today);
+  const el = document.getElementById('ceremony');
+  el.style.display='flex';
+  // Fill data from live status
+  const tasks = liveStatus ? (liveStatus.tasks||[]) : [];
+  const jjc = tasks.filter(t=>(t.id||'').startsWith('JJC-'));
+  const pending = jjc.filter(t=>!['Done','Cancelled'].includes(t.state)).length;
+  const done = jjc.filter(t=>t.state==='Done').length;
+  const overdue = jjc.filter(t=>t.state!=='Done'&&t.state!=='Cancelled'&&t.eta&&new Date(t.eta.replace(' ','T'))<new Date()).length;
+  document.getElementById('crm-l3').textContent = `待办 ${pending} 件 · 已完成 ${done} 件` + (overdue?` · ⚠ 超期 ${overdue} 件`:'');
+  // Date line
+  const d = new Date();
+  const dateStr = d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 · '+['日','一','二','三','四','五','六'][d.getDay()]+'曜日';
+  document.getElementById('crm-date').textContent = dateStr;
+  // Trigger animations
+  document.getElementById('crm-l1').classList.add('in');
+  document.getElementById('crm-l2').classList.add('in');
+  document.getElementById('crm-l3').classList.add('in');
+  document.getElementById('crm-date').classList.add('in');
+  // Auto dismiss after 3.5s
+  window._crmTimer = setTimeout(()=>skipCeremony(), 3500);
+}
+function skipCeremony(){
+  clearTimeout(window._crmTimer);
+  const el = document.getElementById('ceremony');
+  el.classList.add('out');
+  setTimeout(()=>{el.style.display='none'}, 500);
+}
+
+/* ══ MEMORIALS (奏折系统) ══ */
+function renderMemorials(){
+  const tasks = liveStatus ? (liveStatus.tasks||[]) : [];
+  const filter = (document.getElementById('mem-filter')||{}).value || 'all';
+  // Only JJC edicts that are Done or Cancelled
+  let mems = tasks.filter(t=>(t.id||'').startsWith('JJC-') && ['Done','Cancelled'].includes(t.state));
+  if(filter!=='all') mems = mems.filter(t=>t.state===filter);
+  document.getElementById('tb-mem').textContent = mems.length;
+
+  const el = document.getElementById('mem-list');
+  if(!mems.length){ el.innerHTML='<div class="mem-empty">暂无奏折 — 任务完成后自动生成</div>'; return; }
+
+  el.innerHTML = mems.map(t=>{
+    const fl = t.flow_log||[];
+    const depts = [...new Set(fl.map(f=>f.from).concat(fl.map(f=>f.to)).filter(x=>x&&x!=='皇上'))];
+    const firstAt = fl.length ? (fl[0].at||'').substring(0,16).replace('T',' ') : '';
+    const lastAt = fl.length ? (fl[fl.length-1].at||'').substring(0,16).replace('T',' ') : '';
+    const stIcon = t.state==='Done'?'✅':'🚫';
+    return `<div class="mem-card" onclick='openMemorial(${JSON.stringify(JSON.stringify(t))})'>
+      <div class="mem-icon">📜</div>
+      <div class="mem-info">
+        <div class="mem-title">${stIcon} ${esc(t.title||t.id)}</div>
+        <div class="mem-sub">${esc(t.id)} · ${esc(t.org||'')} · 流转 ${fl.length} 步</div>
+        <div class="mem-tags">${depts.slice(0,5).map(d=>`<span class="mem-tag">${esc(d)}</span>`).join('')}</div>
+      </div>
+      <div class="mem-right">
+        <span class="mem-date">${esc(firstAt)}</span>
+        ${lastAt!==firstAt?`<span class="mem-date">${esc(lastAt)}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openMemorial(jsonStr){
+  const t = JSON.parse(jsonStr);
+  const fl = t.flow_log||[];
+  const st = t.state||'Unknown';
+  const stIcon = st==='Done'?'✅':st==='Cancelled'?'🚫':'🔄';
+  const depts = [...new Set(fl.map(f=>f.from).concat(fl.map(f=>f.to)).filter(x=>x&&x!=='皇上'))];
+
+  // Reconstruct phases from flow_log
+  let originLog=[], planLog=[], reviewLog=[], execLog=[], resultLog=[];
+  for(const f of fl){
+    if(f.from==='皇上') originLog.push(f);
+    else if(f.to==='中书省'||f.from==='中书省') planLog.push(f);
+    else if(f.to==='门下省'||f.from==='门下省') reviewLog.push(f);
+    else if(f.remark&&(f.remark.includes('完成')||f.remark.includes('回奏'))) resultLog.push(f);
+    else execLog.push(f);
+  }
+
+  const renderPhase = (title, icon, items)=>{
+    if(!items.length) return '';
+    return `<div style="margin-bottom:18px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">${icon} ${title}</div>
+      <div class="md-timeline">${items.map(f=>{
+        const dotCls = f.remark&&f.remark.includes('✅')?'green':f.remark&&f.remark.includes('驳')?'red':'';
+        return `<div class="md-tl-item">
+          <div class="md-tl-dot ${dotCls}"></div>
+          <div style="display:flex;gap:6px;align-items:baseline">
+            <span class="md-tl-from">${esc(f.from||'')}</span>
+            <span class="md-tl-to">→ ${esc(f.to||'')}</span>
+          </div>
+          <div class="md-tl-remark">${esc(f.remark||'')}</div>
+          <div class="md-tl-time">${esc((f.at||'').substring(0,19).replace('T',' '))}</div>
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  };
+
+  document.getElementById('modal-body').innerHTML=`
+    <div style="font-size:11px;color:var(--acc);font-weight:700;letter-spacing:.04em;margin-bottom:4px">${esc(t.id)}</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:6px">${stIcon} ${esc(t.title||t.id)}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+      <span class="tag st-${st}">${STATE_LABEL[st]||st}</span>
+      <span style="font-size:11px;color:var(--muted)">${esc(t.org||'')}</span>
+      <span style="font-size:11px;color:var(--muted)">流转 ${fl.length} 步</span>
+      ${depts.map(d=>`<span class="mem-tag">${esc(d)}</span>`).join('')}
+    </div>
+
+    ${t.now?`<div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:12px;color:var(--muted)">${esc(t.now)}</div>`:''}
+
+    ${renderPhase('圣旨原文', '👑', originLog)}
+    ${renderPhase('中书规划', '📋', planLog)}
+    ${renderPhase('门下审议', '🔍', reviewLog)}
+    ${renderPhase('六部执行', '⚔️', execLog)}
+    ${renderPhase('汇总回奏', '📨', resultLog)}
+
+    ${t.output&&t.output!=='-'?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+      <div style="font-size:11px;font-weight:600;margin-bottom:4px">📦 产出物</div>
+      <code style="font-size:11px;word-break:break-all">${esc(t.output)}</code>
+    </div>`:''}
+
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn btn-g" onclick="exportMemorial(${JSON.stringify(JSON.stringify(t.id))})" style="font-size:12px;padding:6px 16px">📋 复制奏折</button>
+    </div>
+  `;
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function exportMemorial(taskIdJson){
+  const taskId = JSON.parse(taskIdJson);
+  const tasks = liveStatus ? (liveStatus.tasks||[]) : [];
+  const t = tasks.find(x=>x.id===taskId);
+  if(!t){ toast('找不到任务','err'); return; }
+  const fl = t.flow_log||[];
+  let md = `# 📜 奏折 · ${t.title}\n\n`;
+  md += `- **任务编号**: ${t.id}\n`;
+  md += `- **状态**: ${t.state}\n`;
+  md += `- **负责部门**: ${t.org}\n\n`;
+  md += `## 流转记录\n\n`;
+  for(const f of fl){
+    md += `- **${f.from}** → **${f.to}**  \n  ${f.remark}  \n  _${(f.at||'').substring(0,19)}_\n\n`;
+  }
+  if(t.output && t.output!=='-') md += `## 产出物\n\n\`${t.output}\`\n`;
+  navigator.clipboard.writeText(md).then(()=>toast('✅ 奏折已复制为 Markdown','ok')).catch(()=>toast('复制失败','err'));
+}
+
+/* ══ TEMPLATES (圣旨模板库) ══ */
+const TEMPLATES = [
+  {id:'tpl-weekly-report', cat:'日常办公', icon:'📝', name:'周报生成',
+   desc:'基于本周看板数据和各部产出，自动生成结构化周报',
+   depts:['户部','礼部'], est:'~10分钟', cost:'¥0.5',
+   params:[
+     {key:'date_range', label:'报告周期', type:'text', default:'本周', required:true},
+     {key:'focus', label:'重点关注（逗号分隔）', type:'text', default:'项目进展,下周计划'},
+     {key:'format', label:'输出格式', type:'select', options:['Markdown','飞书文档'], default:'Markdown'}
+   ],
+   command:'生成{date_range}的周报，重点覆盖{focus}，输出为{format}格式'},
+  {id:'tpl-code-review', cat:'工程开发', icon:'🔍', name:'代码审查',
+   desc:'对指定代码仓库/文件进行质量审查，输出问题清单和改进建议',
+   depts:['兵部','刑部'], est:'~20分钟', cost:'¥2',
+   params:[
+     {key:'repo', label:'仓库/文件路径', type:'text', required:true},
+     {key:'scope', label:'审查范围', type:'select', options:['全量','增量(最近commit)','指定文件'], default:'增量(最近commit)'},
+     {key:'focus', label:'重点关注（可选）', type:'text', default:'安全漏洞,错误处理,性能'}
+   ],
+   command:'对 {repo} 进行代码审查，范围：{scope}，重点关注：{focus}'},
+  {id:'tpl-api-design', cat:'工程开发', icon:'⚡', name:'API 设计与实现',
+   desc:'从需求描述到 RESTful API 设计、实现、测试一条龙',
+   depts:['中书省','兵部'], est:'~45分钟', cost:'¥3',
+   params:[
+     {key:'requirement', label:'需求描述', type:'textarea', required:true},
+     {key:'tech', label:'技术栈', type:'select', options:['Python/FastAPI','Node/Express','Go/Gin'], default:'Python/FastAPI'},
+     {key:'auth', label:'鉴权方式', type:'select', options:['JWT','API Key','无'], default:'JWT'}
+   ],
+   command:'设计并实现一个 {tech} 的 RESTful API：{requirement}。鉴权方式：{auth}'},
+  {id:'tpl-competitor', cat:'数据分析', icon:'📊', name:'竞品分析',
+   desc:'爬取竞品网站数据，分析对比，生成结构化报告',
+   depts:['兵部','户部','礼部'], est:'~60分钟', cost:'¥5',
+   params:[
+     {key:'targets', label:'竞品名称/URL（每行一个）', type:'textarea', required:true},
+     {key:'dimensions', label:'分析维度', type:'text', default:'产品功能,定价策略,用户评价'},
+     {key:'format', label:'输出格式', type:'select', options:['Markdown报告','表格对比'], default:'Markdown报告'}
+   ],
+   command:'对以下竞品进行分析：\n{targets}\n\n分析维度：{dimensions}，输出格式：{format}'},
+  {id:'tpl-data-report', cat:'数据分析', icon:'📈', name:'数据报告',
+   desc:'对给定数据集进行清洗、分析、可视化，输出分析报告',
+   depts:['户部','礼部'], est:'~30分钟', cost:'¥2',
+   params:[
+     {key:'data_source', label:'数据源描述/路径', type:'text', required:true},
+     {key:'questions', label:'分析问题（每行一个）', type:'textarea'},
+     {key:'viz', label:'是否需要可视化图表', type:'select', options:['是','否'], default:'是'}
+   ],
+   command:'对数据 {data_source} 进行分析。{questions}\n需要可视化：{viz}'},
+  {id:'tpl-blog', cat:'内容创作', icon:'✍️', name:'博客文章',
+   desc:'给定主题和要求，生成高质量博客文章',
+   depts:['礼部'], est:'~15分钟', cost:'¥1',
+   params:[
+     {key:'topic', label:'文章主题', type:'text', required:true},
+     {key:'audience', label:'目标读者', type:'text', default:'技术人员'},
+     {key:'length', label:'期望字数', type:'select', options:['~1000字','~2000字','~3000字'], default:'~2000字'},
+     {key:'style', label:'风格', type:'select', options:['技术教程','观点评论','案例分析'], default:'技术教程'}
+   ],
+   command:'写一篇关于「{topic}」的博客文章，面向{audience}，{length}，风格：{style}'},
+  {id:'tpl-deploy', cat:'工程开发', icon:'🚀', name:'部署方案',
+   desc:'生成完整的部署检查单、Docker配置、CI/CD流程',
+   depts:['兵部','工部'], est:'~25分钟', cost:'¥2',
+   params:[
+     {key:'project', label:'项目名称/描述', type:'text', required:true},
+     {key:'env', label:'部署环境', type:'select', options:['Docker','K8s','VPS','Serverless'], default:'Docker'},
+     {key:'ci', label:'CI/CD 工具', type:'select', options:['GitHub Actions','GitLab CI','无'], default:'GitHub Actions'}
+   ],
+   command:'为项目「{project}」生成{env}部署方案，CI/CD使用{ci}'},
+  {id:'tpl-email', cat:'内容创作', icon:'📧', name:'邮件/通知文案',
+   desc:'根据场景和目的，生成专业邮件或通知文案',
+   depts:['礼部'], est:'~5分钟', cost:'¥0.3',
+   params:[
+     {key:'scenario', label:'使用场景', type:'select', options:['商务邮件','产品发布','客户通知','内部公告'], default:'商务邮件'},
+     {key:'purpose', label:'目的/内容', type:'textarea', required:true},
+     {key:'tone', label:'语调', type:'select', options:['正式','友好','简洁'], default:'正式'}
+   ],
+   command:'撰写一封{scenario}，{tone}语调。内容：{purpose}'},
+  {id:'tpl-standup', cat:'日常办公', icon:'🗓️', name:'每日站会摘要',
+   desc:'汇总各部今日进展和明日计划，生成站会摘要',
+   depts:['尚书省'], est:'~5分钟', cost:'¥0.3',
+   params:[
+     {key:'range', label:'汇总范围', type:'select', options:['今天','最近24小时','昨天+今天'], default:'今天'}
+   ],
+   command:'汇总{range}各部工作进展和待办，生成站会摘要'}
+];
+const TPL_CATS = [
+  {name:'全部', icon:'📋'},
+  {name:'日常办公', icon:'💼'},
+  {name:'数据分析', icon:'📊'},
+  {name:'工程开发', icon:'⚙️'},
+  {name:'内容创作', icon:'✍️'}
+];
+let tplCatFilter = '全部';
+
+function renderTemplates(){
+  // categories
+  document.getElementById('tpl-cats').innerHTML = TPL_CATS.map(c=>
+    `<span class="tpl-cat${tplCatFilter===c.name?' active':''}" onclick="tplCatFilter='${c.name}';renderTemplates()">${c.icon} ${c.name}</span>`
+  ).join('');
+
+  let tpls = TEMPLATES;
+  if(tplCatFilter!=='全部') tpls = tpls.filter(t=>t.cat===tplCatFilter);
+
+  document.getElementById('tpl-grid').innerHTML = tpls.map(t=>`
+    <div class="tpl-card">
+      <div class="tpl-top">
+        <span class="tpl-icon">${t.icon}</span>
+        <span class="tpl-name">${esc(t.name)}</span>
+      </div>
+      <div class="tpl-desc">${esc(t.desc)}</div>
+      <div class="tpl-footer">
+        ${t.depts.map(d=>`<span class="tpl-dept">${esc(d)}</span>`).join('')}
+        <span class="tpl-est">${esc(t.est)} · ${esc(t.cost)}</span>
+        <button class="tpl-go" onclick="openTemplateForm('${t.id}')">下旨</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openTemplateForm(tplId){
+  const t = TEMPLATES.find(x=>x.id===tplId);
+  if(!t) return;
+  document.getElementById('modal-body').innerHTML=`
+    <div style="font-size:11px;color:var(--acc);font-weight:700;letter-spacing:.04em;margin-bottom:4px">圣旨模板</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:6px">${t.icon} ${esc(t.name)}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px">${esc(t.desc)}</div>
+    <div style="display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap">${t.depts.map(d=>`<span class="tpl-dept">${esc(d)}</span>`).join('')}<span style="font-size:11px;color:var(--muted);margin-left:auto">${esc(t.est)} · ${esc(t.cost)}</span></div>
+    <form class="tpl-form" onsubmit="executeTemplate(event,'${t.id}')">
+      ${t.params.map(p=>`<div class="tpl-field">
+        <label class="tpl-label">${esc(p.label)}${p.required?` <span style="color:#ff5270">*</span>`:''}</label>
+        ${p.type==='textarea'
+          ?`<textarea id="tpl-${p.key}" class="tpl-input" style="min-height:80px;resize:vertical" ${p.required?'required':''} placeholder="${esc(p.default||'')}">${esc(p.default||'')}</textarea>`
+          :p.type==='select'
+          ?`<select id="tpl-${p.key}" class="tpl-input">${(p.options||[]).map(o=>`<option${o===p.default?' selected':''}>${esc(o)}</option>`).join('')}</select>`
+          :`<input id="tpl-${p.key}" class="tpl-input" type="text" value="${esc(p.default||'')}" ${p.required?'required':''}/>`
+        }
+      </div>`).join('')}
+      <div id="tpl-preview" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--muted);display:none"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button type="button" class="btn btn-g" onclick="previewTemplate('${t.id}')" style="padding:8px 16px;font-size:12px">👁 预览旨意</button>
+        <button type="submit" class="tpl-go" style="padding:8px 20px;font-size:13px">📜 下旨</button>
+      </div>
+    </form>
+  `;
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function buildCommand(tplId){
+  const t = TEMPLATES.find(x=>x.id===tplId);
+  if(!t) return '';
+  let cmd = t.command;
+  for(const p of t.params){
+    const el = document.getElementById('tpl-'+p.key);
+    const val = el ? el.value : (p.default||'');
+    cmd = cmd.replace(new RegExp('\\{'+p.key+'\\}','g'), val);
+  }
+  return cmd;
+}
+
+function previewTemplate(tplId){
+  const cmd = buildCommand(tplId);
+  const el = document.getElementById('tpl-preview');
+  el.style.display='block';
+  el.innerHTML = `<div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">📜 将发送给中书省的旨意：</div><div style="white-space:pre-wrap;line-height:1.6">${esc(cmd)}</div>`;
+}
+
+async function executeTemplate(e, tplId){
+  e.preventDefault();
+  const cmd = buildCommand(tplId);
+  if(!cmd.trim()){ toast('请填写必填参数','err'); return; }
+  const t = TEMPLATES.find(x=>x.id===tplId);
+  // Show the generated command in a confirmation
+  if(!confirm(`确认下旨？\n\n${cmd.substring(0,200)}${cmd.length>200?'…':''}`)) return;
+  toast(`📜 旨意已生成，请复制到飞书发送给中书省`, 'ok', 6000);
+  // Copy to clipboard
+  const full = cmd;
+  navigator.clipboard.writeText(full).then(()=>toast('✅ 旨意已复制到剪贴板','ok')).catch(()=>{});
+  closeModal();
+}
+
 /* ══ INIT ══ */
-loadAll();
+loadAll().then(()=>showCeremony());
 startCd();
 </script>
 </body>
