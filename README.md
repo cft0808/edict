@@ -1,7 +1,7 @@
 # ⚔️ 三省六部 · OpenClaw Multi-Agent Orchestration
 
 <p align="center">
-  > 📸 **截图待补充** — 启动看板后运行 `screencapture` 截图并放入 `docs/screenshots/`
+  <img src="docs/screenshots/01-kanban-main.png" alt="三省六部看板总览" width="100%">
 </p>
 
 <p align="center">
@@ -40,23 +40,38 @@
 
 ## 🖼️ 看板截图
 
+### 旨意看板
+任务以卡片形式展示，支持按省/部过滤、全文搜索，心跳徽章实时显示 Agent 状态。
+
+![旨意看板](docs/screenshots/01-kanban-main.png)
+
 <details>
 <summary>展开查看更多截图</summary>
 
-### 总览面板
-*(截图待补充)*
+### 早朝简报
+每日自动抓取科技/财经资讯，汇总展示。
 
-### 任务看板
-*(截图待补充)*
+![早朝简报](docs/screenshots/02-morning-briefing.png)
 
-### 工作记录（流转日志）
-*(截图待补充)*
+### 任务流转详情
+点击任意任务卡片，展开完整流转日志，追踪从下旨到回奏的每一步。
 
-### 时间线视图
-*(截图待补充)*
+![任务流转详情](docs/screenshots/03-task-detail.png)
 
 ### 模型配置
-*(截图待补充)*
+一键切换各省/部 Agent 使用的 LLM 模型，更改后自动重启 Gateway（约5秒生效）。
+
+![模型配置](docs/screenshots/04-model-config.png)
+
+### 技能配置
+展示各省/部已安装的 OpenClaw Skills，一览各 Agent 的能力边界。
+
+![技能配置](docs/screenshots/05-skills-config.png)
+
+### 官员总览
+功绩排行榜 + 各官员 Token 消耗、活跃状态、完成旨意数全面统计。
+
+![官员总览](docs/screenshots/06-official-overview.png)
 
 </details>
 

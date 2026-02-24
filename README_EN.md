@@ -7,6 +7,10 @@
   <a href="#dashboard">Dashboard</a>
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/01-kanban-main.png" alt="SanSheng LiuBu Dashboard" width="100%">
+</p>
+
 **SanSheng LiuBu** (三省六部, Three Departments & Six Ministries) is a **multi-agent orchestration system** built on [OpenClaw](https://openclaw.ai), inspired by the ancient Chinese administrative system. Complex tasks flow through specialized AI agents in a structured, auditable pipeline — with a real-time dashboard for monitoring and control.
 
 > User issues command → Planning (中书省) → Review (门下省) → Dispatch (尚书省) → Execution (六部) → Report back
@@ -99,12 +103,34 @@ open http://127.0.0.1:7891
 
 | Tab | Description |
 |-----|-------------|
-| 🏠 Overview | Pipeline visualization, charts, agent health cards |
 | 📋 Kanban | Task cards by state with filter/search |
-| 📊 History | Completed tasks grouped by department with audit logs |
-| ⏱️ Timeline | Global event timeline for all flow transitions |
+| 📰 Morning Briefing | Daily auto-fetched tech/finance news digest |
+| 👥 Officials | Leaderboard with token usage & activity stats |
 | ⚙️ Models | Per-agent LLM model configuration with live apply |
 | 🛠️ Skills | Installed skills per agent workspace |
+
+<details>
+<summary>📸 Screenshots</summary>
+
+**Kanban** — Task cards with heartbeat indicators, department filters, and full-text search.
+![Kanban](docs/screenshots/01-kanban-main.png)
+
+**Morning Briefing** — Auto-curated daily news across tech and business channels.
+![Morning Briefing](docs/screenshots/02-morning-briefing.png)
+
+**Task Detail** — Click any card to expand the full flow log from command to completion.
+![Task Detail](docs/screenshots/03-task-detail.png)
+
+**Model Config** — Switch any agent's LLM model; Gateway restarts automatically (~5s).
+![Model Config](docs/screenshots/04-model-config.png)
+
+**Skills Config** — See installed OpenClaw skills per department at a glance.
+![Skills Config](docs/screenshots/05-skills-config.png)
+
+**Officials Overview** — Merit leaderboard with token costs and session statistics.
+![Officials Overview](docs/screenshots/06-official-overview.png)
+
+</details>
 
 ## 📄 License
 
