@@ -1,4 +1,4 @@
-# ⚔️ 三省六部 · OpenClaw Multi-Agent Orchestration
+# ⚔️ Edict · Multi-Agent Orchestration System
 
 <p align="center">
   <img src="docs/screenshots/01-kanban-main.png" alt="三省六部看板总览" width="100%">
@@ -31,7 +31,7 @@
 ## 🚀 Quick Start（30秒体验）
 
 ```bash
-docker run -p 7891:7891 cft0808/sansheng-demo
+docker run -p 7891:7891 cft0808/edict
 ```
 
 然后打开 http://localhost:7891 查看军机处看板演示。
@@ -117,8 +117,8 @@ docker run -p 7891:7891 cft0808/sansheng-demo
 ### 一键安装
 
 ```bash
-git clone https://github.com/cft0808/openclaw-sansheng-liubu.git
-cd openclaw-sansheng-liubu
+git clone https://github.com/cft0808/edict.git
+cd edict
 chmod +x install.sh
 ./install.sh
 ```
@@ -275,7 +275,7 @@ data/
 ## 📁 项目结构
 
 ```
-openclaw-sansheng-liubu/
+edict/
 ├── README.md                  # 本文件
 ├── README_EN.md               # English docs
 ├── LICENSE                    # MIT License
@@ -356,9 +356,9 @@ openclaw-sansheng-liubu/
 
 欢迎贡献！请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-- 🐛 [提交 Bug](https://github.com/cft0808/openclaw-sansheng-liubu/issues/new?template=bug_report.md)
-- 💡 [功能建议](https://github.com/cft0808/openclaw-sansheng-liubu/issues/new?template=feature_request.md)
-- 🔧 [提交 PR](https://github.com/cft0808/openclaw-sansheng-liubu/pulls)
+- 🐛 [提交 Bug](https://github.com/cft0808/edict/issues/new?template=bug_report.md)
+- 💡 [功能建议](https://github.com/cft0808/edict/issues/new?template=feature_request.md)
+- 🔧 [提交 PR](https://github.com/cft0808/edict/pulls)
 
 ---
 

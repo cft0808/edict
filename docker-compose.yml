@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   sansheng-demo:
-    image: cft0808/sansheng-demo:latest
+    image: cft0808/edict:latest
     ports:
       - "7891:7891"
     environment:

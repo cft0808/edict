@@ -236,6 +236,31 @@
     .ec-todo-track{flex:1;max-width:80px;height:4px;background:#0e1320;border-radius:2px;overflow:hidden}
     .ec-todo-fill{height:100%;background:var(--ok);border-radius:2px}
 
+    /* ══ SUBSCRIPTION CONFIG ══ */
+    .sub-config{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
+    .sub-section{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+    .sub-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+    .sub-sec-title{font-size:13px;font-weight:700;margin-bottom:10px}
+    .sub-cats{display:flex;flex-wrap:wrap;gap:8px}
+    .sub-cat{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;transition:all .15s;user-select:none}
+    .sub-cat:hover{border-color:var(--acc)}
+    .sub-cat.active{border-color:var(--ok);background:#0a2018}
+    .sub-cat .sc-check{width:16px;height:16px;border-radius:4px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .15s}
+    .sub-cat.active .sc-check{background:var(--ok);border-color:var(--ok);color:#000}
+    .sub-cat .sc-label{font-size:12px;font-weight:600}
+    .sub-cat .sc-count{font-size:10px;color:var(--muted)}
+    .sub-input{background:var(--panel2);border:1px solid var(--line);border-radius:7px;color:var(--text);padding:7px 10px;font-size:12px;outline:none;min-width:0}
+    .sub-input:focus{border-color:var(--acc)}
+    .sub-kw-list{display:flex;flex-wrap:wrap;gap:6px}
+    .sub-kw{display:flex;align-items:center;gap:4px;padding:4px 8px 4px 10px;border-radius:999px;background:#0f1a38;border:1px solid #1e2e50;font-size:11px;color:var(--acc)}
+    .sub-kw .kw-del{cursor:pointer;opacity:.5;font-size:13px;padding:0 2px}.sub-kw .kw-del:hover{opacity:1;color:var(--danger)}
+    .sub-feed-list{display:flex;flex-direction:column;gap:4px}
+    .sub-feed{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--panel2);border-radius:7px;font-size:12px}
+    .sub-feed .sf-name{font-weight:600;min-width:80px;color:var(--acc)}
+    .sub-feed .sf-url{flex:1;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .sub-feed .sf-cat{font-size:10px;padding:2px 6px;border-radius:4px;border:1px solid var(--line)}
+    .sub-feed .sf-del{cursor:pointer;color:var(--muted);font-size:14px}.sub-feed .sf-del:hover{color:var(--danger)}
+
     /* ══ CONFIRM DIALOG ══ */
     .confirm-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;backdrop-filter:blur(3px)}
     .confirm-bg.open{display:flex;align-items:center;justify-content:center}
@@ -409,10 +434,10 @@
   <div class="tabs">
     <div class="tab active" data-tab="edicts">📜 旨意看板 <span class="tbadge" id="tb-e">0</span></div>
     <div class="tab" data-tab="monitor">🔭 省部调度 <span class="tbadge" id="tb-m">0</span></div>
-    <div class="tab" data-tab="morning">🌅 早朝简报</div>
     <div class="tab" data-tab="officials">👥 官员总览</div>
     <div class="tab" data-tab="models">⚙️ 模型配置</div>
     <div class="tab" data-tab="skills">🛠️ 技能配置</div>
+    <div class="tab" data-tab="morning">📰 天下要闻</div>
   </div>
 
   <!-- ══ 旨意看板 ══ -->
@@ -424,18 +449,6 @@
   <div class="panel" id="panel-monitor">
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px">各省部当前承接旨意与执行状态 · 每5秒自动刷新</div>
     <div class="duty-grid" id="duty-grid"></div>
-  </div>
-
-  <!-- ══ 早朝简报 ══ -->
-  <div class="panel" id="panel-morning">
-    <div class="mb-hdr">
-      <div>
-        <div class="mb-title">🌅 早朝简报</div>
-        <div id="mb-subtitle" class="mb-sub">加载中…</div>
-      </div>
-      <button class="btn btn-g" id="mb-refresh-btn" onclick="refreshNews()" style="font-size:12px;padding:6px 14px">⟳ 立即采集</button>
-    </div>
-    <div id="mb-body"></div>
   </div>
 
   <!-- ══ 官员总览 ══ -->
@@ -459,6 +472,57 @@
   <div class="panel" id="panel-skills">
     <div class="sec-title" style="margin-bottom:14px">各省部 · Skills 配置</div>
     <div class="skills-grid" id="skills-grid"></div>
+  </div>
+
+  <!-- ══ 天下要闻 ══ -->
+  <div class="panel" id="panel-morning">
+    <div class="mb-hdr">
+      <div>
+        <div class="mb-title">📰 天下要闻 · 御览</div>
+        <div id="mb-subtitle" class="mb-sub">加载中…</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-g" onclick="toggleSubConfig()" style="font-size:12px;padding:6px 14px">⚙ 订阅管理</button>
+        <button class="btn btn-g" id="mb-refresh-btn" onclick="refreshNews()" style="font-size:12px;padding:6px 14px">⟳ 立即采集</button>
+      </div>
+    </div>
+
+    <!-- 订阅管理面板 -->
+    <div id="sub-config" class="sub-config" style="display:none">
+      <div class="sub-section">
+        <div class="sub-sec-title">📂 新闻分类 <span style="font-weight:400;font-size:11px;color:var(--muted)">— 勾选启用，取消禁用</span></div>
+        <div id="sub-cats" class="sub-cats"></div>
+      </div>
+      <div class="sub-section">
+        <div class="sub-sec-title">🔑 自定义关注词 <span style="font-weight:400;font-size:11px;color:var(--muted)">— 额外关键词过滤</span></div>
+        <div id="sub-keywords" class="sub-kw-list"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <input id="new-kw" class="sub-input" placeholder="输入关键词，如：芯片、SpaceX…" onkeydown="if(event.key==='Enter')addKeyword()">
+          <button class="btn btn-p" onclick="addKeyword()" style="font-size:12px;padding:6px 14px">添加</button>
+        </div>
+      </div>
+      <div class="sub-section">
+        <div class="sub-sec-title">📡 自定义 RSS 源</div>
+        <div id="sub-feeds" class="sub-feed-list"></div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+          <input id="new-feed-name" class="sub-input" placeholder="源名称" style="max-width:120px">
+          <input id="new-feed-url" class="sub-input" placeholder="RSS URL" style="flex:1">
+          <select id="new-feed-cat" class="sub-input" style="max-width:130px"></select>
+          <button class="btn btn-p" onclick="addFeed()" style="font-size:12px;padding:6px 14px">添加</button>
+        </div>
+      </div>
+      <div class="sub-section">
+        <div class="sub-sec-title">🔔 飞书推送</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input id="feishu-webhook" class="sub-input" placeholder="飞书 Webhook URL（留空则不推送）" style="flex:1">
+          <button class="btn btn-p" onclick="saveSubConfig()" style="font-size:12px;padding:6px 14px">保存全部配置</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">采集完成后自动推送简报链接到飞书群。<a href="https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot" target="_blank" style="color:var(--acc)">如何创建自定义机器人？</a></div>
+      </div>
+      <div id="sub-status" style="font-size:12px;margin-top:8px;display:none"></div>
+    </div>
+
+    <div id="mb-body"></div>
   </div>
 </div>
 
@@ -895,22 +959,140 @@ async function loadAgentConfig(){
 }
 async function loadAll(){await loadLive();if(['models','skills'].includes(activeTab))await loadAgentConfig()}
 
-/* ══ MORNING BRIEF ══ */
-const CAT_COLORS = {politics:'#6a9eff',military:'#ff5270',economy:'#2ecc8a',ai:'#a07aff'};
-
-/* ══ MORNING BRIEF ══ */
+/* ══ MORNING BRIEF (天下要闻) ══ */
 const CAT_META = {
-  '政治': {icon:'🏛️', color:'#6a9eff'},
-  '军事': {icon:'⚔️',  color:'#ff5270'},
-  '经济': {icon:'💹',  color:'#2ecc8a'},
-  'AI大模型': {icon:'🤖', color:'#a07aff'},
+  '政治': {icon:'🏛️', color:'#6a9eff', desc:'全球政治动态'},
+  '军事': {icon:'⚔️',  color:'#ff5270', desc:'军事与冲突'},
+  '经济': {icon:'💹',  color:'#2ecc8a', desc:'经济与市场'},
+  'AI大模型': {icon:'🤖', color:'#a07aff', desc:'AI与大模型进展'},
 };
+const DEFAULT_CATS = ['政治','军事','经济','AI大模型'];
 
+// --- Subscription config ---
+let subConfig = null;
+
+async function loadSubConfig(){
+  try{ subConfig = await fetchJ(API+'/morning-config'); }
+  catch(e){ subConfig = { categories: DEFAULT_CATS.map(c=>({name:c,enabled:true})), keywords:[], custom_feeds:[], feishu_webhook:'' }; }
+}
+
+function renderSubConfig(){
+  if(!subConfig) return;
+  // Categories
+  const catsEl = document.getElementById('sub-cats');
+  const allCats = [...DEFAULT_CATS];
+  (subConfig.categories||[]).forEach(c=>{ if(!allCats.includes(c.name)) allCats.push(c.name); });
+  const enabledSet = new Set((subConfig.categories||[]).filter(c=>c.enabled).map(c=>c.name));
+  catsEl.innerHTML = allCats.map(cat=>{
+    const meta=CAT_META[cat]||{icon:'📰',color:'var(--acc)',desc:cat};
+    const on=enabledSet.has(cat);
+    return `<div class="sub-cat ${on?'active':''}" onclick="toggleCat('${esc(cat)}')">
+      <div class="sc-check">${on?'✓':''}</div>
+      <span style="font-size:16px">${meta.icon}</span>
+      <div><div class="sc-label">${esc(cat)}</div><div class="sc-count">${meta.desc}</div></div>
+    </div>`;
+  }).join('');
+  // Keywords
+  const kwEl = document.getElementById('sub-keywords');
+  kwEl.innerHTML = (subConfig.keywords||[]).map((kw,i)=>`<span class="sub-kw">${esc(kw)}<span class="kw-del" onclick="removeKeyword(${i})">✕</span></span>`).join('');
+  // Custom feeds
+  const feedEl = document.getElementById('sub-feeds');
+  feedEl.innerHTML = (subConfig.custom_feeds||[]).length
+    ? (subConfig.custom_feeds||[]).map((f,i)=>`<div class="sub-feed">
+        <span class="sf-name">${esc(f.name)}</span>
+        <span class="sf-url" title="${esc(f.url)}">${esc(f.url)}</span>
+        <span class="sf-cat">${esc(f.category)}</span>
+        <span class="sf-del" onclick="removeFeed(${i})">✕</span>
+      </div>`).join('')
+    : '<div style="font-size:12px;color:var(--muted);padding:4px 0">暂无自定义源</div>';
+  // Feed category dropdown
+  const sel = document.getElementById('new-feed-cat');
+  sel.innerHTML = allCats.map(c=>`<option value="${c}">${c}</option>`).join('') + '<option value="__new__">+ 新分类…</option>';
+  // Feishu webhook
+  document.getElementById('feishu-webhook').value = subConfig.feishu_webhook||'';
+}
+
+function toggleSubConfig(){
+  const el = document.getElementById('sub-config');
+  if(el.style.display==='none'){
+    el.style.display='block';
+    loadSubConfig().then(()=>renderSubConfig());
+  } else {
+    el.style.display='none';
+  }
+}
+
+function toggleCat(name){
+  if(!subConfig) return;
+  const cats = subConfig.categories||[];
+  const existing = cats.find(c=>c.name===name);
+  if(existing) existing.enabled = !existing.enabled;
+  else cats.push({name, enabled:true});
+  subConfig.categories = cats;
+  renderSubConfig();
+}
+
+function addKeyword(){
+  const inp = document.getElementById('new-kw');
+  const kw = inp.value.trim();
+  if(!kw) return;
+  if(!subConfig.keywords) subConfig.keywords=[];
+  if(!subConfig.keywords.includes(kw)) subConfig.keywords.push(kw);
+  inp.value = '';
+  renderSubConfig();
+}
+
+function removeKeyword(i){
+  if(!subConfig||!subConfig.keywords) return;
+  subConfig.keywords.splice(i,1);
+  renderSubConfig();
+}
+
+function addFeed(){
+  const name=document.getElementById('new-feed-name').value.trim();
+  const url=document.getElementById('new-feed-url').value.trim();
+  let cat=document.getElementById('new-feed-cat').value;
+  if(!name||!url){toast('请填写源名称和URL','err');return}
+  if(cat==='__new__'){
+    const nc=prompt('输入新分类名称：');
+    if(!nc) return;
+    cat=nc;
+    // ensure category exists
+    if(!subConfig.categories) subConfig.categories=[];
+    if(!subConfig.categories.find(c=>c.name===cat)) subConfig.categories.push({name:cat,enabled:true});
+  }
+  if(!subConfig.custom_feeds) subConfig.custom_feeds=[];
+  subConfig.custom_feeds.push({name,url,category:cat});
+  document.getElementById('new-feed-name').value='';
+  document.getElementById('new-feed-url').value='';
+  renderSubConfig();
+}
+
+function removeFeed(i){
+  if(!subConfig||!subConfig.custom_feeds) return;
+  subConfig.custom_feeds.splice(i,1);
+  renderSubConfig();
+}
+
+async function saveSubConfig(){
+  subConfig.feishu_webhook = document.getElementById('feishu-webhook').value.trim();
+  const st = document.getElementById('sub-status');
+  st.style.display='block'; st.style.color='var(--acc)'; st.textContent='⟳ 保存中…';
+  try{
+    const r = await postJ(API+'/morning-config', subConfig);
+    if(r.ok){ st.style.color='var(--ok)'; st.textContent='✅ 配置已保存'; toast('订阅配置已保存','ok'); }
+    else{ st.style.color='var(--danger)'; st.textContent='❌ '+(r.error||'保存失败'); }
+  }catch(e){ st.style.color='var(--danger)'; st.textContent='❌ 服务器连接失败'; }
+  setTimeout(()=>st.style.display='none', 3000);
+}
+
+// --- News rendering ---
 async function loadMorning(){
   const body = document.getElementById('mb-body');
-  body.innerHTML = '<div class="mb-loading">⟳ 加载新闻中…</div>';
+  body.innerHTML = '<div class="mb-loading">⟳ 加载要闻中…</div>';
   try{
     const d = await fetchJ(API+'/morning-brief');
+    await loadSubConfig();
     renderMorning(d);
   }catch(e){
     body.innerHTML = '<div class="mb-empty">⚠️ 暂无数据，请点击「立即采集」</div>';
@@ -929,19 +1111,31 @@ function renderMorning(d){
     body.innerHTML='<div class="mb-empty">暂无数据，点击右上角「立即采集」获取今日简报</div>';
     return;
   }
+  // Filter by enabled categories
+  const enabledSet = subConfig ? new Set((subConfig.categories||[]).filter(c=>c.enabled).map(c=>c.name)) : null;
+  const userKws = (subConfig && subConfig.keywords||[]).map(k=>k.toLowerCase());
+
   body.innerHTML = `<div class="mb-cats">
     ${Object.entries(cats).map(([cat, items])=>{
+      if(enabledSet && !enabledSet.has(cat)) return '';
       const meta = CAT_META[cat]||{icon:'📰',color:'var(--acc)'};
+      // Boost items matching user keywords
+      const scored = items.map(item=>{
+        const text = ((item.title||'')+(item.summary||'')).toLowerCase();
+        const kwHits = userKws.filter(k=>text.includes(k)).length;
+        return {...item, _kwHits: kwHits};
+      }).sort((a,b)=>b._kwHits-a._kwHits);
       return `<div class="mb-cat">
         <div class="mb-cat-hdr">
           <span class="mb-cat-icon">${meta.icon}</span>
           <span class="mb-cat-name" style="color:${meta.color}">${esc(cat)}</span>
-          <span class="mb-cat-cnt">${items.length} 条</span>
+          <span class="mb-cat-cnt">${scored.length} 条</span>
         </div>
         <div class="mb-news-list">
-          ${!items.length ? '<div class="mb-empty" style="padding:16px">暂无新闻</div>' :
-            items.map(item => {
+          ${!scored.length ? '<div class="mb-empty" style="padding:16px">暂无新闻</div>' :
+            scored.map(item => {
               const hasImg = item.image && item.image.startsWith('http');
+              const kwBadge = item._kwHits ? `<span style="font-size:9px;padding:1px 5px;border-radius:999px;background:#a07aff22;color:#a07aff;border:1px solid #a07aff44;margin-left:4px">⭐ 关注</span>` : '';
               return `<div class="mb-card" onclick="window.open('${esc(item.link)}','_blank')">
                 <div class="mb-img">
                   ${hasImg
@@ -949,7 +1143,7 @@ function renderMorning(d){
                     : `<span>${meta.icon}</span>`}
                 </div>
                 <div class="mb-info">
-                  <div class="mb-headline">${esc(item.title)}</div>
+                  <div class="mb-headline">${esc(item.title)}${kwBadge}</div>
                   <div class="mb-summary">${esc(item.summary||item.desc||'')}</div>
                   <div class="mb-meta">
                     <span class="mb-source">📡 ${esc(item.source||'')}</span>

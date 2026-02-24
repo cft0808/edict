@@ -1,4 +1,4 @@
-# ⚔️ SanSheng LiuBu · OpenClaw Multi-Agent Orchestration
+# ⚔️ Edict · Multi-Agent Orchestration System
 
 <p align="center">
   <a href="README.md">中文</a> ·
@@ -11,7 +11,7 @@
   <img src="docs/screenshots/01-kanban-main.png" alt="SanSheng LiuBu Dashboard" width="100%">
 </p>
 
-**SanSheng LiuBu** (三省六部, Three Departments & Six Ministries) is a **multi-agent orchestration system** built on [OpenClaw](https://openclaw.ai), inspired by the ancient Chinese administrative system. Complex tasks flow through specialized AI agents in a structured, auditable pipeline — with a real-time dashboard for monitoring and control.
+**Edict** is a **multi-agent orchestration system** built on [OpenClaw](https://openclaw.ai), inspired by the ancient Chinese imperial governance system (三省六部, Three Departments & Six Ministries). Complex tasks flow through specialized AI agents in a structured, auditable pipeline — with a real-time dashboard for monitoring and control.
 
 > User issues command → Planning (中书省) → Review (门下省) → Dispatch (尚书省) → Execution (六部) → Report back
 
@@ -58,8 +58,8 @@ Most multi-agent frameworks let agents execute tasks directly. **SanSheng LiuBu*
 ### Install
 
 ```bash
-git clone https://github.com/cft0808/openclaw-sansheng-liubu.git
-cd openclaw-sansheng-liubu
+git clone https://github.com/cft0808/edict.git
+cd edict
 chmod +x install.sh
 ./install.sh
 ```

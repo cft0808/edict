@@ -39,8 +39,8 @@ chore: 杂项维护
 ## 开发环境
 
 ```bash
-git clone https://github.com/cft0808/openclaw-sansheng-liubu.git
-cd openclaw-sansheng-liubu
+git clone https://github.com/cft0808/edict.git
+cd edict
 ./install.sh
 
 # 启动开发服务器

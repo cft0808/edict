@@ -145,6 +145,18 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(read_json(DATA / 'officials_stats.json', {}))
         elif p == '/api/morning-brief':
             self.send_json(read_json(DATA / 'morning_brief.json', {}))
+        elif p == '/api/morning-config':
+            self.send_json(read_json(DATA / 'morning_brief_config.json', {
+                'categories': [
+                    {'name': '政治', 'enabled': True},
+                    {'name': '军事', 'enabled': True},
+                    {'name': '经济', 'enabled': True},
+                    {'name': 'AI大模型', 'enabled': True},
+                ],
+                'keywords': [],
+                'custom_feeds': [],
+                'feishu_webhook': '',
+            }))
         elif p.startswith('/api/morning-brief/'):
             date = p.split('/')[-1]
             self.send_json(read_json(DATA / f'morning_brief_{date}.json', {}))
