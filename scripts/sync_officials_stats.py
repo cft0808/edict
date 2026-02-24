@@ -2,10 +2,10 @@
 """同步各官员统计数据 → data/officials_stats.json"""
 import json, pathlib, datetime
 
-BASE = pathlib.Path('/Users/bingsen/clawd/junjichu-v2')
+BASE = pathlib.Path(__file__).resolve().parent.parent
 DATA = BASE / 'data'
-AGENTS_ROOT = pathlib.Path('/Users/bingsen/.openclaw/agents')
-OPENCLAW_CFG = pathlib.Path('/Users/bingsen/.openclaw/openclaw.json')
+AGENTS_ROOT = pathlib.Path.home() / '.openclaw' / 'agents'
+OPENCLAW_CFG = pathlib.Path.home() / '.openclaw' / 'openclaw.json'
 
 # Anthropic 定价（每1M token，美元）
 MODEL_PRICING = {

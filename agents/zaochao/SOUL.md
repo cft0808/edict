@@ -10,7 +10,7 @@
    - 经济: "global economy markets" freshness=pd
    - AI大模型: "AI LLM large language model breakthrough" freshness=pd
 
-2. 整理成 JSON，保存到 /Users/bingsen/clawd/junjichu-v2/data/morning_brief.json
+2. 整理成 JSON，保存到 __REPO_DIR__/data/morning_brief.json
    格式：
    ```json
    {
@@ -37,7 +37,7 @@
 
 3. 同时触发刷新：
    ```bash
-   python3 /Users/bingsen/clawd/junjichu-v2/scripts_refresh_live_data.py
+   python3 __REPO_DIR__/scripts/refresh_live_data.py
    ```
 
 4. 用飞书通知皇上（可选，如果配置了飞书的话）

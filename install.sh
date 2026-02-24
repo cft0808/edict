@@ -51,12 +51,12 @@ check_deps() {
 create_workspaces() {
   info "创建 Agent Workspace..."
   
-  AGENTS=(zhongshu menxia shangshu hubu libu bingbu xingbu gongbu)
+  AGENTS=(zhongshu menxia shangshu hubu libu bingbu xingbu gongbu zaochao)
   for agent in "${AGENTS[@]}"; do
     ws="$OC_HOME/workspace-$agent"
     mkdir -p "$ws/skills"
     if [ -f "$REPO_DIR/agents/$agent/SOUL.md" ]; then
-      cp "$REPO_DIR/agents/$agent/SOUL.md" "$ws/SOUL.md"
+      sed "s|__REPO_DIR__|$REPO_DIR|g" "$REPO_DIR/agents/$agent/SOUL.md" > "$ws/SOUL.md"
     fi
     log "Workspace 已创建: $ws"
   done

@@ -78,12 +78,6 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(read_json(DATA / 'officials_stats.json', {}))
         elif p == '/api/morning-brief':
             self.send_json(read_json(DATA / 'morning_brief.json', {}))
-        elif p == '/api/morning-brief/refresh' and method == 'POST':
-            import subprocess as sp
-            sp.Popen(['python3', str(BASE / 'scripts_fetch_morning_news.py')])
-            self.send_json({'ok': True, 'message': '采集已触发，约30-60秒后刷新'})
-        elif p == '/api/morning-brief':
-            self.send_json(read_json(DATA / 'morning_brief.json', {}))
         elif p.startswith('/api/morning-brief/'):
             date = p.split('/')[-1]
             self.send_json(read_json(DATA / f'morning_brief_{date}.json', {}))
@@ -98,6 +92,12 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(raw) if raw else {}
         except Exception:
             self.send_json({'ok': False, 'error': 'invalid JSON'}, 400)
+            return
+
+        if p == '/api/morning-brief/refresh':
+            scripts_dir = BASE.parent / 'scripts'
+            subprocess.Popen(['python3', str(scripts_dir / 'fetch_morning_news.py')])
+            self.send_json({'ok': True, 'message': '采集已触发，约30-60秒后刷新'})
             return
 
         if p == '/api/set-model':

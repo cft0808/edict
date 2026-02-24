@@ -7,7 +7,7 @@
 import json, pathlib, datetime, subprocess, re, sys, os
 from xml.etree import ElementTree as ET
 
-DATA = pathlib.Path('/Users/bingsen/clawd/junjichu-v2/data')
+DATA = pathlib.Path(__file__).resolve().parent.parent / 'data'
 LOCK = DATA / 'morning_brief.lock'
 
 # ── RSS 源配置 ──────────────────────────────────────────────────────────

@@ -14,7 +14,7 @@
 ```python
 import json, pathlib, datetime, subprocess
 
-tasks_file = pathlib.Path('/Users/bingsen/clawd/junjichu-v2/data/tasks_source.json')
+tasks_file = pathlib.Path('__REPO_DIR__/data/tasks_source.json')
 tasks = json.loads(tasks_file.read_text())
 for t in tasks:
     if t['id'] == task_id:
@@ -29,7 +29,7 @@ for t in tasks:
         })
         t['updatedAt'] = datetime.datetime.utcnow().isoformat() + "Z"
 tasks_file.write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
-subprocess.run(['python3', '/Users/bingsen/clawd/junjichu-v2/scripts_refresh_live_data.py'], capture_output=True)
+subprocess.run(['python3', '__REPO_DIR__/scripts/refresh_live_data.py'], capture_output=True)
 ```
 
 ### 各部完成汇报后（state→Review）：

@@ -362,7 +362,6 @@
     <div class="tab active" data-tab="edicts">📜 旨意看板 <span class="tbadge" id="tb-e">0</span></div>
     <div class="tab" data-tab="monitor">🔭 省部调度 <span class="tbadge" id="tb-m">0</span></div>
     <div class="tab" data-tab="morning">🌅 早朝简报</div>
-    <div class="tab" data-tab="morning">🌅 早朝简报</div>
     <div class="tab" data-tab="officials">👥 官员总览</div>
     <div class="tab" data-tab="models">⚙️ 模型配置</div>
     <div class="tab" data-tab="skills">🛠️ 技能配置</div>
@@ -377,12 +376,6 @@
   <div class="panel" id="panel-monitor">
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px">各省部当前承接旨意与执行状态 · 每5秒自动刷新</div>
     <div class="duty-grid" id="duty-grid"></div>
-  </div>
-
-  <!-- ══ 早朝简报 ══ -->
-  <div class="panel" id="panel-morning">
-    <div id="morning-hdr" class="mn-hdr"></div>
-    <div id="morning-body"></div>
   </div>
 
   <!-- ══ 早朝简报 ══ -->
@@ -791,112 +784,6 @@ async function loadAll(){await loadLive();if(['models','skills'].includes(active
 /* ══ MORNING BRIEF ══ */
 const CAT_COLORS = {politics:'#6a9eff',military:'#ff5270',economy:'#2ecc8a',ai:'#a07aff'};
 
-async function loadMorning(){
-  document.getElementById('morning-body').innerHTML='<div class="mn-loading">🌅 正在加载早朝简报…</div>';
-  try{
-    const d = await fetchJ(API+'/morning-brief');
-    renderMorning(d);
-  }catch(e){
-    document.getElementById('morning-body').innerHTML='<div class="mn-empty">⏳ 今日简报尚未生成<br><small>每日 06:00 自动采集，或点击手动刷新</small></div>';
-    document.getElementById('morning-hdr').innerHTML=morningHdr(null);
-  }
-}
-
-function morningHdr(d){
-  const rawDate = d&&(d.date||d.generated_at||'');
-  const dateDisplay = rawDate
-    ? new Date(rawDate).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'})
-    : new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'});
-  const gen = d&&(d.generatedAt||d.generated_at||'—');
-  const cats = d&&d.categories;
-  const total = cats
-    ? (Array.isArray(cats)
-        ? cats.reduce((s,c)=>s+(c.items||[]).length,0)
-        : Object.values(cats).reduce((s,v)=>s+(v||[]).length,0))
-    : 0;
-  return `<div>
-    <div class="mn-date">🌅 ${dateDisplay} 早朝简报</div>
-    <div class="mn-sub">采集时间：${esc(String(gen).substring(0,16))} · 每日 06:00 自动更新</div>
-  </div>
-  <div class="mn-hdr-r">
-    <span class="chip">${total?total+' 条新闻':'无数据'}</span>
-    <button class="btn-morning-refresh" onclick="loadMorning()">⟳ 手动刷新</button>
-  </div>`;
-}
-
-const CAT_ICON = {'政治':'🏛️','军事':'⚔️','经济':'💹','AI大模型':'🤖',
-  politics:'🏛️',military:'⚔️',economy:'💹',ai:'🤖'};
-const CAT_COLOR_MAP = {'政治':'#6a9eff','军事':'#ff5270','经济':'#2ecc8a','AI大模型':'#a07aff',
-  politics:'#6a9eff',military:'#ff5270',economy:'#2ecc8a',ai:'#a07aff'};
-
-function normalizeMorning(d){
-  // 统一成 [{key, label, items:[{title,summary,url,image_url,source,published}]}]
-  if(!d) return [];
-  const cats = d.categories;
-  if(!cats) return [];
-  // Array format (Python script)
-  if(Array.isArray(cats)) return cats.map(c=>({
-    key:c.key, label:c.label,
-    items:(c.items||[]).map(i=>({
-      title:i.title_zh||i.title, summary:i.summary_zh||i.summary||'',
-      url:i.url||i.link, image_url:i.image||i.image_url||'',
-      source:i.source, published:i.pub_date||i.published||''
-    }))
-  }));
-  // Object format (zaochao agent)
-  return Object.entries(cats).map(([label, items])=>({
-    key: label, label: (CAT_ICON[label]||'📰')+' '+label,
-    items: (items||[]).map(i=>({
-      title: i.title_zh||i.title_en||i.title||'',
-      summary: i.summary_zh||i.summary||'',
-      url: i.url||i.link||'',
-      image_url: i.image||i.image_url||'',
-      source: i.source||'',
-      published: (i.pub_date||i.published||'').substring(0,10)
-    }))
-  }));
-}
-
-function renderMorning(d){
-  document.getElementById('morning-hdr').innerHTML = morningHdr(d);
-  const cats = normalizeMorning(d);
-  if(!cats.length){
-    document.getElementById('morning-body').innerHTML='<div class="mn-empty">⏳ 今日简报尚未生成<br><small>每日 06:00 自动采集，或点击上方「手动刷新」</small></div>';
-    return;
-  }
-  document.getElementById('morning-body').innerHTML=`<div class="mn-cats">${
-    cats.map(cat=>{
-      const icon = CAT_ICON[cat.key]||'📰';
-      const color = CAT_COLOR_MAP[cat.key]||'var(--acc)';
-      const name = cat.label.replace(/^[^\s]+\s*/,''); // strip leading emoji
-      return `<div class="mn-cat" style="border-top:3px solid ${color}">
-        <div class="mn-cat-hdr">
-          <span class="mn-cat-icon">${icon}</span>
-          <span class="mn-cat-name">${esc(name||cat.key)}</span>
-          <span class="mn-cat-cnt">${(cat.items||[]).length} 条</span>
-        </div>
-        <div class="mn-items">
-          ${!(cat.items||[]).length?'<div class="mn-empty">暂无新闻</div>':
-            cat.items.map(item=>`
-            <div class="mn-item" onclick="window.open('${esc(item.url||'')}','_blank')">
-              <div class="mn-img">
-                ${item.image_url?`<img src="${esc(item.image_url)}" onerror="this.parentElement.innerHTML='${icon}'">`:icon}
-              </div>
-              <div class="mn-content">
-                <div class="mn-title">${esc(item.title||'')}</div>
-                <div class="mn-summary">${esc(item.summary||'')}</div>
-                <div class="mn-meta">
-                  <span class="mn-source">📰 ${esc(item.source||'')}</span>
-                  <span class="mn-time">${esc(item.published||'')}</span>
-                </div>
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>`;
-    }).join('')
-  }</div>`;
-}
-
 /* ══ MORNING BRIEF ══ */
 const CAT_META = {
   '政治': {icon:'🏛️', color:'#6a9eff'},
@@ -1122,7 +1009,6 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.getElementById('panel-'+activeTab).classList.add('active');
   if(['models','skills'].includes(activeTab))loadAgentConfig();
   if(activeTab==='officials')loadOfficials();
-  if(activeTab==='morning')loadMorning();
   if(activeTab==='morning')loadMorning();
 }));
 

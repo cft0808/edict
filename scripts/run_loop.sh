@@ -13,6 +13,7 @@ while true; do
   python3 "$SCRIPT_DIR/sync_from_openclaw_runtime.py" >> /tmp/sansheng_liubu_refresh.log 2>&1
   python3 "$SCRIPT_DIR/sync_agent_config.py"          >> /tmp/sansheng_liubu_refresh.log 2>&1
   python3 "$SCRIPT_DIR/apply_model_changes.py"        >> /tmp/sansheng_liubu_refresh.log 2>&1
+  python3 "$SCRIPT_DIR/sync_officials_stats.py"       >> /tmp/sansheng_liubu_refresh.log 2>&1
   python3 "$SCRIPT_DIR/refresh_live_data.py"          >> /tmp/sansheng_liubu_refresh.log 2>&1
   sleep 15
 done

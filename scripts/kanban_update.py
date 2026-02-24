@@ -17,8 +17,9 @@
 """
 import json, pathlib, datetime, sys, subprocess
 
-TASKS_FILE = pathlib.Path('/Users/bingsen/clawd/junjichu-v2/data/tasks_source.json')
-REFRESH_SCRIPT = pathlib.Path('/Users/bingsen/clawd/junjichu-v2/scripts_refresh_live_data.py')
+_BASE = pathlib.Path(__file__).resolve().parent.parent
+TASKS_FILE = _BASE / 'data' / 'tasks_source.json'
+REFRESH_SCRIPT = _BASE / 'scripts' / 'refresh_live_data.py'
 
 STATE_ORG_MAP = {
     'Zhongshu': '中书省', 'Menxia': '门下省', 'Assigned': '尚书省',
@@ -36,7 +37,7 @@ def save(tasks):
     subprocess.run(['python3', str(REFRESH_SCRIPT)], capture_output=True)
 
 def now_iso():
-    return datetime.datetime.utcnow().isoformat() + 'Z'
+    return datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00', 'Z')
 
 def find_task(tasks, task_id):
     return next((t for t in tasks if t.get('id') == task_id), None)

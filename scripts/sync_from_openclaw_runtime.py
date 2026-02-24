@@ -5,10 +5,10 @@ import time
 import datetime
 import traceback
 
-BASE = pathlib.Path('/Users/bingsen/clawd/junjichu-v2')
+BASE = pathlib.Path(__file__).resolve().parent.parent
 DATA = BASE / 'data'
 SYNC_STATUS = DATA / 'sync_status.json'
-SESSIONS_ROOT = pathlib.Path('/Users/bingsen/.openclaw/agents')
+SESSIONS_ROOT = pathlib.Path.home() / '.openclaw' / 'agents'
 
 
 def write_status(**kwargs):
