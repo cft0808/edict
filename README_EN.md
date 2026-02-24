@@ -15,6 +15,27 @@
 
 > User issues command → Planning (中书省) → Review (门下省) → Dispatch (尚书省) → Execution (六部) → Report back
 
+---
+
+## 🤔 Why SanSheng LiuBu?
+
+> **"Instead of one AI agent doing everything wrong, 9 specialized agents check each other's work."**
+
+Most multi-agent frameworks let agents execute tasks directly. **SanSheng LiuBu** introduces the checks-and-balances wisdom of ancient Chinese imperial governance:
+
+| Feature | SanSheng LiuBu | CrewAI | MetaGPT | AutoGen |
+|---------|:--------------:|:------:|:-------:|:-------:|
+| Built-in review/veto mechanism (门下省) | ✅ | ❌ | ❌ | ❌ |
+| Real-time Kanban monitoring dashboard | ✅ | ❌ | ❌ | ❌ |
+| Full audit trail (who did what, when) | ✅ | ⚠️ | ⚠️ | ❌ |
+| Agent heartbeat health monitoring | ✅ | ❌ | ❌ | ❌ |
+| Hot-swap LLM models without restart | ✅ | ❌ | ❌ | ❌ |
+| Natural language commands via IM | ✅ | ❌ | ❌ | ❌ |
+
+**Core Innovation: The Reviewer Agent (门下省)** — Every execution plan must pass through an independent reviewer agent before dispatching. Plans can be rejected and revised, making AI decisions more reliable and auditable.
+
+---
+
 ## ✨ Features
 
 - 🏛️ **9 specialized agents** with defined roles and communication permissions
