@@ -16,7 +16,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 
 BASE = pathlib.Path(__file__).parent
-DATA = BASE.parent / 'data'
+DATA = BASE.parent / "data"
 SCRIPTS = BASE.parent / 'scripts'
 
 
@@ -103,31 +103,46 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass
 
+    def handle_error(self):
+        pass  # 静默处理连接错误，避免 BrokenPipe 崩溃
+
+    def handle(self):
+        try:
+            super().handle()
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # 客户端断开连接，忽略
+
     def do_OPTIONS(self):
         self.send_response(200)
         cors_headers(self)
         self.end_headers()
 
     def send_json(self, data, code=200):
-        body = json.dumps(data, ensure_ascii=False).encode()
-        self.send_response(code)
-        self.send_header('Content-Type', 'application/json; charset=utf-8')
-        self.send_header('Content-Length', str(len(body)))
-        cors_headers(self)
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            body = json.dumps(data, ensure_ascii=False).encode()
+            self.send_response(code)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
+            cors_headers(self)
+            self.end_headers()
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
     def send_file(self, path: pathlib.Path, mime='text/html; charset=utf-8'):
         if not path.exists():
             self.send_error(404)
             return
-        body = path.read_bytes()
-        self.send_response(200)
-        self.send_header('Content-Type', mime)
-        self.send_header('Content-Length', str(len(body)))
-        cors_headers(self)
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            body = path.read_bytes()
+            self.send_response(200)
+            self.send_header('Content-Type', mime)
+            self.send_header('Content-Length', str(len(body)))
+            cors_headers(self)
+            self.end_headers()
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
     def do_GET(self):
         p = urlparse(self.path).path.rstrip('/')
@@ -145,18 +160,6 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(read_json(DATA / 'officials_stats.json', {}))
         elif p == '/api/morning-brief':
             self.send_json(read_json(DATA / 'morning_brief.json', {}))
-        elif p == '/api/morning-config':
-            self.send_json(read_json(DATA / 'morning_brief_config.json', {
-                'categories': [
-                    {'name': '政治', 'enabled': True},
-                    {'name': '军事', 'enabled': True},
-                    {'name': '经济', 'enabled': True},
-                    {'name': 'AI大模型', 'enabled': True},
-                ],
-                'keywords': [],
-                'custom_feeds': [],
-                'feishu_webhook': '',
-            }))
         elif p.startswith('/api/morning-brief/'):
             date = p.split('/')[-1]
             self.send_json(read_json(DATA / f'morning_brief_{date}.json', {}))
@@ -220,8 +223,8 @@ class Handler(BaseHTTPRequestHandler):
             # Async apply
             def apply_async():
                 try:
-                    subprocess.run(['python3', str(BASE.parent / 'scripts' / 'apply_model_changes.py')], timeout=30)
-                    subprocess.run(['python3', str(BASE.parent / 'scripts' / 'sync_agent_config.py')], timeout=10)
+                    subprocess.run(['python3', str(BASE / "scripts_apply_model_changes.py")], timeout=30)
+                    subprocess.run(['python3', str(BASE / "scripts_sync_agent_config.py")], timeout=10)
                 except Exception as e:
                     print(f'[apply error] {e}', file=sys.stderr)
 
