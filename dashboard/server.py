@@ -339,14 +339,15 @@ def handle_review_action(task_id, action, comment=''):
 
 # 状态推进顺序（手动推进用）
 _STATE_FLOW = {
+    'Taizi':    ('Zhongshu', '太子', '中书省', '太子分拣完毕，转中书省起草'),
     'Zhongshu': ('Menxia', '中书省', '门下省', '中书省方案提交门下省审议'),
     'Menxia':   ('Assigned', '门下省', '尚书省', '门下省准奏，转尚书省派发'),
     'Assigned': ('Doing', '尚书省', '六部', '尚书省开始派发执行'),
     'Doing':    ('Review', '六部', '尚书省', '各部完成，进入汇总'),
-    'Review':   ('Done', '尚书省', '皇上', '全流程完成，回奏皇上'),
+    'Review':   ('Done', '尚书省', '太子', '全流程完成，回奏太子转报皇上'),
 }
 _STATE_LABELS = {
-    'Zhongshu': '中书省', 'Menxia': '门下省', 'Assigned': '尚书省',
+    'Taizi': '太子', 'Zhongshu': '中书省', 'Menxia': '门下省', 'Assigned': '尚书省',
     'Doing': '执行中', 'Review': '审查', 'Done': '完成',
 }
 
