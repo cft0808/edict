@@ -1,19 +1,13 @@
 #!/usr/bin/env python3
 import json, pathlib, datetime, logging
 from file_lock import atomic_json_write, atomic_json_read
+from utils import read_json
 
 log = logging.getLogger('refresh')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(message)s', datefmt='%H:%M:%S')
 
 BASE = pathlib.Path(__file__).parent.parent
 DATA = BASE / 'data'
-
-
-def read_json(path, default):
-    try:
-        return json.loads(path.read_text())
-    except Exception:
-        return default
 
 
 def output_meta(path):

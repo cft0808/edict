@@ -127,13 +127,18 @@ def fetch_category(category, feeds, max_items=5):
     return results
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--force', action='store_true', help='强制采集，忽略幂等锁')
+    args = parser.parse_args()
+
     # 幂等锁：防重复执行
     today = datetime.date.today().strftime('%Y%m%d')
     lock_file = DATA / f'morning_brief_{today}.lock'
-    if lock_file.exists():
+    if lock_file.exists() and not args.force:
         age = datetime.datetime.now().timestamp() - lock_file.stat().st_mtime
         if age < 3600:  # 1小时内不重复
-            log.info(f'今日已采集（{today}），跳过')
+            log.info(f'今日已采集（{today}），跳过（使用 --force 强制采集）')
             return
     lock_file.touch()
 

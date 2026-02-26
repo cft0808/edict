@@ -17,8 +17,10 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 # 引入文件锁工具，确保与其他脚本并发安全
-sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / 'scripts'))
+scripts_dir = str(pathlib.Path(__file__).parent.parent / 'scripts')
+sys.path.insert(0, scripts_dir)
 from file_lock import atomic_json_read, atomic_json_write, atomic_json_update
+from utils import validate_url
 
 log = logging.getLogger('server')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(message)s', datefmt='%H:%M:%S')
@@ -204,6 +206,9 @@ def push_to_feishu():
     webhook = cfg.get('feishu_webhook', '').strip()
     if not webhook:
         return
+    if not validate_url(webhook, allowed_schemes=('https',), allowed_domains=('open.feishu.cn', 'open.larksuite.com')):
+        log.warning(f'飞书 Webhook URL 不合法: {webhook}')
+        return
     brief = read_json(DATA / 'morning_brief.json', {})
     date_str = brief.get('date', '')
     total = sum(len(v) for v in (brief.get('categories') or {}).values())
@@ -234,9 +239,97 @@ def push_to_feishu():
         print(f'[飞书] 推送失败: {e}', file=sys.stderr)
 
 
+def handle_create_task(title, org='中书省', official='中书令', priority='normal', template_id='', params=None):
+    """从看板创建新任务（圣旨模板下旨）。"""
+    if not title or not title.strip():
+        return {'ok': False, 'error': '任务标题不能为空'}
+    title = title.strip()
+    # 生成 task id: JJC-YYYYMMDD-NNN
+    today = datetime.datetime.now().strftime('%Y%m%d')
+    tasks = load_tasks()
+    today_ids = [t['id'] for t in tasks if t.get('id', '').startswith(f'JJC-{today}-')]
+    seq = 1
+    if today_ids:
+        nums = [int(tid.split('-')[-1]) for tid in today_ids if tid.split('-')[-1].isdigit()]
+        seq = max(nums) + 1 if nums else 1
+    task_id = f'JJC-{today}-{seq:03d}'
+    new_task = {
+        'id': task_id,
+        'title': title,
+        'official': official,
+        'org': org,
+        'state': 'Zhongshu',
+        'now': f'{org}正在规划',
+        'eta': '-',
+        'block': '无',
+        'output': '',
+        'ac': '',
+        'priority': priority,
+        'templateId': template_id,
+        'templateParams': params or {},
+        'flow_log': [{
+            'at': now_iso(),
+            'from': '皇上',
+            'to': org,
+            'remark': f'下旨：{title}'
+        }],
+        'updatedAt': now_iso(),
+    }
+    tasks.insert(0, new_task)
+    save_tasks(tasks)
+    log.info(f'创建任务: {task_id} | {title[:40]}')
+    return {'ok': True, 'taskId': task_id, 'message': f'旨意 {task_id} 已下达'}
+
+
+def handle_review_action(task_id, action, comment=''):
+    """门下省御批：准奏/封驳。"""
+    tasks = load_tasks()
+    task = next((t for t in tasks if t.get('id') == task_id), None)
+    if not task:
+        return {'ok': False, 'error': f'任务 {task_id} 不存在'}
+    if task.get('state') not in ('Review', 'Menxia'):
+        return {'ok': False, 'error': f'任务 {task_id} 当前状态为 {task.get("state")}，无法御批'}
+
+    if action == 'approve':
+        if task['state'] == 'Menxia':
+            task['state'] = 'Assigned'
+            task['now'] = '门下省准奏，移交尚书省派发'
+            remark = f'✅ 准奏：{comment or "门下省审议通过"}'
+            to_dept = '尚书省'
+        else:  # Review
+            task['state'] = 'Done'
+            task['now'] = '御批通过，任务完成'
+            remark = f'✅ 御批准奏：{comment or "审查通过"}'
+            to_dept = '皇上'
+    elif action == 'reject':
+        round_num = (task.get('review_round') or 0) + 1
+        task['review_round'] = round_num
+        task['state'] = 'Zhongshu'
+        task['now'] = f'封驳退回中书省修订（第{round_num}轮）'
+        remark = f'🚫 封驳：{comment or "需要修改"}'
+        to_dept = '中书省'
+    else:
+        return {'ok': False, 'error': f'未知操作: {action}'}
+
+    task.setdefault('flow_log', []).append({
+        'at': now_iso(),
+        'from': '门下省' if task.get('state') != 'Done' else '皇上',
+        'to': to_dept,
+        'remark': remark
+    })
+    task['updatedAt'] = now_iso()
+    save_tasks(tasks)
+    label = '已准奏' if action == 'approve' else '已封驳'
+    return {'ok': True, 'message': f'{task_id} {label}'}
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
-        pass
+        # 只记录 4xx/5xx 错误请求
+        if args and len(args) >= 1:
+            status = str(args[0]) if args else ''
+            if status.startswith('4') or status.startswith('5'):
+                log.warning(f'{self.client_address[0]} {fmt % args}')
 
     def handle_error(self):
         pass  # 静默处理连接错误，避免 BrokenPipe 崩溃
@@ -312,7 +405,12 @@ class Handler(BaseHTTPRequestHandler):
             }))
         elif p.startswith('/api/morning-brief/'):
             date = p.split('/')[-1]
-            self.send_json(read_json(DATA / f'morning_brief_{date}.json', {}))
+            # 标准化日期格式为 YYYYMMDD（兼容 YYYY-MM-DD 输入）
+            date_clean = date.replace('-', '')
+            if not date_clean.isdigit() or len(date_clean) != 8:
+                self.send_json({'ok': False, 'error': f'日期格式无效: {date}，请使用 YYYYMMDD'}, 400)
+                return
+            self.send_json(read_json(DATA / f'morning_brief_{date_clean}.json', {}))
         elif p.startswith('/api/skill-content/'):
             # /api/skill-content/{agentId}/{skillName}
             parts = p.replace('/api/skill-content/', '').split('/', 1)
@@ -337,15 +435,39 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if p == '/api/morning-config':
+            # 字段校验
+            if not isinstance(body, dict):
+                self.send_json({'ok': False, 'error': '请求体必须是 JSON 对象'}, 400)
+                return
+            allowed_keys = {'categories', 'keywords', 'custom_feeds', 'feishu_webhook'}
+            unknown = set(body.keys()) - allowed_keys
+            if unknown:
+                self.send_json({'ok': False, 'error': f'未知字段: {", ".join(unknown)}'}, 400)
+                return
+            if 'categories' in body and not isinstance(body['categories'], list):
+                self.send_json({'ok': False, 'error': 'categories 必须是数组'}, 400)
+                return
+            if 'keywords' in body and not isinstance(body['keywords'], list):
+                self.send_json({'ok': False, 'error': 'keywords 必须是数组'}, 400)
+                return
+            # 飞书 Webhook 校验
+            webhook = body.get('feishu_webhook', '').strip()
+            if webhook and not validate_url(webhook, allowed_schemes=('https',), allowed_domains=('open.feishu.cn', 'open.larksuite.com')):
+                self.send_json({'ok': False, 'error': '飞书 Webhook URL 无效，仅支持 https://open.feishu.cn 或 open.larksuite.com 域名'}, 400)
+                return
             cfg_path = DATA / 'morning_brief_config.json'
             cfg_path.write_text(json.dumps(body, ensure_ascii=False, indent=2))
             self.send_json({'ok': True, 'message': '订阅配置已保存'})
             return
 
         if p == '/api/morning-brief/refresh':
+            force = body.get('force', True)  # 从看板手动触发默认强制
             def do_refresh():
                 try:
-                    subprocess.run(['python3', str(SCRIPTS / 'fetch_morning_news.py')], timeout=120)
+                    cmd = ['python3', str(SCRIPTS / 'fetch_morning_news.py')]
+                    if force:
+                        cmd.append('--force')
+                    subprocess.run(cmd, timeout=120)
                     push_to_feishu()
                 except Exception as e:
                     print(f'[refresh error] {e}', file=sys.stderr)
@@ -394,6 +516,31 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({'ok': False, 'error': 'taskId required'}, 400)
                 return
             result = update_task_todos(task_id, todos)
+            self.send_json(result)
+            return
+
+        if p == '/api/create-task':
+            title = body.get('title', '').strip()
+            org = body.get('org', '中书省').strip()
+            official = body.get('official', '中书令').strip()
+            priority = body.get('priority', 'normal').strip()
+            template_id = body.get('templateId', '')
+            params = body.get('params', {})
+            if not title:
+                self.send_json({'ok': False, 'error': 'title required'}, 400)
+                return
+            result = handle_create_task(title, org, official, priority, template_id, params)
+            self.send_json(result)
+            return
+
+        if p == '/api/review-action':
+            task_id = body.get('taskId', '').strip()
+            action = body.get('action', '').strip()  # approve, reject
+            comment = body.get('comment', '').strip()
+            if not task_id or action not in ('approve', 'reject'):
+                self.send_json({'ok': False, 'error': 'taskId and action(approve/reject) required'}, 400)
+                return
+            result = handle_review_action(task_id, action, comment)
             self.send_json(result)
             return
 

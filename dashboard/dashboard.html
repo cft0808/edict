@@ -1018,6 +1018,8 @@ function openTask(id){
       ${canStop ? `<button class="btn-action btn-stop" onclick="confirmAction('${esc(t.id)}','stop')">⏸ 叫停任务</button>
       <button class="btn-action btn-cancel" onclick="confirmAction('${esc(t.id)}','cancel')">🚫 取消任务</button>` : ''}
       ${canResume ? `<button class="btn-action btn-resume" onclick="taskAction('${esc(t.id)}','resume','恢复执行')">▶️ 恢复执行</button>` : ''}
+      ${['Review','Menxia'].includes(t.state) ? `<button class="btn-action" style="background:#2ecc8a22;color:#2ecc8a;border:1px solid #2ecc8a44" onclick="reviewAction('${esc(t.id)}','approve')">✅ 准奏</button>
+      <button class="btn-action" style="background:#ff527022;color:#ff5270;border:1px solid #ff527044" onclick="reviewAction('${esc(t.id)}','reject')">🚫 封驳</button>` : ''}
     </div>
 
     <!-- Todo 子任务 -->
@@ -1153,7 +1155,10 @@ async function applyModel(id){
 function renderCL(log){
   const el=document.getElementById('cl-list');
   if(!log||!log.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0">暂无变更</div>';return}
-  el.innerHTML=[...log].reverse().slice(0,15).map(e=>`<div class="cl-row"><span class="cl-t">${esc((e.at||'').substring(0,16).replace('T',' '))}</span><span class="cl-a">${esc(e.agentId||'')}</span><span class="cl-c"><b>${esc(e.oldModel||'')}</b> → <b>${esc(e.newModel||'')}</b></span></div>`).join('')
+  el.innerHTML=[...log].reverse().slice(0,15).map(e=>{
+    const rb = e.rolledBack ? ' <span style="color:var(--danger);font-size:10px;border:1px solid #ff527044;padding:1px 5px;border-radius:3px">⚠ 已回滚</span>' : '';
+    return `<div class="cl-row"><span class="cl-t">${esc((e.at||'').substring(0,16).replace('T',' '))}</span><span class="cl-a">${esc(e.agentId||'')}</span><span class="cl-c"><b>${esc(e.oldModel||'')}</b> → <b>${esc(e.newModel||'')}</b>${rb}</span></div>`;
+  }).join('')
 }
 
 /* ══ SKILLS ══ */
@@ -1911,6 +1916,18 @@ async function taskAction(taskId, action, reason){
   }catch(e){ toast('服务器连接失败','err'); }
 }
 
+/* ══ REVIEW ACTION (御批 准奏/封驳) ══ */
+async function reviewAction(taskId, action){
+  const labels = {approve:'准奏', reject:'封驳'};
+  const comment = prompt(`${labels[action]} ${taskId}\n\n请输入批注（可留空）：`);
+  if(comment === null) return; // cancelled
+  try{
+    const r = await postJ(API+'/review-action', {taskId, action, comment: comment||''});
+    if(r.ok){ toast(`✅ ${taskId} 已${labels[action]}`,'ok'); loadAll(); document.getElementById('modal-bg').classList.remove('open'); }
+    else toast(r.error||'操作失败','err');
+  }catch(e){ toast('服务器连接失败','err'); }
+}
+
 /* ══ ARCHIVE ACTIONS ══ */
 async function archiveTask(taskId){
   try{
@@ -2301,11 +2318,33 @@ async function executeTemplate(e, tplId){
   const t = TEMPLATES.find(x=>x.id===tplId);
   // Show the generated command in a confirmation
   if(!confirm(`确认下旨？\n\n${cmd.substring(0,200)}${cmd.length>200?'…':''}`)) return;
-  toast(`📜 旨意已生成，请复制到飞书发送给中书省`, 'ok', 6000);
-  // Copy to clipboard
-  const full = cmd;
-  navigator.clipboard.writeText(full).then(()=>toast('✅ 旨意已复制到剪贴板','ok')).catch(()=>{});
-  closeModal();
+  // 通过 API 创建真实任务
+  try{
+    const params = {};
+    for(const p of t.params){
+      const el = document.getElementById('tpl-'+p.key);
+      params[p.key] = el ? el.value : (p.default||'');
+    }
+    const r = await postJ(API+'/create-task', {
+      title: cmd.substring(0, 120),
+      org: t.depts[0] || '中书省',
+      priority: 'normal',
+      templateId: tplId,
+      params: params,
+    });
+    if(r.ok){
+      toast(`📜 ${r.taskId} 旨意已下达`, 'ok', 5000);
+      closeModal();
+      loadAll();
+    } else {
+      toast(r.error||'下旨失败','err');
+    }
+  }catch(err){
+    // 降级：复制到剪贴板
+    toast('⚠️ 服务器连接失败，已复制到剪贴板', 'err', 4000);
+    navigator.clipboard.writeText(cmd).catch(()=>{});
+    closeModal();
+  }
 }
 
 /* ══ INIT ══ */

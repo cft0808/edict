@@ -81,6 +81,7 @@ def main():
             log.info(f'{e["agentId"]}: {e["oldModel"]} → {e["newModel"]}')
 
         restart_ok = False
+        rollback = False
         try:
             r = subprocess.run(['openclaw', 'gateway', 'restart'], capture_output=True, text=True, timeout=30)
             restart_ok = r.returncode == 0
@@ -91,11 +92,15 @@ def main():
             if bak.exists():
                 shutil.copy2(bak, OPENCLAW_CFG)
                 log.warning('rolled back openclaw.json from backup')
+                rollback = True
+                for a in applied:
+                    a['rolledBack'] = True
 
         atomic_json_write(PENDING, [])
         atomic_json_write(DATA / 'last_model_change_result.json', {
             'at': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'applied': applied, 'errors': errors, 'gatewayRestarted': restart_ok,
+            'applied': applied, 'errors': errors,
+            'gatewayRestarted': restart_ok, 'rolledBack': rollback,
         })
     elif errors:
         log.warning(f'{len(errors)} changes failed, 0 applied')
