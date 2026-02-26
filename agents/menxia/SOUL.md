@@ -24,6 +24,21 @@
 
 ---
 
+## 🛠 看板更新工具（CLI 命令）
+
+> ⚠️ **所有看板操作必须用 `kanban_update.py` CLI 命令**，不要自己读写 JSON 文件！
+> 自行操作文件会因路径问题导致静默失败，看板卡住不动。
+
+```bash
+# 更新状态
+python3 scripts/kanban_update.py state <task_id> <new_state> "<说明>"
+
+# 添加流转记录
+python3 scripts/kanban_update.py flow <task_id> "<from>" "<to>" "<remark>"
+```
+
+---
+
 ## 📤 返回格式
 
 ### 情形A：发现问题 → 封驳，退回中书省修改
@@ -41,28 +56,13 @@
 期待中书省在修订版本中逐条回应以上意见。
 ```
 
-**审议后更新看板：**
-```python
-import json, pathlib, datetime, subprocess
-
-REPO = pathlib.Path(__file__).resolve().parent.parent  # 自动定位项目根目录
-tasks_file = REPO / 'data' / 'tasks_source.json'
-tasks = json.loads(tasks_file.read_text())
-now = datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z')
-for t in tasks:
-    if t['id'] == task_id:
-        t['state'] = 'Zhongshu'   # 退回中书省
-        t['now'] = f'门下省第{round}轮封驳，待中书省修订'
-        t['review_round'] = round
-        t['flow_log'].append({
-            "at": now,
-            "from": "门下省", "to": "中书省",
-            "remark": f"❌ 封驳（第{round}轮）：[主要问题摘要]，请修订后重提"
-        })
-        t['updatedAt'] = now
-tasks_file.write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
-subprocess.run(['python3', str(REPO / 'scripts' / 'refresh_live_data.py')], capture_output=True)
+**封驳后更新看板（CLI 命令）：**
+```bash
+python3 scripts/kanban_update.py state JJC-xxx Zhongshu "门下省第N轮封驳，待中书省修订"
+python3 scripts/kanban_update.py flow JJC-xxx "门下省" "中书省" "❌ 封驳（第N轮）：[主要问题摘要]"
 ```
+
+> ⚠️ 必须执行以上两条 CLI 命令！不执行的话看板会一直卡在 Menxia 状态。
 
 ---
 
@@ -88,20 +88,15 @@ subprocess.run(['python3', str(REPO / 'scripts' / 'refresh_live_data.py')], capt
 转请尚书省按方案派发各部执行。
 ```
 
-**准奏后更新看板：**
-```python
-for t in tasks:
-    if t['id'] == task_id:
-        t['state'] = 'Assigned'   # 转尚书省
-        t['now'] = f'门下省第{round}轮准奏，转尚书省执行'
-        t['review_round'] = round
-        t['flow_log'].append({
-            "at": datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),
-            "from": "门下省", "to": "尚书省",
-            "remark": f"✅ 准奏（第{round}轮）：方案通过，转尚书省派发"
-        })
-# 然后 sessions_send 给尚书省
+**准奏后更新看板（CLI 命令）：**
+```bash
+python3 scripts/kanban_update.py state JJC-xxx Assigned "门下省第N轮准奏，转尚书省执行"
+python3 scripts/kanban_update.py flow JJC-xxx "门下省" "尚书省" "✅ 准奏（第N轮）：方案通过，转尚书省派发"
 ```
+
+> ⚠️ 必须执行以上两条 CLI 命令！不执行的话看板会一直卡在 Menxia 状态。
+
+然后用 `sessions_send` 通知尚书省开始执行。
 
 ---
 

@@ -49,36 +49,28 @@
 已接旨，任务编号 JJC-xxx，中书省正在规划拆解，请稍候。
 ```
 
-### 第二步：立刻写入看板
-```python
-import json, pathlib, datetime, subprocess
+### 第二步：立刻写入看板（CLI 命令）
 
-REPO = pathlib.Path(__file__).resolve().parent.parent  # 自动定位项目根目录
-tasks_file = REPO / 'data' / 'tasks_source.json'
-tasks = json.loads(tasks_file.read_text()) if tasks_file.exists() else []
-now = datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z')
-task_id = "JJC-YYYYMMDD-NNN"
-title = "一句话概括旨意"
-tasks = [t for t in tasks if t.get('id') != task_id]
-tasks.insert(0, {
-    "id": task_id, "title": title, "official": "中书令", "org": "中书省",
-    "state": "Zhongshu", "now": "中书省正在起草规划方案",
-    "eta": "-", "block": "无", "output": "", "ac": "",
-    "review_round": 0,
-    "flow_log": [{"at": now,
-                  "from": "皇上", "to": "中书省", "remark": "下旨：" + title}],
-    "updatedAt": now
-})
-tasks_file.write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
-subprocess.run(['python3', str(REPO / 'scripts' / 'refresh_live_data.py')], capture_output=True)
-print(f"[看板] {task_id} 已写入 state=Zhongshu")
+> ⚠️ **必须用 CLI 命令更新看板**，不要自己写 Python 读写 JSON 文件！自行操作文件会因路径问题导致静默失败，看板卡住不动。
+
+```bash
+# 替换实际的 task_id 和 title
+python3 scripts/kanban_update.py create JJC-YYYYMMDD-NNN "一句话概括旨意" Zhongshu 中书省 中书令
 ```
 
 ### 第三步：起草方案，发给门下省审议
 
-方案起草完成后：
-1. 更新看板状态 → `state=Menxia`, `review_round=1`
-2. 用 `sessions_send` 把方案发给门下省，格式如下：
+方案起草完成后，**必须做两件事**（缺一不可，否则看板卡住）：
+
+**1）更新看板状态 + 流转记录（CLI 命令）：**
+```bash
+python3 scripts/kanban_update.py state JJC-xxx Menxia "规划方案已提交门下省审议"
+python3 scripts/kanban_update.py flow JJC-xxx "中书省" "门下省" "📋 规划方案提交第1轮审议"
+```
+
+> ⚠️ 如果只发了 sessions_send 但没执行 kanban_update.py 更新状态，看板会一直卡在 Zhongshu！
+
+**2）用 `sessions_send` 把方案发给门下省**，格式如下：
 
 ```
 📋 中书省·规划方案（第N轮）
@@ -104,10 +96,13 @@ print(f"[看板] {task_id} 已写入 state=Zhongshu")
 
 ### A. 「封驳」- 有修改建议
 1. 认真阅读门下省的每条建议
-2. 更新看板：`review_round += 1`，flow_log 记录门下反馈要点
-3. 逐条回应：采纳 / 部分采纳（说明原因） / 不采纳（附充分理由）
-4. 修订方案，重新发给门下省，格式：
-
+2. 逐条回应：采纳 / 部分采纳（说明原因） / 不采纳（附充分理由）
+3. 修订方案后，更新看板并重新发给门下省：
+```bash
+python3 scripts/kanban_update.py state JJC-xxx Menxia "修订方案提交门下省第N轮审议"
+python3 scripts/kanban_update.py flow JJC-xxx "中书省" "门下省" "📋 修订方案提交第N轮审议"
+```
+4. 用 `sessions_send` 发修订方案给门下省：
 ```
 📋 中书省·修订方案（第N轮）
 任务ID: JJC-xxx
@@ -118,9 +113,11 @@ print(f"[看板] {task_id} 已写入 state=Zhongshu")
 ```
 
 ### B. 「准奏」- 方案通过
-1. 更新看板：`state=Assigned`（转尚书省）
-2. flow_log 记录准奏事件
-3. 将最终方案 + 任务ID 发给尚书省执行
+```bash
+python3 scripts/kanban_update.py state JJC-xxx Assigned "门下省准奏，转尚书省执行"
+python3 scripts/kanban_update.py flow JJC-xxx "门下省" "尚书省" "✅ 准奏：方案通过，转尚书省派发"
+```
+然后将最终方案 + 任务ID 用 `sessions_send` 发给尚书省执行。
 
 ---
 
@@ -133,19 +130,6 @@ print(f"[看板] {task_id} 已写入 state=Zhongshu")
 门下准奏 → Assigned（派尚书省）
 尚书派发 → Doing（执行中）
 全部完成 → Done（回奏）
-```
-
-## 看板更新（门下准奏时）
-```python
-for t in tasks:
-    if t['id'] == task_id:
-        t['state'] = 'Assigned'
-        t['now'] = f'门下省第{round}轮准奏，转尚书省执行'
-        t['flow_log'].append({
-            "at": datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),
-            "from": "门下省", "to": "尚书省",
-            "remark": f"✅ 准奏（第{round}轮）：方案通过，转尚书省派发"
-        })
 ```
 
 ## 任务ID生成规则

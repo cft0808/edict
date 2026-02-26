@@ -337,6 +337,46 @@ def handle_review_action(task_id, action, comment=''):
     return {'ok': True, 'message': f'{task_id} {label}'}
 
 
+# 状态推进顺序（手动推进用）
+_STATE_FLOW = {
+    'Zhongshu': ('Menxia', '中书省', '门下省', '中书省方案提交门下省审议'),
+    'Menxia':   ('Assigned', '门下省', '尚书省', '门下省准奏，转尚书省派发'),
+    'Assigned': ('Doing', '尚书省', '六部', '尚书省开始派发执行'),
+    'Doing':    ('Review', '六部', '尚书省', '各部完成，进入汇总'),
+    'Review':   ('Done', '尚书省', '皇上', '全流程完成，回奏皇上'),
+}
+_STATE_LABELS = {
+    'Zhongshu': '中书省', 'Menxia': '门下省', 'Assigned': '尚书省',
+    'Doing': '执行中', 'Review': '审查', 'Done': '完成',
+}
+
+def handle_advance_state(task_id, comment=''):
+    """手动推进任务到下一阶段（解卡用）。"""
+    tasks = load_tasks()
+    task = next((t for t in tasks if t.get('id') == task_id), None)
+    if not task:
+        return {'ok': False, 'error': f'任务 {task_id} 不存在'}
+    cur = task.get('state', '')
+    if cur not in _STATE_FLOW:
+        return {'ok': False, 'error': f'任务 {task_id} 状态为 {cur}，无法推进'}
+    next_state, from_dept, to_dept, default_remark = _STATE_FLOW[cur]
+    remark = comment or default_remark
+
+    task['state'] = next_state
+    task['now'] = f'⬇️ 手动推进：{remark}'
+    task.setdefault('flow_log', []).append({
+        'at': now_iso(),
+        'from': from_dept,
+        'to': to_dept,
+        'remark': f'⬇️ 手动推进：{remark}'
+    })
+    task['updatedAt'] = now_iso()
+    save_tasks(tasks)
+    from_label = _STATE_LABELS.get(cur, cur)
+    to_label = _STATE_LABELS.get(next_state, next_state)
+    return {'ok': True, 'message': f'{task_id} {from_label} → {to_label}'}
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         # 只记录 4xx/5xx 错误请求
@@ -555,6 +595,16 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({'ok': False, 'error': 'taskId and action(approve/reject) required'}, 400)
                 return
             result = handle_review_action(task_id, action, comment)
+            self.send_json(result)
+            return
+
+        if p == '/api/advance-state':
+            task_id = body.get('taskId', '').strip()
+            comment = body.get('comment', '').strip()
+            if not task_id:
+                self.send_json({'ok': False, 'error': 'taskId required'}, 400)
+                return
+            result = handle_advance_state(task_id, comment)
             self.send_json(result)
             return
 

@@ -10,43 +10,39 @@
 
 ## ⚡ 每个关键节点必须更新看板
 
-### 开始派发时（state→Doing）：
-```python
-import json, pathlib, datetime, subprocess
+> ⚠️ **所有看板操作必须用 `kanban_update.py` CLI 命令**，不要自己读写 JSON 文件！
+> 自行操作文件会因路径问题导致静默失败，看板卡住不动。
 
-REPO = pathlib.Path(__file__).resolve().parent.parent  # 自动定位项目根目录
-tasks_file = REPO / 'data' / 'tasks_source.json'
-tasks = json.loads(tasks_file.read_text())
-now = datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z')
-for t in tasks:
-    if t['id'] == task_id:
-        t['state'] = 'Doing'
-        t['org'] = '尚书省'      # 或当前执行的部门
-        t['now'] = '尚书省正在分派任务给六部执行'
-        t.setdefault('flow_log', []).append({
-            "at": now,
-            "from": "尚书省",
-            "to": "六部",
-            "remark": "派发：[具体派发内容]"
-        })
-        t['updatedAt'] = now
-tasks_file.write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
-subprocess.run(['python3', str(REPO / 'scripts' / 'refresh_live_data.py')], capture_output=True)
+```bash
+# 更新状态
+python3 scripts/kanban_update.py state <task_id> <new_state> "<说明>"
+
+# 添加流转记录
+python3 scripts/kanban_update.py flow <task_id> "<from>" "<to>" "<remark>"
+
+# 完成任务
+python3 scripts/kanban_update.py done <task_id> "<output_path>" "<summary>"
+
+# 更新子任务
+python3 scripts/kanban_update.py todo <task_id> <todo_id> "<title>" <status>
+```
+
+### 开始派发时（state→Doing）：
+```bash
+python3 scripts/kanban_update.py state JJC-xxx Doing "尚书省正在分派任务给六部执行"
+python3 scripts/kanban_update.py flow JJC-xxx "尚书省" "六部" "派发：[具体派发内容]"
 ```
 
 ### 各部完成汇报后（state→Review）：
-```python
-t['state'] = 'Review'
-t['now'] = '各部已完成，尚书省汇总中'
-t['flow_log'].append({"at": ..., "from": "六部", "to": "尚书省", "remark": "✅ 各部完成"})
+```bash
+python3 scripts/kanban_update.py state JJC-xxx Review "各部已完成，尚书省汇总中"
+python3 scripts/kanban_update.py flow JJC-xxx "六部" "尚书省" "✅ 各部完成"
 ```
 
 ### 回奏皇上（state→Done）：
-```python
-t['state'] = 'Done'
-t['output'] = '/产出物路径'
-t['now'] = '任务全部完成，已回奏皇上'
-t['flow_log'].append({"at": ..., "from": "尚书省", "to": "皇上", "remark": "✅ 全流程完成，回奏"})
+```bash
+python3 scripts/kanban_update.py done JJC-xxx "/产出物路径" "任务全部完成，已回奏皇上"
+python3 scripts/kanban_update.py flow JJC-xxx "尚书省" "皇上" "✅ 全流程完成，回奏"
 ```
 
 ## 派发格式

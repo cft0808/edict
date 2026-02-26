@@ -1020,6 +1020,7 @@ function openTask(id){
       ${canResume ? `<button class="btn-action btn-resume" onclick="taskAction('${esc(t.id)}','resume','恢复执行')">▶️ 恢复执行</button>` : ''}
       ${['Review','Menxia'].includes(t.state) ? `<button class="btn-action" style="background:#2ecc8a22;color:#2ecc8a;border:1px solid #2ecc8a44" onclick="reviewAction('${esc(t.id)}','approve')">✅ 准奏</button>
       <button class="btn-action" style="background:#ff527022;color:#ff5270;border:1px solid #ff527044" onclick="reviewAction('${esc(t.id)}','reject')">🚫 封驳</button>` : ''}
+      ${['Zhongshu','Menxia','Assigned','Doing','Review'].includes(t.state) ? `<button class="btn-action" style="background:#7c5cfc18;color:#7c5cfc;border:1px solid #7c5cfc44" onclick="advanceState('${esc(t.id)}','${esc(t.state)}')">⏩ 推进到下一步</button>` : ''}
     </div>
 
     <!-- Todo 子任务 -->
@@ -1925,6 +1926,19 @@ async function reviewAction(taskId, action){
     const r = await postJ(API+'/review-action', {taskId, action, comment: comment||''});
     if(r.ok){ toast(`✅ ${taskId} 已${labels[action]}`,'ok'); loadAll(); document.getElementById('modal-bg').classList.remove('open'); }
     else toast(r.error||'操作失败','err');
+  }catch(e){ toast('服务器连接失败','err'); }
+}
+
+/* ══ ADVANCE STATE (手动推进到下一步) ══ */
+const _NEXT_LABELS = {Zhongshu:'门下省审议', Menxia:'尚书省派发', Assigned:'开始执行', Doing:'进入审查', Review:'完成'};
+async function advanceState(taskId, curState){
+  const next = _NEXT_LABELS[curState] || '下一步';
+  const comment = prompt(`⏩ 手动推进 ${taskId}\n当前: ${curState} → 下一步: ${next}\n\n请输入说明（可留空）：`);
+  if(comment === null) return;
+  try{
+    const r = await postJ(API+'/advance-state', {taskId, comment: comment||''});
+    if(r.ok){ toast(`⏩ ${r.message}`,'ok'); loadAll(); document.getElementById('modal-bg').classList.remove('open'); }
+    else toast(r.error||'推进失败','err');
   }catch(e){ toast('服务器连接失败','err'); }
 }
 
