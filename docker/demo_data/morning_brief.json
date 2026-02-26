@@ -1,0 +1,40 @@
+{
+  "date": "20260226",
+  "generated_at": "2026-02-26 06:30:00",
+  "categories": {
+    "AI大模型": [
+      {
+        "title": "Anthropic 发布 Claude Opus 4.6，推理能力再创新高",
+        "summary": "Anthropic 宣布推出 Claude Opus 4.6 模型，在复杂推理和代码生成任务上取得重大突破，同时保持安全对齐。",
+        "source": "TechCrunch",
+        "url": "https://example.com/opus46",
+        "time": "2026-02-25"
+      },
+      {
+        "title": "OpenAI Codex GPT-5.3 支持百万行代码库上下文",
+        "summary": "OpenAI 发布 Codex GPT-5.3，上下文窗口扩展至2M tokens，可一次性理解整个大型代码库。",
+        "source": "The Verge",
+        "url": "https://example.com/codex53",
+        "time": "2026-02-25"
+      }
+    ],
+    "经济": [
+      {
+        "title": "全球半导体产业链加速向东南亚布局",
+        "summary": "台积电、三星等芯片巨头宣布新一轮东南亚投资计划，越南和马来西亚成主要受益者。",
+        "source": "日经新闻",
+        "url": "https://example.com/semi",
+        "time": "2026-02-25"
+      }
+    ],
+    "政治": [
+      {
+        "title": "欧盟 AI 法案实施细则正式公布",
+        "summary": "欧盟委员会发布 AI 法案最终实施细则，明确高风险 AI 系统的审计和透明度要求。",
+        "source": "Reuters",
+        "url": "https://example.com/euai",
+        "time": "2026-02-25"
+      }
+    ]
+  }
+}

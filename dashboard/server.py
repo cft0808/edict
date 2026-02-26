@@ -11,10 +11,14 @@ Endpoints:
   GET  /api/model-change-log   → data/model_change_log.json
   GET  /api/last-result        → data/last_model_change_result.json
 """
-import json, pathlib, subprocess, sys, threading, argparse, datetime, logging, re
+import json, pathlib, subprocess, sys, threading, argparse, datetime, logging, re, os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
+
+# 引入文件锁工具，确保与其他脚本并发安全
+sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / 'scripts'))
+from file_lock import atomic_json_read, atomic_json_write, atomic_json_update
 
 log = logging.getLogger('server')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(message)s', datefmt='%H:%M:%S')
@@ -48,13 +52,16 @@ def now_iso():
 
 
 def load_tasks():
-    return read_json(DATA / 'tasks_source.json', [])
+    return atomic_json_read(DATA / 'tasks_source.json', [])
 
 
 def save_tasks(tasks):
-    (DATA / 'tasks_source.json').write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
+    atomic_json_write(DATA / 'tasks_source.json', tasks)
     # Trigger refresh
-    subprocess.Popen(['python3', str(SCRIPTS / 'refresh_live_data.py')])
+    try:
+        subprocess.Popen(['python3', str(SCRIPTS / 'refresh_live_data.py')])
+    except Exception as e:
+        log.warning(f'refresh_live_data.py 触发失败: {e}')
 
 
 def handle_task_action(task_id, action, reason):
@@ -277,7 +284,10 @@ class Handler(BaseHTTPRequestHandler):
         if p in ('', '/dashboard', '/dashboard.html'):
             self.send_file(BASE / 'dashboard.html')
         elif p == '/healthz':
-            self.send_json({'status': 'ok', 'ts': now_iso()})
+            checks = {'dataDir': DATA.is_dir(), 'tasksReadable': (DATA / 'tasks_source.json').exists()}
+            checks['dataWritable'] = os.access(str(DATA), os.W_OK)
+            all_ok = all(checks.values())
+            self.send_json({'status': 'ok' if all_ok else 'degraded', 'ts': now_iso(), 'checks': checks})
         elif p == '/api/live-status':
             self.send_json(read_json(DATA / 'live_status.json'))
         elif p == '/api/agent-config':

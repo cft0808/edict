@@ -631,7 +631,10 @@
       <span class="sess-filter" data-sf="libu" onclick="filterSessions('libu',this)">礼部</span>
       <span class="sess-filter" data-sf="hubu" onclick="filterSessions('hubu',this)">户部</span>
       <span class="sess-filter" data-sf="bingbu" onclick="filterSessions('bingbu',this)">兵部</span>
+      <span class="sess-filter" data-sf="xingbu" onclick="filterSessions('xingbu',this)">刑部</span>
       <span class="sess-filter" data-sf="gongbu" onclick="filterSessions('gongbu',this)">工部</span>
+      <span class="sess-filter" data-sf="menxia" onclick="filterSessions('menxia',this)">门下省</span>
+      <span class="sess-filter" data-sf="zaochao" onclick="filterSessions('zaochao',this)">钦天监</span>
     </div>
     <div id="sess-grid" class="sess-grid"></div>
   </div>
@@ -897,6 +900,7 @@ function renderMonitor(tasks){
     {id:'bingbu',  label:'兵部',  emoji:'⚔️',role:'兵部尚书',rank:'正二品'},
     {id:'xingbu',  label:'刑部',  emoji:'⚖️',role:'刑部尚书',rank:'正二品'},
     {id:'gongbu',  label:'工部',  emoji:'🔧',role:'工部尚书',rank:'正二品'},
+    {id:'zaochao', label:'钦天监',emoji:'🌟',role:'朝报官',  rank:'正三品'},
   ];
 
   // 每个部门当前承接的旨意：从 JJC 任务里找 org 匹配且非 Done 的
@@ -1096,7 +1100,8 @@ function closeModal(e){
 }
 
 /* ══ MODEL CONFIG ══ */
-const KNOWN_MODELS=[
+// Fallback 硬编码列表，优先从后端 knownModels 动态获取
+const FALLBACK_MODELS=[
   {id:'anthropic/claude-sonnet-4-6',l:'Claude Sonnet 4.6',p:'Anthropic'},
   {id:'anthropic/claude-opus-4-5',l:'Claude Opus 4.5',p:'Anthropic'},
   {id:'anthropic/claude-haiku-3-5',l:'Claude Haiku 3.5',p:'Anthropic'},
@@ -1112,9 +1117,17 @@ const KNOWN_MODELS=[
   {id:'copilot/gemini-2.5-pro',l:'Gemini 2.5 Pro',p:'Copilot'},
   {id:'copilot/o3-mini',l:'o3-mini',p:'Copilot'},
 ];
+function getModels(cfg){
+  // 优先从后端 agent_config.json 的 knownModels 字段动态获取
+  if(cfg && cfg.knownModels && cfg.knownModels.length){
+    return cfg.knownModels.map(m=>({id:m.id, l:m.label, p:m.provider}));
+  }
+  return FALLBACK_MODELS;
+}
 function renderModels(cfg){
   if(!cfg||!cfg.agents){document.getElementById('model-grid').innerHTML='<div class="empty" style="grid-column:1/-1">请确保本地服务器已启动</div>';return}
-  const opts=KNOWN_MODELS.map(m=>`<option value="${m.id}">${m.l} (${m.p})</option>`).join('');
+  const models = getModels(cfg);
+  const opts=models.map(m=>`<option value="${m.id}">${m.l} (${m.p})</option>`).join('');
   document.getElementById('model-grid').innerHTML=cfg.agents.map(ag=>`
     <div class="mc-card">
       <div class="mc-top"><span class="mc-emoji">${ag.emoji||'🏛️'}</span>
@@ -1270,6 +1283,10 @@ async function submitAddSkill(e, agentId, agentLabel){
 async function loadLive(){
   try{
     liveStatus=await fetchJ(API+'/live-status');
+    // 提前加载官员数据，供省部调度 Tab 使用
+    if(!officialsData){
+      try{ officialsData = await fetchJ(API+'/officials-stats'); }catch(e){}
+    }
     const tasks=liveStatus.tasks||[];
     const sync=liveStatus.syncStatus||{};
     const cs=document.getElementById('chip-sync');
@@ -2088,7 +2105,23 @@ function exportMemorial(taskIdJson){
   let md = `# 📜 奏折 · ${t.title}\n\n`;
   md += `- **任务编号**: ${t.id}\n`;
   md += `- **状态**: ${t.state}\n`;
-  md += `- **负责部门**: ${t.org}\n\n`;
+  md += `- **负责部门**: ${t.org}\n`;
+  // 时间信息
+  if(fl.length){
+    const startAt = fl[0].at ? fl[0].at.substring(0,19).replace('T',' ') : '未知';
+    const endAt = fl[fl.length-1].at ? fl[fl.length-1].at.substring(0,19).replace('T',' ') : '未知';
+    md += `- **开始时间**: ${startAt}\n`;
+    md += `- **完成时间**: ${endAt}\n`;
+    // 计算耗时
+    try{
+      const s = new Date(fl[0].at), e = new Date(fl[fl.length-1].at);
+      const diffMin = Math.round((e-s)/60000);
+      if(diffMin>0) md += `- **总耗时**: ${diffMin >= 60 ? Math.floor(diffMin/60)+'小时'+diffMin%60+'分钟' : diffMin+'分钟'}\n`;
+    }catch(e){}
+  }
+  if(t.updatedAt) md += `- **最后更新**: ${t.updatedAt.substring(0,19).replace('T',' ')}\n`;
+  if(t.review_round) md += `- **磋商轮次**: 第 ${t.review_round} 轮\n`;
+  md += `\n`;
   md += `## 流转记录\n\n`;
   for(const f of fl){
     md += `- **${f.from}** → **${f.to}**  \n  ${f.remark}  \n  _${(f.at||'').substring(0,19)}_\n\n`;

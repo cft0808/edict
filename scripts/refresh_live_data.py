@@ -70,7 +70,20 @@ def main():
         else:
             t['heartbeat'] = None
 
-    today_done = sum(1 for t in tasks if t.get('state') == 'Done')
+    today_str = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
+    def _is_today_done(t):
+        if t.get('state') != 'Done':
+            return False
+        ua = t.get('updatedAt', '')
+        if isinstance(ua, str) and ua[:10] == today_str:
+            return True
+        # fallback: outputMeta lastModified
+        lm = t.get('outputMeta', {}).get('lastModified', '')
+        if isinstance(lm, str) and lm[:10] == today_str:
+            return True
+        return False
+    today_done = sum(1 for t in tasks if _is_today_done(t))
+    total_done = sum(1 for t in tasks if t.get('state') == 'Done')
     in_progress = sum(1 for t in tasks if t.get('state') in ['Doing', 'Review', 'Next', 'Blocked'])
     blocked = sum(1 for t in tasks if t.get('state') == 'Blocked')
 
@@ -95,6 +108,7 @@ def main():
         'metrics': {
             'officialCount': len(officials),
             'todayDone': today_done,
+            'totalDone': total_done,
             'inProgress': in_progress,
             'blocked': blocked
         },
