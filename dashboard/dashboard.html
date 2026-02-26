@@ -1183,17 +1183,20 @@ function renderLiveActivity(data){
   if(!log)return;
 
   if(!data.ok||!data.activity||!data.activity.length){
-    const msg=data.message||data.error||'暂无活动记录';
+    const msg=data.message||data.error||'暂无此任务的对话记录（Agent 会话中未提及此任务ID）';
     log.innerHTML=`<div class="la-empty">${esc(msg)}</div>`;
     if(dot)dot.classList.add('idle');
-    if(agLbl)agLbl.textContent=data.agentId?`Agent: ${data.agentId}`:'无对应 Agent';
+    if(agLbl){
+      const agents=(data.relatedAgents||[]).join(', ');
+      agLbl.textContent=agents?`搜索范围: ${agents}`:'无对应 Agent';
+    }
     return;
   }
 
   if(agLbl){
     const parts=[];
     if(data.agentLabel)parts.push(data.agentLabel);
-    if(data.agentId)parts.push(data.agentId);
+    if(data.relatedAgents&&data.relatedAgents.length>1) parts.push(`${data.relatedAgents.length}个 Agent`);
     if(data.lastActive)parts.push(`最后活跃: ${data.lastActive}`);
     agLbl.textContent=parts.join(' · ');
   }
@@ -1207,35 +1210,39 @@ function renderLiveActivity(data){
   }
   if(dot){dot.classList.toggle('idle',!isActive);}
 
+  // Agent label map
+  const _agentLabels={main:'太子',zhongshu:'中书省',menxia:'门下省',shangshu:'尚书省',libu:'礼部',hubu:'户部',bingbu:'兵部',xingbu:'刑部',gongbu:'工部'};
+
   const entries=data.activity.map(a=>{
     const time=a.at?fmtActivityTime(a.at):'';
+    const agBadge=a.agent?`<span style="font-size:9px;color:var(--muted);background:var(--panel);padding:1px 4px;border-radius:3px;margin-right:4px">${_agentLabels[a.agent]||a.agent}</span>`:'';
     if(a.kind==='assistant'){
       let html='';
       if(a.thinking){
-        html+=`<div class="la-entry la-thinking"><span class="la-icon">💭</span><span class="la-body">${esc(a.thinking)}</span><span class="la-time">${time}</span></div>`;
+        html+=`<div class="la-entry la-thinking"><span class="la-icon">💭</span><span class="la-body">${agBadge}${esc(a.thinking)}</span><span class="la-time">${time}</span></div>`;
       }
       if(a.tools&&a.tools.length){
         a.tools.forEach(tc=>{
-          html+=`<div class="la-entry la-tool"><span class="la-icon">🔧</span><span class="la-body"><span class="la-tool-name">${esc(tc.name)}</span><span class="la-trunc">${esc(tc.input_preview||'')}</span></span><span class="la-time">${time}</span></div>`;
+          html+=`<div class="la-entry la-tool"><span class="la-icon">🔧</span><span class="la-body">${agBadge}<span class="la-tool-name">${esc(tc.name)}</span><span class="la-trunc">${esc(tc.input_preview||'')}</span></span><span class="la-time">${time}</span></div>`;
         });
       }
       if(a.text){
-        html+=`<div class="la-entry la-assistant"><span class="la-icon">🤖</span><span class="la-body">${esc(a.text)}</span><span class="la-time">${time}</span></div>`;
+        html+=`<div class="la-entry la-assistant"><span class="la-icon">🤖</span><span class="la-body">${agBadge}${esc(a.text)}</span><span class="la-time">${time}</span></div>`;
       }
       return html;
     }
     if(a.kind==='tool_result'){
       const ok=a.exitCode===0||a.exitCode===null||a.exitCode===undefined;
-      return `<div class="la-entry la-tool-result ${ok?'ok':'err'}"><span class="la-icon">${ok?'✅':'❌'}</span><span class="la-body"><span class="la-tool-name">${esc(a.tool||'')}</span>${a.output?esc(a.output.substring(0,150)):''}</span><span class="la-time">${time}</span></div>`;
+      return `<div class="la-entry la-tool-result ${ok?'ok':'err'}"><span class="la-icon">${ok?'✅':'❌'}</span><span class="la-body">${agBadge}<span class="la-tool-name">${esc(a.tool||'')}</span>${a.output?esc(a.output.substring(0,150)):''}</span><span class="la-time">${time}</span></div>`;
     }
     if(a.kind==='user'){
-      return `<div class="la-entry la-user"><span class="la-icon">📥</span><span class="la-body">${esc(a.text||'')}</span><span class="la-time">${time}</span></div>`;
+      return `<div class="la-entry la-user"><span class="la-icon">📥</span><span class="la-body">${agBadge}${esc(a.text||'')}</span><span class="la-time">${time}</span></div>`;
     }
     return '';
   }).join('');
 
   const shouldScroll=_laLastCount!==data.activity.length;
-  log.innerHTML=entries||'<div class="la-empty">暂无活动</div>';
+  log.innerHTML=entries||'<div class="la-empty">暂无此任务的对话记录</div>';
   _laLastCount=data.activity.length;
 
   if(shouldScroll){

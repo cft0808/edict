@@ -298,23 +298,31 @@ def handle_create_task(title, org='中书省', official='中书令', priority='n
     save_tasks(tasks)
     log.info(f'创建任务: {task_id} | {title[:40]}')
 
-    # 自动派发给中书省 Agent 执行（后台异步，不阻塞响应）
+    # 自动派发给太子 Agent（后台异步，不阻塞响应）
+    # 发送给 main (太子) 而不是 zhongshu，让太子走正常流程分拣→中书省
     def dispatch_to_agent():
         try:
-            msg = f'📋 旨意传达\n任务ID: {task_id}\n需求: {title}\n请立即开始起草执行方案。'
-            cmd = ['openclaw', 'agent', '--agent', 'zhongshu', '-m', msg, '--deliver',
-                   '--channel', 'feishu', '--timeout', '300']
-            log.info(f'正在派发 {task_id} 给中书省 Agent...')
+            msg = (
+                f'📜 皇上新旨意（已录入看板，请直接处理）\n'
+                f'任务ID: {task_id}\n'
+                f'旨意: {title}\n'
+                f'⚠️ 看板已有此任务记录，请勿重复创建。'
+                f'直接用 kanban_update.py 更新状态即可。\n'
+                f'请立即转交中书省起草执行方案。'
+            )
+            cmd = ['openclaw', 'agent', '--agent', 'main', '-m', msg,
+                   '--deliver', '--channel', 'feishu', '--timeout', '300']
+            log.info(f'正在派发 {task_id} 给太子 Agent...')
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=310)
             if result.returncode == 0:
-                log.info(f'✅ {task_id} 已派发给中书省 Agent')
+                log.info(f'✅ {task_id} 已派发给太子 Agent')
             else:
                 log.warning(f'⚠️ {task_id} 派发失败: {result.stderr[:200]}')
         except Exception as e:
             log.warning(f'⚠️ {task_id} 派发异常: {e}')
     threading.Thread(target=dispatch_to_agent, daemon=True).start()
 
-    return {'ok': True, 'taskId': task_id, 'message': f'旨意 {task_id} 已下达，正在派发给中书省'}
+    return {'ok': True, 'taskId': task_id, 'message': f'旨意 {task_id} 已下达，正在派发给太子'}
 
 
 def handle_review_action(task_id, action, comment=''):
@@ -376,90 +384,112 @@ _ORG_AGENT_MAP = {
 }
 
 
-def get_agent_activity(agent_id, limit=30):
-    """从 Agent 的 session jsonl 读取最近活动。"""
+def get_agent_activity(agent_id, limit=30, task_id=None):
+    """从 Agent 的 session jsonl 读取最近活动。
+    如果 task_id 不为空，只返回提及该 task_id 的相关条目。
+    """
     sessions_dir = OCLAW_HOME / 'agents' / agent_id / 'sessions'
     if not sessions_dir.exists():
         return []
 
-    # 找到最新的 jsonl 文件
+    # 扫描所有 jsonl（按修改时间倒序），优先最新
     jsonl_files = sorted(sessions_dir.glob('*.jsonl'), key=lambda f: f.stat().st_mtime, reverse=True)
     if not jsonl_files:
         return []
 
-    session_file = jsonl_files[0]
     entries = []
-    try:
-        lines = session_file.read_text(errors='ignore').splitlines()
-    except Exception:
-        return []
+    # 如果需要按 task_id 过滤，可能需要扫描多个文件
+    files_to_scan = jsonl_files[:3] if task_id else jsonl_files[:1]
 
-    for ln in reversed(lines):
+    for session_file in files_to_scan:
         try:
-            item = json.loads(ln)
+            lines = session_file.read_text(errors='ignore').splitlines()
         except Exception:
             continue
-        msg = item.get('message') or {}
-        role = msg.get('role', '')
-        ts = item.get('timestamp', '')
 
-        if role == 'assistant':
-            text = ''
-            thinking = ''
-            tool_calls = []
+        # 正向扫描以保持时间顺序；如果有 task_id，收集提及 task_id 的条目
+        for ln in lines:
+            try:
+                item = json.loads(ln)
+            except Exception:
+                continue
+            msg = item.get('message') or {}
+            role = msg.get('role', '')
+            ts = item.get('timestamp', '')
+
+            # 收集该条目的所有文本内容（用于 task_id 过滤）
+            all_text = ''
             for c in msg.get('content', []):
-                if c.get('type') == 'text' and c.get('text'):
-                    text = c['text'].strip()
-                elif c.get('type') == 'thinking' and c.get('thinking'):
-                    thinking = c['thinking'].strip()[:200]
+                if c.get('type') == 'text':
+                    all_text += c.get('text', '')
+                elif c.get('type') == 'thinking':
+                    all_text += c.get('thinking', '')
                 elif c.get('type') == 'tool_use':
-                    tool_calls.append({
-                        'name': c.get('name', ''),
-                        'input_preview': json.dumps(c.get('input', {}), ensure_ascii=False)[:100]
-                    })
-            entry = {'at': ts, 'kind': 'assistant'}
-            if text:
-                entry['text'] = text[:300]
-            if thinking:
-                entry['thinking'] = thinking
-            if tool_calls:
-                entry['tools'] = tool_calls
-            if text or thinking or tool_calls:
-                entries.append(entry)
+                    all_text += json.dumps(c.get('input', {}), ensure_ascii=False)
 
-        elif role == 'toolResult':
-            tool = msg.get('toolName', '')
-            details = msg.get('details') or {}
-            code = details.get('exitCode')
-            output = ''
-            for c in msg.get('content', []):
-                if c.get('type') == 'text' and c.get('text'):
-                    output = c['text'].strip()[:200]
-                    break
-            entries.append({
-                'at': ts, 'kind': 'tool_result',
-                'tool': tool, 'exitCode': code,
-                'output': output
-            })
+            # task_id 过滤：只保留提及 task_id 的条目
+            if task_id and task_id not in all_text:
+                continue
 
-        elif role == 'user':
-            text = ''
-            for c in msg.get('content', []):
-                if c.get('type') == 'text' and c.get('text'):
-                    text = c['text'].strip()
-                    break
-            if text:
-                entries.append({'at': ts, 'kind': 'user', 'text': text[:200]})
+            if role == 'assistant':
+                text = ''
+                thinking = ''
+                tool_calls = []
+                for c in msg.get('content', []):
+                    if c.get('type') == 'text' and c.get('text'):
+                        text = c['text'].strip()
+                    elif c.get('type') == 'thinking' and c.get('thinking'):
+                        thinking = c['thinking'].strip()[:200]
+                    elif c.get('type') == 'tool_use':
+                        tool_calls.append({
+                            'name': c.get('name', ''),
+                            'input_preview': json.dumps(c.get('input', {}), ensure_ascii=False)[:100]
+                        })
+                entry = {'at': ts, 'kind': 'assistant'}
+                if text:
+                    entry['text'] = text[:300]
+                if thinking:
+                    entry['thinking'] = thinking
+                if tool_calls:
+                    entry['tools'] = tool_calls
+                if text or thinking or tool_calls:
+                    entries.append(entry)
 
+            elif role == 'toolResult':
+                tool = msg.get('toolName', '')
+                details = msg.get('details') or {}
+                code = details.get('exitCode')
+                output = ''
+                for c in msg.get('content', []):
+                    if c.get('type') == 'text' and c.get('text'):
+                        output = c['text'].strip()[:200]
+                        break
+                entries.append({
+                    'at': ts, 'kind': 'tool_result',
+                    'tool': tool, 'exitCode': code,
+                    'output': output
+                })
+
+            elif role == 'user':
+                text = ''
+                for c in msg.get('content', []):
+                    if c.get('type') == 'text' and c.get('text'):
+                        text = c['text'].strip()
+                        break
+                if text:
+                    entries.append({'at': ts, 'kind': 'user', 'text': text[:200]})
+
+            if len(entries) >= limit:
+                break
         if len(entries) >= limit:
             break
 
-    entries.reverse()
-    return entries
+    # 只保留最后 limit 条
+    return entries[-limit:]
 
 
 def get_task_activity(task_id):
-    """获取任务关联 Agent 的实时活动。"""
+    """获取任务关联 Agent 的实时活动（按 task_id 过滤）。"""
     tasks = load_tasks()
     task = next((t for t in tasks if t.get('id') == task_id), None)
     if not task:
@@ -467,25 +497,60 @@ def get_task_activity(task_id):
 
     state = task.get('state', '')
     org = task.get('org', '')
-    agent_id = _STATE_AGENT_MAP.get(state)
 
-    # Doing 状态根据 org 推断
+    # 确定当前 agent + 可能的关联 agents（任务可能经过多个 agent）
+    agent_id = _STATE_AGENT_MAP.get(state)
     if agent_id is None and state == 'Doing':
         agent_id = _ORG_AGENT_MAP.get(org)
 
-    if not agent_id:
+    # 收集所有可能涉及的 agent（从流转日志推断）
+    related_agents = set()
+    if agent_id:
+        related_agents.add(agent_id)
+    # 流转过的省部也可能有相关记录
+    _DEPT_AGENT = {
+        '中书省': 'zhongshu', '门下省': 'menxia', '尚书省': 'shangshu',
+        '太子': 'main', '皇上': 'main',
+        **{k: v for k, v in _ORG_AGENT_MAP.items()},
+    }
+    for fl in task.get('flow_log', []):
+        for dept in (fl.get('from', ''), fl.get('to', '')):
+            aid = _DEPT_AGENT.get(dept)
+            if aid:
+                related_agents.add(aid)
+
+    if not related_agents:
         return {
             'ok': True, 'taskId': task_id, 'agentId': None,
             'activity': [], 'message': f'状态 {state} 无对应 Agent'
         }
 
-    activity = get_agent_activity(agent_id, limit=25)
+    # 从所有相关 agent 的 session 中搜索提及 task_id 的条目
+    all_activity = []
+    for aid in related_agents:
+        entries = get_agent_activity(aid, limit=30, task_id=task_id)
+        for e in entries:
+            e['agent'] = aid  # 标记来源 agent
+        all_activity.extend(entries)
 
-    # 获取 Agent 会话文件的修改时间（心跳）
-    sessions_dir = OCLAW_HOME / 'agents' / agent_id / 'sessions'
+    # 按时间排序
+    def sort_key(e):
+        at = e.get('at', '')
+        if isinstance(at, (int, float)):
+            return at
+        return at  # ISO string 可直接排序
+    all_activity.sort(key=sort_key)
+
+    # 只保留最后 30 条
+    all_activity = all_activity[-30:]
+
+    # 获取当前 Agent 会话文件的修改时间（心跳）
     last_active = None
-    for f in sorted(sessions_dir.glob('*.jsonl'), key=lambda x: x.stat().st_mtime, reverse=True)[:1]:
-        last_active = datetime.datetime.fromtimestamp(f.stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+    if agent_id:
+        sessions_dir = OCLAW_HOME / 'agents' / agent_id / 'sessions'
+        if sessions_dir.exists():
+            for f in sorted(sessions_dir.glob('*.jsonl'), key=lambda x: x.stat().st_mtime, reverse=True)[:1]:
+                last_active = datetime.datetime.fromtimestamp(f.stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S')
 
     return {
         'ok': True,
@@ -493,7 +558,8 @@ def get_task_activity(task_id):
         'agentId': agent_id,
         'agentLabel': _STATE_LABELS.get(state, state),
         'lastActive': last_active,
-        'activity': activity
+        'activity': all_activity,
+        'relatedAgents': list(related_agents),
     }
 
 
