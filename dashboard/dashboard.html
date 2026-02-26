@@ -290,6 +290,30 @@
     .ec-todo-track{flex:1;max-width:80px;height:4px;background:#0e1320;border-radius:2px;overflow:hidden}
     .ec-todo-fill{height:100%;background:var(--ok);border-radius:2px}
 
+    /* ══ LIVE ACTIVITY PANEL ══ */
+    .la-section{margin-bottom:18px}
+    .la-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .la-header .la-title{font-size:11px;font-weight:700;color:var(--acc);letter-spacing:.06em}
+    .la-header .la-agent{font-size:11px;color:var(--muted)}
+    .la-header .la-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ok);margin-right:4px;animation:pulse 1.5s infinite}
+    .la-header .la-dot.idle{background:var(--muted);animation:none}
+    .la-log{max-height:320px;overflow-y:auto;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:12px;scroll-behavior:smooth}
+    .la-entry{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:6px;line-height:1.5;word-break:break-all}
+    .la-entry:hover{background:rgba(106,158,255,.04)}
+    .la-entry .la-icon{flex-shrink:0;font-size:13px;margin-top:1px}
+    .la-entry .la-body{flex:1;min-width:0}
+    .la-entry .la-time{font-size:10px;color:var(--muted);flex-shrink:0;min-width:44px;text-align:right}
+    .la-entry.la-assistant{color:var(--text)}
+    .la-entry.la-thinking{color:#a07aff;font-style:italic;opacity:.75}
+    .la-entry.la-tool{color:#44aaff}
+    .la-entry.la-tool-result{color:var(--muted);font-size:11px}
+    .la-entry.la-tool-result.ok{color:var(--ok)}
+    .la-entry.la-tool-result.err{color:var(--danger)}
+    .la-entry.la-user{color:var(--warn)}
+    .la-empty{text-align:center;color:var(--muted);padding:20px;font-size:12px}
+    .la-tool-name{font-weight:700;margin-right:4px}
+    .la-trunc{color:var(--muted);font-size:10px;opacity:.6}
+
     /* ══ SUBSCRIPTION CONFIG ══ */
     .sub-config{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
     .sub-section{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
@@ -1095,14 +1119,140 @@ function openTask(id){
       <div class="m-sec-label">产出物</div>
       <code>${esc(t.output)}</code>
     </div>`:''}
+
+    <!-- 实时动态 -->
+    ${!['Done','Cancelled'].includes(t.state) ? `
+    <div class="la-section" id="live-activity-section">
+      <div class="la-header">
+        <span class="la-title"><span class="la-dot" id="la-dot"></span>实时动态</span>
+        <span class="la-agent" id="la-agent-label">加载中...</span>
+      </div>
+      <div class="la-log" id="la-log">
+        <div class="la-empty">正在获取 Agent 活动数据...</div>
+      </div>
+    </div>` : ''}
   `;
 
   document.getElementById('modal-bg').classList.add('open');
+
+  // 启动实时动态轮询
+  if(!['Done','Cancelled'].includes(t.state)){
+    startLiveActivity(t.id);
+  }
 }
 
 function closeModal(e){
   if(e&&e.target!==document.getElementById('modal-bg')&&!e.target.classList.contains('modal-close'))return;
   document.getElementById('modal-bg').classList.remove('open');
+  stopLiveActivity();
+}
+
+/* ══ LIVE ACTIVITY ══ */
+let _laTimer = null;
+let _laTaskId = null;
+let _laLastCount = 0;
+
+function stopLiveActivity(){
+  if(_laTimer){clearInterval(_laTimer);_laTimer=null;}
+  _laTaskId=null;_laLastCount=0;
+}
+
+function startLiveActivity(taskId){
+  stopLiveActivity();
+  _laTaskId=taskId;
+  fetchLiveActivity();
+  _laTimer=setInterval(fetchLiveActivity, 4000);
+}
+
+async function fetchLiveActivity(){
+  if(!_laTaskId)return;
+  try{
+    const r=await fetch(`/api/task-activity/${encodeURIComponent(_laTaskId)}`);
+    const d=await r.json();
+    renderLiveActivity(d);
+  }catch(e){
+    const log=document.getElementById('la-log');
+    if(log) log.innerHTML='<div class="la-empty">获取活动数据失败</div>';
+  }
+}
+
+function renderLiveActivity(data){
+  const log=document.getElementById('la-log');
+  const dot=document.getElementById('la-dot');
+  const agLbl=document.getElementById('la-agent-label');
+  if(!log)return;
+
+  if(!data.ok||!data.activity||!data.activity.length){
+    const msg=data.message||data.error||'暂无活动记录';
+    log.innerHTML=`<div class="la-empty">${esc(msg)}</div>`;
+    if(dot)dot.classList.add('idle');
+    if(agLbl)agLbl.textContent=data.agentId?`Agent: ${data.agentId}`:'无对应 Agent';
+    return;
+  }
+
+  if(agLbl){
+    const parts=[];
+    if(data.agentLabel)parts.push(data.agentLabel);
+    if(data.agentId)parts.push(data.agentId);
+    if(data.lastActive)parts.push(`最后活跃: ${data.lastActive}`);
+    agLbl.textContent=parts.join(' · ');
+  }
+
+  // 判断是否活跃（最后一条活动5分钟内）
+  const lastEntry=data.activity[data.activity.length-1];
+  let isActive=false;
+  if(lastEntry&&lastEntry.at){
+    const diff=Date.now()-lastEntry.at;
+    isActive=diff<300000; // 5min
+  }
+  if(dot){dot.classList.toggle('idle',!isActive);}
+
+  const entries=data.activity.map(a=>{
+    const time=a.at?fmtActivityTime(a.at):'';
+    if(a.kind==='assistant'){
+      let html='';
+      if(a.thinking){
+        html+=`<div class="la-entry la-thinking"><span class="la-icon">💭</span><span class="la-body">${esc(a.thinking)}</span><span class="la-time">${time}</span></div>`;
+      }
+      if(a.tools&&a.tools.length){
+        a.tools.forEach(tc=>{
+          html+=`<div class="la-entry la-tool"><span class="la-icon">🔧</span><span class="la-body"><span class="la-tool-name">${esc(tc.name)}</span><span class="la-trunc">${esc(tc.input_preview||'')}</span></span><span class="la-time">${time}</span></div>`;
+        });
+      }
+      if(a.text){
+        html+=`<div class="la-entry la-assistant"><span class="la-icon">🤖</span><span class="la-body">${esc(a.text)}</span><span class="la-time">${time}</span></div>`;
+      }
+      return html;
+    }
+    if(a.kind==='tool_result'){
+      const ok=a.exitCode===0||a.exitCode===null||a.exitCode===undefined;
+      return `<div class="la-entry la-tool-result ${ok?'ok':'err'}"><span class="la-icon">${ok?'✅':'❌'}</span><span class="la-body"><span class="la-tool-name">${esc(a.tool||'')}</span>${a.output?esc(a.output.substring(0,150)):''}</span><span class="la-time">${time}</span></div>`;
+    }
+    if(a.kind==='user'){
+      return `<div class="la-entry la-user"><span class="la-icon">📥</span><span class="la-body">${esc(a.text||'')}</span><span class="la-time">${time}</span></div>`;
+    }
+    return '';
+  }).join('');
+
+  const shouldScroll=_laLastCount!==data.activity.length;
+  log.innerHTML=entries||'<div class="la-empty">暂无活动</div>';
+  _laLastCount=data.activity.length;
+
+  if(shouldScroll){
+    log.scrollTop=log.scrollHeight;
+  }
+}
+
+function fmtActivityTime(ts){
+  if(!ts)return '';
+  if(typeof ts==='number'){
+    const d=new Date(ts);
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+  }
+  if(typeof ts==='string'&&ts.length>=19){
+    return ts.substring(11,19);
+  }
+  return String(ts).substring(0,8);
 }
 
 /* ══ MODEL CONFIG ══ */

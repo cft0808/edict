@@ -297,7 +297,24 @@ def handle_create_task(title, org='中书省', official='中书令', priority='n
     tasks.insert(0, new_task)
     save_tasks(tasks)
     log.info(f'创建任务: {task_id} | {title[:40]}')
-    return {'ok': True, 'taskId': task_id, 'message': f'旨意 {task_id} 已下达'}
+
+    # 自动派发给中书省 Agent 执行（后台异步，不阻塞响应）
+    def dispatch_to_agent():
+        try:
+            msg = f'📋 旨意传达\n任务ID: {task_id}\n需求: {title}\n请立即开始起草执行方案。'
+            cmd = ['openclaw', 'agent', '--agent', 'zhongshu', '-m', msg, '--deliver',
+                   '--channel', 'feishu', '--timeout', '300']
+            log.info(f'正在派发 {task_id} 给中书省 Agent...')
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=310)
+            if result.returncode == 0:
+                log.info(f'✅ {task_id} 已派发给中书省 Agent')
+            else:
+                log.warning(f'⚠️ {task_id} 派发失败: {result.stderr[:200]}')
+        except Exception as e:
+            log.warning(f'⚠️ {task_id} 派发异常: {e}')
+    threading.Thread(target=dispatch_to_agent, daemon=True).start()
+
+    return {'ok': True, 'taskId': task_id, 'message': f'旨意 {task_id} 已下达，正在派发给中书省'}
 
 
 def handle_review_action(task_id, action, comment=''):
@@ -340,6 +357,144 @@ def handle_review_action(task_id, action, comment=''):
     save_tasks(tasks)
     label = '已准奏' if action == 'approve' else '已封驳'
     return {'ok': True, 'message': f'{task_id} {label}'}
+
+
+# ══ Agent 实时活动读取 ══
+
+# 状态 → agent_id 映射
+_STATE_AGENT_MAP = {
+    'Taizi': 'main',      # 太子用 main agent
+    'Zhongshu': 'zhongshu',
+    'Menxia': 'menxia',
+    'Assigned': 'shangshu',
+    'Doing': None,         # 六部，需从 org 推断
+    'Review': 'shangshu',
+}
+_ORG_AGENT_MAP = {
+    '礼部': 'libu', '户部': 'hubu', '兵部': 'bingbu',
+    '刑部': 'xingbu', '工部': 'gongbu',
+}
+
+
+def get_agent_activity(agent_id, limit=30):
+    """从 Agent 的 session jsonl 读取最近活动。"""
+    sessions_dir = OCLAW_HOME / 'agents' / agent_id / 'sessions'
+    if not sessions_dir.exists():
+        return []
+
+    # 找到最新的 jsonl 文件
+    jsonl_files = sorted(sessions_dir.glob('*.jsonl'), key=lambda f: f.stat().st_mtime, reverse=True)
+    if not jsonl_files:
+        return []
+
+    session_file = jsonl_files[0]
+    entries = []
+    try:
+        lines = session_file.read_text(errors='ignore').splitlines()
+    except Exception:
+        return []
+
+    for ln in reversed(lines):
+        try:
+            item = json.loads(ln)
+        except Exception:
+            continue
+        msg = item.get('message') or {}
+        role = msg.get('role', '')
+        ts = item.get('timestamp', '')
+
+        if role == 'assistant':
+            text = ''
+            thinking = ''
+            tool_calls = []
+            for c in msg.get('content', []):
+                if c.get('type') == 'text' and c.get('text'):
+                    text = c['text'].strip()
+                elif c.get('type') == 'thinking' and c.get('thinking'):
+                    thinking = c['thinking'].strip()[:200]
+                elif c.get('type') == 'tool_use':
+                    tool_calls.append({
+                        'name': c.get('name', ''),
+                        'input_preview': json.dumps(c.get('input', {}), ensure_ascii=False)[:100]
+                    })
+            entry = {'at': ts, 'kind': 'assistant'}
+            if text:
+                entry['text'] = text[:300]
+            if thinking:
+                entry['thinking'] = thinking
+            if tool_calls:
+                entry['tools'] = tool_calls
+            if text or thinking or tool_calls:
+                entries.append(entry)
+
+        elif role == 'toolResult':
+            tool = msg.get('toolName', '')
+            details = msg.get('details') or {}
+            code = details.get('exitCode')
+            output = ''
+            for c in msg.get('content', []):
+                if c.get('type') == 'text' and c.get('text'):
+                    output = c['text'].strip()[:200]
+                    break
+            entries.append({
+                'at': ts, 'kind': 'tool_result',
+                'tool': tool, 'exitCode': code,
+                'output': output
+            })
+
+        elif role == 'user':
+            text = ''
+            for c in msg.get('content', []):
+                if c.get('type') == 'text' and c.get('text'):
+                    text = c['text'].strip()
+                    break
+            if text:
+                entries.append({'at': ts, 'kind': 'user', 'text': text[:200]})
+
+        if len(entries) >= limit:
+            break
+
+    entries.reverse()
+    return entries
+
+
+def get_task_activity(task_id):
+    """获取任务关联 Agent 的实时活动。"""
+    tasks = load_tasks()
+    task = next((t for t in tasks if t.get('id') == task_id), None)
+    if not task:
+        return {'ok': False, 'error': f'任务 {task_id} 不存在'}
+
+    state = task.get('state', '')
+    org = task.get('org', '')
+    agent_id = _STATE_AGENT_MAP.get(state)
+
+    # Doing 状态根据 org 推断
+    if agent_id is None and state == 'Doing':
+        agent_id = _ORG_AGENT_MAP.get(org)
+
+    if not agent_id:
+        return {
+            'ok': True, 'taskId': task_id, 'agentId': None,
+            'activity': [], 'message': f'状态 {state} 无对应 Agent'
+        }
+
+    activity = get_agent_activity(agent_id, limit=25)
+
+    # 获取 Agent 会话文件的修改时间（心跳）
+    sessions_dir = OCLAW_HOME / 'agents' / agent_id / 'sessions'
+    last_active = None
+    for f in sorted(sessions_dir.glob('*.jsonl'), key=lambda x: x.stat().st_mtime, reverse=True)[:1]:
+        last_active = datetime.datetime.fromtimestamp(f.stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+
+    return {
+        'ok': True,
+        'taskId': task_id,
+        'agentId': agent_id,
+        'agentLabel': _STATE_LABELS.get(state, state),
+        'lastActive': last_active,
+        'activity': activity
+    }
 
 
 # 状态推进顺序（手动推进用）
@@ -478,6 +633,18 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(read_skill_content(parts[0], parts[1]))
             else:
                 self.send_json({'ok': False, 'error': 'Usage: /api/skill-content/{agentId}/{skillName}'}, 400)
+        elif p.startswith('/api/task-activity/'):
+            task_id = p.replace('/api/task-activity/', '')
+            if not task_id:
+                self.send_json({'ok': False, 'error': 'task_id required'}, 400)
+            else:
+                self.send_json(get_task_activity(task_id))
+        elif p.startswith('/api/agent-activity/'):
+            agent_id = p.replace('/api/agent-activity/', '')
+            if not agent_id or not _SAFE_NAME_RE.match(agent_id):
+                self.send_json({'ok': False, 'error': 'invalid agent_id'}, 400)
+            else:
+                self.send_json({'ok': True, 'agentId': agent_id, 'activity': get_agent_activity(agent_id)})
         else:
             self.send_error(404)
 
