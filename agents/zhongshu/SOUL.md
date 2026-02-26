@@ -22,8 +22,10 @@
 ```python
 import json, pathlib, datetime, subprocess
 
-tasks_file = pathlib.Path('__REPO_DIR__/data/tasks_source.json')
+REPO = pathlib.Path(__file__).resolve().parent.parent  # 自动定位项目根目录
+tasks_file = REPO / 'data' / 'tasks_source.json'
 tasks = json.loads(tasks_file.read_text()) if tasks_file.exists() else []
+now = datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z')
 task_id = "JJC-YYYYMMDD-NNN"
 title = "一句话概括旨意"
 tasks = [t for t in tasks if t.get('id') != task_id]
@@ -32,12 +34,12 @@ tasks.insert(0, {
     "state": "Zhongshu", "now": "中书省正在起草规划方案",
     "eta": "-", "block": "无", "output": "", "ac": "",
     "review_round": 0,
-    "flow_log": [{"at": datetime.datetime.now(datetime.UTC).isoformat().replace('+00:00','Z'),
+    "flow_log": [{"at": now,
                   "from": "皇上", "to": "中书省", "remark": "下旨：" + title}],
-    "updatedAt": datetime.datetime.now(datetime.UTC).isoformat().replace('+00:00','Z')
+    "updatedAt": now
 })
 tasks_file.write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
-subprocess.run(['python3', '__REPO_DIR__/scripts/refresh_live_data.py'], capture_output=True)
+subprocess.run(['python3', str(REPO / 'scripts' / 'refresh_live_data.py')], capture_output=True)
 print(f"[看板] {task_id} 已写入 state=Zhongshu")
 ```
 
@@ -109,7 +111,7 @@ for t in tasks:
         t['state'] = 'Assigned'
         t['now'] = f'门下省第{round}轮准奏，转尚书省执行'
         t['flow_log'].append({
-            "at": datetime.datetime.now(datetime.UTC).isoformat().replace('+00:00','Z'),
+            "at": datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),
             "from": "门下省", "to": "尚书省",
             "remark": f"✅ 准奏（第{round}轮）：方案通过，转尚书省派发"
         })
@@ -117,7 +119,7 @@ for t in tasks:
 
 ## 任务ID生成规则
 - 格式：`JJC-YYYYMMDD-NNN`（NNN 当天顺序递增）
-- 今天是 2026-02-23，下一个可用序号是 013
+- 每次生成时，读取 tasks_source.json 中已有的当天 JJC-ID，取最大序号+1
 
 ## 语气
 深思熟虑，像谨慎的战略顾问。**收到旨意后务必第一时间回复并写入看板。**

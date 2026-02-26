@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>军机处 · 三省六部总控台</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&display=swap');
     :root{
       --bg:#07090f;--panel:#0f1219;--panel2:#141824;--line:#1c2236;
       --text:#dde4f8;--muted:#5a6b92;--ok:#2ecc8a;--warn:#f5c842;--danger:#ff5270;
@@ -252,6 +253,19 @@
     .ec-actions .mini-act:hover{border-color:var(--acc);color:var(--text)}
     .ec-actions .mini-act.danger:hover{border-color:#ff5270;color:#ff5270}
 
+    /* ══ ARCHIVE FILTER BAR ══ */
+    .archive-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+    .archive-bar .ab-label{font-size:12px;color:var(--muted);margin-right:4px}
+    .archive-bar .ab-btn{font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid var(--line);background:transparent;cursor:pointer;color:var(--muted);transition:all .15s;font-weight:600}
+    .archive-bar .ab-btn:hover{border-color:var(--acc);color:var(--text)}
+    .archive-bar .ab-btn.active{border-color:var(--acc);color:var(--acc);background:#0f1a38}
+    .archive-bar .ab-count{font-size:10px;color:var(--muted);margin-left:auto}
+    .archive-bar .ab-archive-all{font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid #2ecc8a44;background:transparent;cursor:pointer;color:var(--ok);font-weight:600;transition:all .15s}
+    .archive-bar .ab-archive-all:hover{background:#0a2018;border-color:var(--ok)}
+    /* archived card styling */
+    .edict-card.archived{opacity:.55;border-style:dashed}
+    .edict-card.archived:hover{opacity:.85}
+
     /* ══ TODO LIST ══ */
     .todo-section{margin-bottom:18px}
     .todo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -452,7 +466,6 @@
     code{font-size:11px;background:var(--panel2);padding:2px 6px;border-radius:4px;font-family:monospace}
 
     /* ══ COURT CEREMONY ══ */
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&display=swap');
     .ceremony-bg{position:fixed;inset:0;z-index:9999;background:#07090f;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;animation:crmFadeIn .6s ease forwards;cursor:pointer}
     .ceremony-bg.out{animation:crmFadeOut .5s ease forwards}
     .crm-glow{position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(106,158,255,.08),transparent 70%);animation:crmPulse 3s ease-in-out infinite}
@@ -566,6 +579,14 @@
 
   <!-- ══ 旨意看板 ══ -->
   <div class="panel active" id="panel-edicts">
+    <div class="archive-bar" id="archive-bar">
+      <span class="ab-label">📋 筛选：</span>
+      <button class="ab-btn active" data-filter="active" onclick="setEdictFilter('active')">🔥 进行中</button>
+      <button class="ab-btn" data-filter="archived" onclick="setEdictFilter('archived')">📦 已归档</button>
+      <button class="ab-btn" data-filter="all" onclick="setEdictFilter('all')">全部</button>
+      <span class="ab-count" id="archive-count"></span>
+      <button class="ab-archive-all" id="btn-archive-done" onclick="archiveAllDone()" style="display:none">📦 一键归档已完成</button>
+    </div>
     <div id="edict-grid" class="edict-grid"></div>
   </div>
 
@@ -720,7 +741,7 @@
 
 <script>
 /* ══ CONFIG ══ */
-const API = 'http://127.0.0.1:7891/api';
+const API = (location.origin === 'file://' ? 'http://127.0.0.1:7891' : location.origin) + '/api';
 let liveStatus=null, agentConfig=null, activeTab='edicts', countdown=5;
 
 /* ══ PIPELINE DEFINITION ══ */
@@ -758,6 +779,14 @@ function stateLabel(t){
 function isEdict(t){ return /^JJC-/i.test(t.id||'') }
 // 系统会话：OC-* / MC-* 开头
 function isSession(t){ return /^(OC-|MC-)/i.test(t.id||'') }
+// 归档判定：Done/Cancelled 或手动标记 archived
+function isArchived(t){ return t.archived || ['Done','Cancelled'].includes(t.state) }
+let edictFilter = 'active';  // 'active' | 'archived' | 'all'
+function setEdictFilter(f){
+  edictFilter = f;
+  document.querySelectorAll('.archive-bar .ab-btn').forEach(b=>b.classList.toggle('active',b.dataset.filter===f));
+  if(liveStatus) renderEdicts(liveStatus.tasks||[]);
+}
 
 /* ══ PIPE STATUS FOR A TASK ══ */
 function getPipeStatus(t){
@@ -784,12 +813,26 @@ function miniPipe(t){
 
 /* ══ EDICT CARDS ══ */
 function renderEdicts(tasks){
-  const edicts = tasks.filter(isEdict).sort((a,b) => {
+  const allEdicts = tasks.filter(isEdict);
+  const activeEdicts = allEdicts.filter(t=>!isArchived(t));
+  const archivedEdicts = allEdicts.filter(t=>isArchived(t));
+  // Apply filter
+  let edicts;
+  if(edictFilter==='active') edicts = activeEdicts;
+  else if(edictFilter==='archived') edicts = archivedEdicts;
+  else edicts = allEdicts;
+  edicts.sort((a,b) => {
     const order = {Doing:0,Review:1,Assigned:2,Menxia:3,Zhongshu:4,Inbox:5,Blocked:6,Next:7,Done:8,Cancelled:9};
     return (order[a.state]??9) - (order[b.state]??9);
   });
-  document.getElementById('tb-e').textContent = edicts.length;
-  document.getElementById('chip-tasks').textContent = edicts.length + ' 道旨意';
+  // Tab badge = active count only
+  document.getElementById('tb-e').textContent = activeEdicts.length;
+  document.getElementById('chip-tasks').textContent = activeEdicts.length + ' 道旨意';
+  // Archive stats
+  document.getElementById('archive-count').textContent = `活跃 ${activeEdicts.length} · 归档 ${archivedEdicts.length} · 共 ${allEdicts.length}`;
+  // Show "一键归档" button if there are un-archived Done/Cancelled tasks
+  const unArchivedDone = allEdicts.filter(t=>!t.archived && ['Done','Cancelled'].includes(t.state));
+  document.getElementById('btn-archive-done').style.display = unArchivedDone.length ? '' : 'none';
   const el = document.getElementById('edict-grid');
   if(!edicts.length){
     el.innerHTML='<div class="empty" style="grid-column:1/-1">暂无旨意<br><small style="font-size:11px;margin-top:6px;display:block;color:var(--muted)">通过飞书/Telegram 向中书省发送任务，任务ID格式 JJC-* 将显示于此</small></div>';
@@ -806,8 +849,9 @@ function renderEdicts(tasks){
     const todoTotal = todos.length;
     const canStop = !['Done','Blocked','Cancelled'].includes(t.state);
     const canResume = ['Blocked','Cancelled'].includes(t.state);
+    const archCls = isArchived(t) ? ' archived' : '';
     return `
-    <div class="edict-card" onclick='openTask(${JSON.stringify(t.id)})'>
+    <div class="edict-card${archCls}" onclick='openTask(${JSON.stringify(t.id)})'>
       ${miniPipe(t)}
       <div class="ec-id">${esc(t.id)}</div>
       <div class="ec-title">${esc(t.title||'(无标题)')}</div>
@@ -835,6 +879,8 @@ function renderEdicts(tasks){
         ${canStop ? `<button class="mini-act" onclick="confirmAction('${esc(t.id)}','stop')">⏸ 叫停</button>
         <button class="mini-act danger" onclick="confirmAction('${esc(t.id)}','cancel')">🚫 取消</button>` : ''}
         ${canResume ? `<button class="mini-act" onclick="taskAction('${esc(t.id)}','resume','恢复执行')">▶ 恢复</button>` : ''}
+        ${isArchived(t) && !t.archived ? `<button class="mini-act" onclick="archiveTask('${esc(t.id)}')" title="移入归档">📦 归档</button>` : ''}
+        ${t.archived ? `<button class="mini-act" onclick="unarchiveTask('${esc(t.id)}')" title="取消归档">📤 取消归档</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -1059,6 +1105,12 @@ const KNOWN_MODELS=[
   {id:'openai-codex/gpt-5.3-codex',l:'GPT-5.3 Codex',p:'OpenAI Codex'},
   {id:'google/gemini-2.0-flash',l:'Gemini 2.0 Flash',p:'Google'},
   {id:'google/gemini-2.5-pro',l:'Gemini 2.5 Pro',p:'Google'},
+  {id:'copilot/claude-sonnet-4',l:'Claude Sonnet 4',p:'Copilot'},
+  {id:'copilot/claude-opus-4.5',l:'Claude Opus 4.5',p:'Copilot'},
+  {id:'github-copilot/claude-opus-4.6',l:'Claude Opus 4.6',p:'GitHub Copilot'},
+  {id:'copilot/gpt-4o',l:'GPT-4o',p:'Copilot'},
+  {id:'copilot/gemini-2.5-pro',l:'Gemini 2.5 Pro',p:'Copilot'},
+  {id:'copilot/o3-mini',l:'o3-mini',p:'Copilot'},
 ];
 function renderModels(cfg){
   if(!cfg||!cfg.agents){document.getElementById('model-grid').innerHTML='<div class="empty" style="grid-column:1/-1">请确保本地服务器已启动</div>';return}
@@ -1255,7 +1307,7 @@ const AGENT_EMOJI_MAP = {};
 const AGENT_LABEL_MAP = {};
 let sessFilter = 'all';
 
-function isEdict(t){ return (t.id||'').startsWith('JJC-'); }
+// isEdict already defined above
 
 /* 从 title 和 sourceMeta 中提取人类可读名称 */
 function humanTitle(t){
@@ -1839,6 +1891,30 @@ async function taskAction(taskId, action, reason){
     const r = await postJ(API+'/task-action', {taskId, action, reason: reason||''});
     if(r.ok){ toast(r.message,'ok'); loadAll(); /* close modal if open */ document.getElementById('modal-bg').classList.remove('open'); }
     else toast(r.error||'操作失败','err');
+  }catch(e){ toast('服务器连接失败','err'); }
+}
+
+/* ══ ARCHIVE ACTIONS ══ */
+async function archiveTask(taskId){
+  try{
+    const r = await postJ(API+'/archive-task', {taskId, archived: true});
+    if(r.ok){ toast(`📦 ${taskId} 已归档`,'ok'); loadAll(); }
+    else toast(r.error||'归档失败','err');
+  }catch(e){ toast('服务器连接失败','err'); }
+}
+async function unarchiveTask(taskId){
+  try{
+    const r = await postJ(API+'/archive-task', {taskId, archived: false});
+    if(r.ok){ toast(`📤 ${taskId} 已取消归档`,'ok'); loadAll(); }
+    else toast(r.error||'取消归档失败','err');
+  }catch(e){ toast('服务器连接失败','err'); }
+}
+async function archiveAllDone(){
+  if(!confirm('将所有已完成/已取消的旨意移入归档？')) return;
+  try{
+    const r = await postJ(API+'/archive-task', {archiveAllDone: true});
+    if(r.ok){ toast(`📦 ${r.count||0} 道旨意已归档`,'ok'); loadAll(); }
+    else toast(r.error||'批量归档失败','err');
   }catch(e){ toast('服务器连接失败','err'); }
 }
 

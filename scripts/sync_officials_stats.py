@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """同步各官员统计数据 → data/officials_stats.json"""
-import json, pathlib, datetime
+import json, pathlib, datetime, logging
+from file_lock import atomic_json_write
+
+log = logging.getLogger('officials')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(message)s', datefmt='%H:%M:%S')
 
 BASE = pathlib.Path(__file__).resolve().parent.parent
 DATA = BASE / 'data'
@@ -27,14 +31,25 @@ OFFICIALS = [
     {'id':'bingbu',  'label':'兵部',  'role':'兵部尚书','emoji':'⚔️','rank':'正二品'},
     {'id':'xingbu',  'label':'刑部',  'role':'刑部尚书','emoji':'⚖️','rank':'正二品'},
     {'id':'gongbu',  'label':'工部',  'role':'工部尚书','emoji':'🔧','rank':'正二品'},
+    {'id':'zaochao', 'label':'钦天监','role':'朝报官',  'emoji':'📰','rank':'正三品'},
 ]
 
 def rj(p, d):
     try: return json.loads(pathlib.Path(p).read_text())
-    except: return d
+    except Exception: return d
+
+
+# Pre-load openclaw config once (avoid re-reading per agent)
+_OPENCLAW_CACHE = None
+
+def _load_openclaw_cfg():
+    global _OPENCLAW_CACHE
+    if _OPENCLAW_CACHE is None:
+        _OPENCLAW_CACHE = rj(OPENCLAW_CFG, {})
+    return _OPENCLAW_CACHE
 
 def get_model(agent_id):
-    cfg = rj(OPENCLAW_CFG, {})
+    cfg = _load_openclaw_cfg()
     default = cfg.get('agents',{}).get('defaults',{}).get('model',{}).get('primary','anthropic/claude-sonnet-4-6')
     for a in cfg.get('agents',{}).get('list',[]):
         if a.get('id') == agent_id:
@@ -61,11 +76,17 @@ def scan_agent(agent_id):
             try:
                 t = datetime.datetime.fromtimestamp(ts/1000) if isinstance(ts,int) else datetime.datetime.fromisoformat(ts.replace('Z','+00:00'))
                 if last_ts is None or t > last_ts: last_ts = t
-            except: pass
+            except Exception: pass
     
-    # 估算消息数：从最近 session jsonl 快速统计
+    # Estimate message count from most recent session JSONL
     msg_count = 0
-    sf_key = max(data.keys(), key=lambda k: data[k].get('updatedAt',0) or 0, default=None) if data else None
+    if data:
+        try:
+            sf_key = max(data.keys(), key=lambda k: data[k].get('updatedAt',0) or 0, default=None)
+        except Exception:
+            sf_key = None
+    else:
+        sf_key = None
     if sf_key and data[sf_key].get('sessionFile'):
         sf = AGENTS_ROOT / agent_id / 'sessions' / pathlib.Path(data[sf_key]['sessionFile']).name
         try:
@@ -75,8 +96,8 @@ def scan_agent(agent_id):
                     e = json.loads(ln)
                     if e.get('type') == 'message' and e.get('message',{}).get('role') == 'assistant':
                         msg_count += 1
-                except: pass
-        except: pass
+                except Exception: pass
+        except Exception: pass
 
     return {
         'tokens_in': tin, 'tokens_out': tout,
@@ -168,8 +189,8 @@ def main():
         'totals': totals,
         'top_official': top.get('label',''),
     }
-    (DATA/'officials_stats.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2))
-    print(f'[officials] 8 officials | cost=¥{totals["cost_cny"]} | top={top.get("label","")}')
+    atomic_json_write(DATA/'officials_stats.json', payload)
+    log.info(f'{len(result)} officials | cost=¥{totals["cost_cny"]} | top={top.get("label","")}')
 
 if __name__ == '__main__':
     main()

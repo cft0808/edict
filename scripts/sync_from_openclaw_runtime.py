@@ -4,15 +4,21 @@ import pathlib
 import time
 import datetime
 import traceback
+import logging
+from file_lock import atomic_json_write, atomic_json_read
+
+log = logging.getLogger('sync_runtime')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(message)s', datefmt='%H:%M:%S')
 
 BASE = pathlib.Path(__file__).resolve().parent.parent
 DATA = BASE / 'data'
+DATA.mkdir(exist_ok=True)
 SYNC_STATUS = DATA / 'sync_status.json'
 SESSIONS_ROOT = pathlib.Path.home() / '.openclaw' / 'agents'
 
 
 def write_status(**kwargs):
-    SYNC_STATUS.write_text(json.dumps(kwargs, ensure_ascii=False, indent=2))
+    atomic_json_write(SYNC_STATUS, kwargs)
 
 
 def ms_to_str(ts_ms):
@@ -45,6 +51,7 @@ def detect_official(agent_id):
         'bingbu': ('兵部尚书', '兵部'),
         'xingbu': ('刑部尚书', '刑部'),
         'gongbu': ('工部尚书', '工部'),
+        'zaochao': ('钦天监', '朝报司'),
     }
     return mapping.get(agent_id, ('尚书令', '尚书省'))
 
@@ -203,7 +210,7 @@ def main():
             except Exception:
                 pass
 
-        (DATA / 'tasks_source.json').write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
+        atomic_json_write(DATA / 'tasks_source.json', tasks)
 
         duration_ms = int((time.time() - start) * 1000)
         write_status(
@@ -216,7 +223,7 @@ def main():
             missingFields={},
             error=None,
         )
-        print(f'synced {len(tasks)} tasks from openclaw runtime in {duration_ms}ms')
+        log.info(f'synced {len(tasks)} tasks from openclaw runtime in {duration_ms}ms')
 
     except Exception as e:
         duration_ms = int((time.time() - start) * 1000)

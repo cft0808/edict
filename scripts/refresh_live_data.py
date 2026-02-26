@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-import json, pathlib, datetime
+import json, pathlib, datetime, logging
+from file_lock import atomic_json_write, atomic_json_read
+
+log = logging.getLogger('refresh')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(message)s', datefmt='%H:%M:%S')
 
 BASE = pathlib.Path(__file__).parent.parent
 DATA = BASE / 'data'
@@ -21,15 +25,21 @@ def output_meta(path):
 
 
 def main():
-    officials = read_json(DATA / 'officials.json', [])
+    # 使用 officials_stats.json（与 sync_officials_stats.py 统一）
+    officials_data = read_json(DATA / 'officials_stats.json', {})
+    officials = officials_data.get('officials', []) if isinstance(officials_data, dict) else officials_data
     # 任务源优先：tasks_source.json（可对接外部系统同步写入）
-    tasks = read_json(DATA / 'tasks_source.json', [])
+    tasks = atomic_json_read(DATA / 'tasks_source.json', [])
     if not tasks:
         tasks = read_json(DATA / 'tasks.json', [])
 
     sync_status = read_json(DATA / 'sync_status.json', {})
 
-    org_map = {o['name']: o.get('org', '') for o in officials}
+    org_map = {}
+    for o in officials:
+        label = o.get('label', o.get('name', ''))
+        if label:
+            org_map[label] = label
 
     now_ts = datetime.datetime.now(datetime.timezone.utc)
     for t in tasks:
@@ -96,8 +106,8 @@ def main():
         }
     }
 
-    (DATA / 'live_status.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2))
-    print('updated live_status.json')
+    atomic_json_write(DATA / 'live_status.json', payload)
+    log.info(f'updated live_status.json ({len(tasks)} tasks)')
 
 
 if __name__ == '__main__':

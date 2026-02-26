@@ -44,21 +44,24 @@
 **审议后更新看板：**
 ```python
 import json, pathlib, datetime, subprocess
-tasks_file = pathlib.Path('__REPO_DIR__/data/tasks_source.json')
+
+REPO = pathlib.Path(__file__).resolve().parent.parent  # 自动定位项目根目录
+tasks_file = REPO / 'data' / 'tasks_source.json'
 tasks = json.loads(tasks_file.read_text())
+now = datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z')
 for t in tasks:
     if t['id'] == task_id:
         t['state'] = 'Zhongshu'   # 退回中书省
         t['now'] = f'门下省第{round}轮封驳，待中书省修订'
         t['review_round'] = round
         t['flow_log'].append({
-            "at": datetime.datetime.now(datetime.UTC).isoformat().replace('+00:00','Z'),
+            "at": now,
             "from": "门下省", "to": "中书省",
             "remark": f"❌ 封驳（第{round}轮）：[主要问题摘要]，请修订后重提"
         })
-        t['updatedAt'] = datetime.datetime.now(datetime.UTC).isoformat().replace('+00:00','Z')
+        t['updatedAt'] = now
 tasks_file.write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
-subprocess.run(['python3', '__REPO_DIR__/scripts/refresh_live_data.py'], capture_output=True)
+subprocess.run(['python3', str(REPO / 'scripts' / 'refresh_live_data.py')], capture_output=True)
 ```
 
 ---
@@ -93,7 +96,7 @@ for t in tasks:
         t['now'] = f'门下省第{round}轮准奏，转尚书省执行'
         t['review_round'] = round
         t['flow_log'].append({
-            "at": datetime.datetime.now(datetime.UTC).isoformat().replace('+00:00','Z'),
+            "at": datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),
             "from": "门下省", "to": "尚书省",
             "remark": f"✅ 准奏（第{round}轮）：方案通过，转尚书省派发"
         })

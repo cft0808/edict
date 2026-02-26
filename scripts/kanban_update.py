@@ -19,11 +19,17 @@
   python3 kanban_update.py todo JJC-20260223-012 1 "实现API接口" in-progress
   python3 kanban_update.py todo JJC-20260223-012 1 "" completed
 """
-import json, pathlib, datetime, sys, subprocess
+import json, pathlib, datetime, sys, subprocess, logging
 
 _BASE = pathlib.Path(__file__).resolve().parent.parent
 TASKS_FILE = _BASE / 'data' / 'tasks_source.json'
 REFRESH_SCRIPT = _BASE / 'scripts' / 'refresh_live_data.py'
+
+log = logging.getLogger('kanban')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(message)s', datefmt='%H:%M:%S')
+
+# 文件锁 —— 防止多 Agent 同时读写 tasks_source.json
+from file_lock import atomic_json_read, atomic_json_update, atomic_json_write  # noqa: E402
 
 STATE_ORG_MAP = {
     'Zhongshu': '中书省', 'Menxia': '门下省', 'Assigned': '尚书省',
@@ -31,12 +37,10 @@ STATE_ORG_MAP = {
 }
 
 def load():
-    if TASKS_FILE.exists():
-        return json.loads(TASKS_FILE.read_text())
-    return []
+    return atomic_json_read(TASKS_FILE, [])
 
 def save(tasks):
-    TASKS_FILE.write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
+    atomic_json_write(TASKS_FILE, tasks)
     # 触发刷新
     subprocess.run(['python3', str(REFRESH_SCRIPT)], capture_output=True)
 
@@ -50,6 +54,9 @@ def find_task(tasks, task_id):
 def cmd_create(task_id, title, state, org, official, remark=None):
     """新建任务（收旨时立即调用）"""
     tasks = load()
+    existing = next((t for t in tasks if t.get('id') == task_id), None)
+    if existing and existing.get('state') not in (None, '', 'Inbox'):
+        log.warning(f'任务 {task_id} 已存在 (state={existing["state"]})，将被覆盖')
     tasks = [t for t in tasks if t.get('id') != task_id]  # 去重
     flow_log = [{
         "at": now_iso(),
@@ -72,7 +79,7 @@ def cmd_create(task_id, title, state, org, official, remark=None):
         "updatedAt": now_iso()
     })
     save(tasks)
-    print(f'[看板] ✅ 创建 {task_id} | {title[:30]} | state={state}')
+    log.info(f'✅ 创建 {task_id} | {title[:30]} | state={state}')
 
 
 def cmd_state(task_id, new_state, now_text=None):
@@ -80,7 +87,7 @@ def cmd_state(task_id, new_state, now_text=None):
     tasks = load()
     t = find_task(tasks, task_id)
     if not t:
-        print(f'[看板] ❌ 任务 {task_id} 不存在')
+        log.error(f'任务 {task_id} 不存在')
         return
     old_state = t['state']
     t['state'] = new_state
@@ -88,7 +95,7 @@ def cmd_state(task_id, new_state, now_text=None):
         t['now'] = now_text
     t['updatedAt'] = now_iso()
     save(tasks)
-    print(f'[看板] ✅ {task_id} 状态更新: {old_state} → {new_state}')
+    log.info(f'✅ {task_id} 状态更新: {old_state} → {new_state}')
 
 
 def cmd_flow(task_id, from_dept, to_dept, remark):
@@ -96,7 +103,7 @@ def cmd_flow(task_id, from_dept, to_dept, remark):
     tasks = load()
     t = find_task(tasks, task_id)
     if not t:
-        print(f'[看板] ❌ 任务 {task_id} 不存在')
+        log.error(f'任务 {task_id} 不存在')
         return
     if 'flow_log' not in t:
         t['flow_log'] = []
@@ -109,7 +116,7 @@ def cmd_flow(task_id, from_dept, to_dept, remark):
     t['now'] = remark[:60]
     t['updatedAt'] = now_iso()
     save(tasks)
-    print(f'[看板] ✅ {task_id} 流转记录: {from_dept} → {to_dept}')
+    log.info(f'✅ {task_id} 流转记录: {from_dept} → {to_dept}')
 
 
 def cmd_done(task_id, output_path='', summary=''):
@@ -117,7 +124,7 @@ def cmd_done(task_id, output_path='', summary=''):
     tasks = load()
     t = find_task(tasks, task_id)
     if not t:
-        print(f'[看板] ❌ 任务 {task_id} 不存在')
+        log.error(f'任务 {task_id} 不存在')
         return
     t['state'] = 'Done'
     t['output'] = output_path
@@ -132,7 +139,7 @@ def cmd_done(task_id, output_path='', summary=''):
     })
     t['updatedAt'] = now_iso()
     save(tasks)
-    print(f'[看板] ✅ {task_id} 已完成')
+    log.info(f'✅ {task_id} 已完成')
 
 
 def cmd_block(task_id, reason):
@@ -140,12 +147,13 @@ def cmd_block(task_id, reason):
     tasks = load()
     t = find_task(tasks, task_id)
     if not t:
+        log.error(f'任务 {task_id} 不存在')
         return
     t['state'] = 'Blocked'
     t['block'] = reason
     t['updatedAt'] = now_iso()
     save(tasks)
-    print(f'[看板] ⚠️ {task_id} 已阻塞: {reason}')
+    log.warning(f'⚠️ {task_id} 已阻塞: {reason}')
 
 def cmd_todo(task_id, todo_id, title, status='not-started'):
     """添加或更新子任务 todo
@@ -155,7 +163,7 @@ def cmd_todo(task_id, todo_id, title, status='not-started'):
     tasks = load()
     t = find_task(tasks, task_id)
     if not t:
-        print(f'[看板] ❌ 任务 {task_id} 不存在')
+        log.error(f'任务 {task_id} 不存在')
         return
     if 'todos' not in t:
         t['todos'] = []
@@ -177,7 +185,7 @@ def cmd_todo(task_id, todo_id, title, status='not-started'):
 
     done = sum(1 for td in t['todos'] if td.get('status') == 'completed')
     total = len(t['todos'])
-    print(f'[看板] ✅ {task_id} todo [{done}/{total}]: {todo_id} → {status}')
+    log.info(f'✅ {task_id} todo [{done}/{total}]: {todo_id} → {status}')
 
 if __name__ == '__main__':
     args = sys.argv[1:]

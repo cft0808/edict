@@ -3,7 +3,11 @@
 同步 openclaw.json 中的 agent 配置 → data/agent_config.json
 支持自动发现 agent workspace 下的 Skills 目录
 """
-import json, pathlib, datetime
+import json, pathlib, datetime, logging
+from file_lock import atomic_json_write
+
+log = logging.getLogger('sync_agent_config')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(message)s', datefmt='%H:%M:%S')
 
 # Auto-detect project root (parent of scripts/)
 BASE = pathlib.Path(__file__).parent.parent
@@ -19,6 +23,7 @@ ID_LABEL = {
     'bingbu':   {'label': '兵部',   'role': '兵部尚书', 'duty': '应急与巡检',          'emoji': '⚔️'},
     'xingbu':   {'label': '刑部',   'role': '刑部尚书', 'duty': '合规/审计/红线',      'emoji': '⚖️'},
     'gongbu':   {'label': '工部',   'role': '工部尚书', 'duty': '工程交付与自动化',    'emoji': '🔧'},
+    'zaochao':  {'label': '钦天监', 'role': '朝报官',   'duty': '每日新闻采集与简报',  'emoji': '📰'},
 }
 
 KNOWN_MODELS = [
@@ -36,18 +41,24 @@ KNOWN_MODELS = [
 def get_skills(workspace: str):
     skills_dir = pathlib.Path(workspace) / 'skills'
     skills = []
-    if skills_dir.exists():
-        for d in sorted(skills_dir.iterdir()):
-            if d.is_dir():
-                md = d / 'SKILL.md'
-                desc = ''
-                if md.exists():
-                    for line in md.read_text(encoding='utf-8', errors='ignore').splitlines():
-                        line = line.strip()
-                        if line and not line.startswith('#'):
-                            desc = line[:100]
-                            break
-                skills.append({'name': d.name, 'path': str(md), 'exists': md.exists(), 'description': desc})
+    try:
+        if skills_dir.exists():
+            for d in sorted(skills_dir.iterdir()):
+                if d.is_dir():
+                    md = d / 'SKILL.md'
+                    desc = ''
+                    if md.exists():
+                        try:
+                            for line in md.read_text(encoding='utf-8', errors='ignore').splitlines():
+                                line = line.strip()
+                                if line and not line.startswith('#') and not line.startswith('---'):
+                                    desc = line[:100]
+                                    break
+                        except Exception:
+                            desc = '(读取失败)'
+                    skills.append({'name': d.name, 'path': str(md), 'exists': md.exists(), 'description': desc})
+    except PermissionError as e:
+        log.warning(f'Skills 目录访问受限: {e}')
     return skills
 
 
@@ -56,7 +67,7 @@ def main():
     try:
         cfg = json.loads(OPENCLAW_CFG.read_text())
     except Exception as e:
-        print(f'[WARN] cannot read openclaw.json: {e}')
+        log.warning(f'cannot read openclaw.json: {e}')
         return
 
     agents_cfg = cfg.get('agents', {})
@@ -87,8 +98,8 @@ def main():
         'agents': result,
     }
     DATA.mkdir(exist_ok=True)
-    (DATA / 'agent_config.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2))
-    print(f'[sync_agent_config] {len(result)} agents synced')
+    atomic_json_write(DATA / 'agent_config.json', payload)
+    log.info(f'{len(result)} agents synced')
 
 
 if __name__ == '__main__':

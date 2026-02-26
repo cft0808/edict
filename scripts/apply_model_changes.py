@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """应用 data/pending_model_changes.json → openclaw.json，并重启 Gateway"""
-import json, pathlib, subprocess, datetime, shutil
+import json, pathlib, subprocess, datetime, shutil, logging, glob
+from file_lock import atomic_json_write, atomic_json_read
+
+log = logging.getLogger('model_change')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(message)s', datefmt='%H:%M:%S')
 
 BASE = pathlib.Path(__file__).parent.parent
 DATA = BASE / 'data'
 OPENCLAW_CFG = pathlib.Path.home() / '.openclaw' / 'openclaw.json'
 PENDING = DATA / 'pending_model_changes.json'
 CHANGE_LOG = DATA / 'model_change_log.json'
+MAX_BACKUPS = 10
 
 
 def rj(path, default):
@@ -16,8 +21,15 @@ def rj(path, default):
         return default
 
 
-def wj(path, data):
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2))
+def cleanup_backups():
+    """只保留最近 MAX_BACKUPS 个备份"""
+    pattern = str(OPENCLAW_CFG.parent / 'openclaw.json.bak.model-*')
+    baks = sorted(glob.glob(pattern))
+    for old in baks[:-MAX_BACKUPS]:
+        try:
+            pathlib.Path(old).unlink()
+        except OSError:
+            pass
 
 
 def main():
@@ -55,33 +67,39 @@ def main():
     if applied:
         bak = OPENCLAW_CFG.parent / f'openclaw.json.bak.model-{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}'
         shutil.copy2(OPENCLAW_CFG, bak)
+        cleanup_backups()
         cfg['agents']['list'] = agents_list
-        wj(OPENCLAW_CFG, cfg)
+        atomic_json_write(OPENCLAW_CFG, cfg)
 
-        log = rj(CHANGE_LOG, [])
-        log.extend(applied)
-        if len(log) > 200:
-            log = log[-200:]
-        wj(CHANGE_LOG, log)
+        log_data = rj(CHANGE_LOG, [])
+        log_data.extend(applied)
+        if len(log_data) > 200:
+            log_data = log_data[-200:]
+        atomic_json_write(CHANGE_LOG, log_data)
 
         for e in applied:
-            print(f'[model_change] {e["agentId"]}: {e["oldModel"]} → {e["newModel"]}')
+            log.info(f'{e["agentId"]}: {e["oldModel"]} → {e["newModel"]}')
 
         restart_ok = False
         try:
             r = subprocess.run(['openclaw', 'gateway', 'restart'], capture_output=True, text=True, timeout=30)
             restart_ok = r.returncode == 0
-            print(f'[gateway restart] rc={r.returncode}')
+            log.info(f'gateway restart rc={r.returncode}')
         except Exception as e:
-            print(f'[gateway restart error] {e}')
+            log.error(f'gateway restart failed: {e}')
+            # 回滚配置
+            if bak.exists():
+                shutil.copy2(bak, OPENCLAW_CFG)
+                log.warning('rolled back openclaw.json from backup')
 
-        PENDING.write_text('[]')
-        wj(DATA / 'last_model_change_result.json', {
+        atomic_json_write(PENDING, [])
+        atomic_json_write(DATA / 'last_model_change_result.json', {
             'at': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'applied': applied, 'errors': errors, 'gatewayRestarted': restart_ok,
         })
-    else:
-        PENDING.write_text('[]')
+    elif errors:
+        log.warning(f'{len(errors)} changes failed, 0 applied')
+        atomic_json_write(PENDING, [])
 
 
 if __name__ == '__main__':

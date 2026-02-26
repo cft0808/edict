@@ -11,12 +11,18 @@ Endpoints:
   GET  /api/model-change-log   → data/model_change_log.json
   GET  /api/last-result        → data/last_model_change_result.json
 """
-import json, pathlib, subprocess, sys, threading, argparse, datetime
+import json, pathlib, subprocess, sys, threading, argparse, datetime, logging, re
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
+log = logging.getLogger('server')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(message)s', datefmt='%H:%M:%S')
+
 OCLAW_HOME = pathlib.Path.home() / '.openclaw'
+MAX_REQUEST_BODY = 1 * 1024 * 1024  # 1 MB
+ALLOWED_ORIGIN = None  # Set via --cors; None means reflect request origin (dev mode)
+_SAFE_NAME_RE = re.compile(r'^[a-zA-Z0-9_\-\u4e00-\u9fff]+$')
 
 BASE = pathlib.Path(__file__).parent
 DATA = BASE.parent / "data"
@@ -31,7 +37,8 @@ def read_json(path, default=None):
 
 
 def cors_headers(h):
-    h.send_header('Access-Control-Allow-Origin', '*')
+    origin = ALLOWED_ORIGIN or h.headers.get('Origin', '*')
+    h.send_header('Access-Control-Allow-Origin', origin)
     h.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
     h.send_header('Access-Control-Allow-Headers', 'Content-Type')
 
@@ -89,6 +96,32 @@ def handle_task_action(task_id, action, reason):
     return {'ok': True, 'message': f'{task_id} {label}'}
 
 
+def handle_archive_task(task_id, archived, archive_all_done=False):
+    """Archive or unarchive a task, or batch-archive all Done/Cancelled tasks."""
+    tasks = load_tasks()
+    if archive_all_done:
+        count = 0
+        for t in tasks:
+            if t.get('state') in ('Done', 'Cancelled') and not t.get('archived'):
+                t['archived'] = True
+                t['archivedAt'] = now_iso()
+                count += 1
+        save_tasks(tasks)
+        return {'ok': True, 'message': f'{count} 道旨意已归档', 'count': count}
+    task = next((t for t in tasks if t.get('id') == task_id), None)
+    if not task:
+        return {'ok': False, 'error': f'任务 {task_id} 不存在'}
+    task['archived'] = archived
+    if archived:
+        task['archivedAt'] = now_iso()
+    else:
+        task.pop('archivedAt', None)
+    task['updatedAt'] = now_iso()
+    save_tasks(tasks)
+    label = '已归档' if archived else '已取消归档'
+    return {'ok': True, 'message': f'{task_id} {label}'}
+
+
 def update_task_todos(task_id, todos):
     """Update the todos list for a task."""
     tasks = load_tasks()
@@ -124,6 +157,10 @@ def read_skill_content(agent_id, skill_name):
 
 def add_skill_to_agent(agent_id, skill_name, description, trigger=''):
     """Create a new skill for an agent with a standardised SKILL.md template."""
+    if not _SAFE_NAME_RE.match(skill_name):
+        return {'ok': False, 'error': f'skill_name 含非法字符: {skill_name}'}
+    if not _SAFE_NAME_RE.match(agent_id):
+        return {'ok': False, 'error': f'agentId 含非法字符: {agent_id}'}
     workspace = OCLAW_HOME / f'workspace-{agent_id}' / 'skills' / skill_name
     workspace.mkdir(parents=True, exist_ok=True)
     skill_md = workspace / 'SKILL.md'
@@ -239,6 +276,8 @@ class Handler(BaseHTTPRequestHandler):
         p = urlparse(self.path).path.rstrip('/')
         if p in ('', '/dashboard', '/dashboard.html'):
             self.send_file(BASE / 'dashboard.html')
+        elif p == '/healthz':
+            self.send_json({'status': 'ok', 'ts': now_iso()})
         elif p == '/api/live-status':
             self.send_json(read_json(DATA / 'live_status.json'))
         elif p == '/api/agent-config':
@@ -277,6 +316,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         p = urlparse(self.path).path.rstrip('/')
         length = int(self.headers.get('Content-Length', 0))
+        if length > MAX_REQUEST_BODY:
+            self.send_json({'ok': False, 'error': f'Request body too large (max {MAX_REQUEST_BODY} bytes)'}, 413)
+            return
         raw = self.rfile.read(length) if length else b''
         try:
             body = json.loads(raw) if raw else {}
@@ -321,6 +363,17 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({'ok': False, 'error': 'taskId and action(stop/cancel/resume) required'}, 400)
                 return
             result = handle_task_action(task_id, action, reason)
+            self.send_json(result)
+            return
+
+        if p == '/api/archive-task':
+            task_id = body.get('taskId', '').strip() if body.get('taskId') else ''
+            archived = body.get('archived', True)
+            archive_all = body.get('archiveAllDone', False)
+            if not task_id and not archive_all:
+                self.send_json({'ok': False, 'error': 'taskId or archiveAllDone required'}, 400)
+                return
+            result = handle_archive_task(task_id, archived, archive_all)
             self.send_json(result)
             return
 
@@ -370,10 +423,14 @@ def main():
     parser = argparse.ArgumentParser(description='三省六部看板服务器')
     parser.add_argument('--port', type=int, default=7891)
     parser.add_argument('--host', default='127.0.0.1')
+    parser.add_argument('--cors', default=None, help='Allowed CORS origin (default: reflect request Origin header)')
     args = parser.parse_args()
 
+    global ALLOWED_ORIGIN
+    ALLOWED_ORIGIN = args.cors
+
     server = HTTPServer((args.host, args.port), Handler)
-    print(f'🏛️  三省六部看板启动 → http://{args.host}:{args.port}')
+    log.info(f'三省六部看板启动 → http://{args.host}:{args.port}')
     print(f'   按 Ctrl+C 停止')
     try:
         server.serve_forever()

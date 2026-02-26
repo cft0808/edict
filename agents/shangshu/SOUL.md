@@ -14,22 +14,24 @@
 ```python
 import json, pathlib, datetime, subprocess
 
-tasks_file = pathlib.Path('__REPO_DIR__/data/tasks_source.json')
+REPO = pathlib.Path(__file__).resolve().parent.parent  # 自动定位项目根目录
+tasks_file = REPO / 'data' / 'tasks_source.json'
 tasks = json.loads(tasks_file.read_text())
+now = datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z')
 for t in tasks:
     if t['id'] == task_id:
         t['state'] = 'Doing'
         t['org'] = '尚书省'      # 或当前执行的部门
         t['now'] = '尚书省正在分派任务给六部执行'
         t.setdefault('flow_log', []).append({
-            "at": datetime.datetime.utcnow().isoformat() + "Z",
+            "at": now,
             "from": "尚书省",
             "to": "六部",
             "remark": "派发：[具体派发内容]"
         })
-        t['updatedAt'] = datetime.datetime.utcnow().isoformat() + "Z"
+        t['updatedAt'] = now
 tasks_file.write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
-subprocess.run(['python3', '__REPO_DIR__/scripts/refresh_live_data.py'], capture_output=True)
+subprocess.run(['python3', str(REPO / 'scripts' / 'refresh_live_data.py')], capture_output=True)
 ```
 
 ### 各部完成汇报后（state→Review）：

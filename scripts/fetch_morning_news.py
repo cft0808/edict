@@ -4,11 +4,14 @@
 每日 06:00 自动运行，抓取全球新闻 RSS → data/morning_brief_YYYYMMDD.json
 覆盖: 政治 | 军事 | 经济 | AI大模型
 """
-import json, pathlib, datetime, subprocess, re, sys, os
+import json, pathlib, datetime, subprocess, re, sys, os, logging
 from xml.etree import ElementTree as ET
+from file_lock import atomic_json_write
+
+log = logging.getLogger('朝报')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(message)s', datefmt='%H:%M:%S')
 
 DATA = pathlib.Path(__file__).resolve().parent.parent / 'data'
-LOCK = DATA / 'morning_brief.lock'
 
 # ── RSS 源配置 ──────────────────────────────────────────────────────────
 FEEDS = {
@@ -130,7 +133,7 @@ def main():
     if lock_file.exists():
         age = datetime.datetime.now().timestamp() - lock_file.stat().st_mtime
         if age < 3600:  # 1小时内不重复
-            print(f'[朝报] 今日已采集（{today}），跳过')
+            log.info(f'今日已采集（{today}），跳过')
             return
     lock_file.touch()
 
@@ -165,12 +168,12 @@ def main():
         if cat in enabled_cats:
             merged_feeds.setdefault(cat, []).append((cf.get('name', '自定义'), cf.get('url', '')))
 
-    print(f'[朝报] 开始采集 {today}...')
-    print(f'  启用分类: {", ".join(enabled_cats)}')
+    log.info(f'开始采集 {today}...')
+    log.info(f'  启用分类: {", ".join(enabled_cats)}')
     if user_keywords:
-        print(f'  关注词: {", ".join(user_keywords)}')
+        log.info(f'  关注词: {", ".join(user_keywords)}')
     if custom_feeds:
-        print(f'  自定义源: {len(custom_feeds)} 个')
+        log.info(f'  自定义源: {len(custom_feeds)} 个')
 
     result = {
         'date': today,
@@ -179,7 +182,7 @@ def main():
     }
 
     for category, feeds in merged_feeds.items():
-        print(f'  采集 {category}...', end='', flush=True)
+        log.info(f'  采集 {category}...')
         items = fetch_category(category, feeds)
         # Boost items matching user keywords
         if user_keywords:
@@ -190,21 +193,20 @@ def main():
             for item in items:
                 item.pop('_kw_hits', None)
         result['categories'][category] = items
-        print(f' {len(items)} 条')
+        log.info(f'    {category}: {len(items)} 条')
 
     # 写入今日文件
     today_file = DATA / f'morning_brief_{today}.json'
-    today_file.write_text(json.dumps(result, ensure_ascii=False, indent=2))
+    atomic_json_write(today_file, result)
 
     # 覆写 latest（看板读这个）
     latest_file = DATA / 'morning_brief.json'
-    latest_file.write_text(json.dumps(result, ensure_ascii=False, indent=2))
+    atomic_json_write(latest_file, result)
 
     total = sum(len(v) for v in result['categories'].values())
-    print(f'[朝报] ✅ 完成：共 {total} 条新闻 → {today_file.name}')
+    log.info(f'✅ 完成：共 {total} 条新闻 → {today_file.name}')
 
-    # 清除锁文件
-    lock_file.unlink(missing_ok=True)
+    # 保留锁文件作为幂等性守卫（不删除）
 
 if __name__ == '__main__':
     main()
