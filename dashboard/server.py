@@ -248,7 +248,7 @@ _JUNK_TITLES = {
 }
 
 
-def handle_create_task(title, org='中书省', official='中书令', priority='normal', template_id='', params=None):
+def handle_create_task(title, org='中书省', official='中书令', priority='normal', template_id='', params=None, target_dept=''):
     """从看板创建新任务（圣旨模板下旨）。"""
     if not title or not title.strip():
         return {'ok': False, 'error': '任务标题不能为空'}
@@ -267,13 +267,16 @@ def handle_create_task(title, org='中书省', official='中书令', priority='n
         nums = [int(tid.split('-')[-1]) for tid in today_ids if tid.split('-')[-1].isdigit()]
         seq = max(nums) + 1 if nums else 1
     task_id = f'JJC-{today}-{seq:03d}'
+    # 新流程：任务创建进入中书省起草，org 始终为中书省
+    # target_dept 记录模板建议的最终执行部门（仅供尚书省派发参考）
+    initial_org = '中书省'
     new_task = {
         'id': task_id,
         'title': title,
         'official': official,
-        'org': org,
+        'org': initial_org,
         'state': 'Zhongshu',
-        'now': f'{org}正在规划',
+        'now': f'{initial_org}正在规划',
         'eta': '-',
         'block': '无',
         'output': '',
@@ -284,11 +287,13 @@ def handle_create_task(title, org='中书省', official='中书令', priority='n
         'flow_log': [{
             'at': now_iso(),
             'from': '皇上',
-            'to': org,
+            'to': initial_org,
             'remark': f'下旨：{title}'
         }],
         'updatedAt': now_iso(),
     }
+    if target_dept:
+        new_task['targetDept'] = target_dept
     tasks.insert(0, new_task)
     save_tasks(tasks)
     log.info(f'创建任务: {task_id} | {title[:40]}')
@@ -584,7 +589,8 @@ class Handler(BaseHTTPRequestHandler):
             if not title:
                 self.send_json({'ok': False, 'error': 'title required'}, 400)
                 return
-            result = handle_create_task(title, org, official, priority, template_id, params)
+            target_dept = body.get('targetDept', '').strip()
+            result = handle_create_task(title, org, official, priority, template_id, params, target_dept)
             self.send_json(result)
             return
 

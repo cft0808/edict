@@ -2344,7 +2344,8 @@ async function executeTemplate(e, tplId){
     }
     const r = await postJ(API+'/create-task', {
       title: cmd.substring(0, 120),
-      org: t.depts[0] || '中书省',
+      org: '中书省',
+      targetDept: t.depts[0] || '',
       priority: 'normal',
       templateId: tplId,
       params: params,

@@ -89,16 +89,18 @@ def cmd_create(task_id, title, state, org, official, remark=None):
     flow_log = [{
         "at": now_iso(),
         "from": "皇上",
-        "to": org,
+        "to": actual_org,
         "remark": remark or f"下旨：{title}"
     }]
+    # 根据 state 推导正确的 org，忽略调用者可能传来的错误 org
+    actual_org = STATE_ORG_MAP.get(state, org)
     tasks.insert(0, {
         "id": task_id,
         "title": title,
         "official": official,
-        "org": org,
+        "org": actual_org,
         "state": state,
-        "now": f"{org}正在处理",
+        "now": f"{actual_org}正在处理",
         "eta": "-",
         "block": "无",
         "output": "",
@@ -119,6 +121,9 @@ def cmd_state(task_id, new_state, now_text=None):
         return
     old_state = t['state']
     t['state'] = new_state
+    # 自动同步 org 到对应部门
+    if new_state in STATE_ORG_MAP:
+        t['org'] = STATE_ORG_MAP[new_state]
     if now_text:
         t['now'] = now_text
     t['updatedAt'] = now_iso()
