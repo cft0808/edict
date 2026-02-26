@@ -51,8 +51,36 @@ def find_task(tasks, task_id):
     return next((t for t in tasks if t.get('id') == task_id), None)
 
 
+# 旨意标题最低要求
+_MIN_TITLE_LEN = 10
+_JUNK_TITLES = {
+    '?', '？', '好', '好的', '是', '否', '不', '不是', '对', '了解', '收到',
+    '嗯', '哦', '知道了', '开启了么', '可以', '不行', '行', 'ok', 'yes', 'no',
+    '你去开启', '测试', '试试', '看看',
+}
+
+def _is_valid_task_title(title):
+    """校验标题是否足够作为一个旨意任务。"""
+    t = (title or '').strip()
+    if len(t) < _MIN_TITLE_LEN:
+        return False, f'标题过短（{len(t)}<{_MIN_TITLE_LEN}字），疑似非旨意'
+    if t.lower() in _JUNK_TITLES:
+        return False, f'标题 "{t}" 不是有效旨意'
+    # 纯标点或问号
+    import re
+    if re.fullmatch(r'[\s?？!！.。,，…·\-—~]+', t):
+        return False, '标题只有标点符号'
+    return True, ''
+
+
 def cmd_create(task_id, title, state, org, official, remark=None):
     """新建任务（收旨时立即调用）"""
+    # 旨意标题校验
+    valid, reason = _is_valid_task_title(title)
+    if not valid:
+        log.warning(f'⚠️ 拒绝创建 {task_id}：{reason}')
+        print(f'[看板] 拒绝创建：{reason}', flush=True)
+        return
     tasks = load()
     existing = next((t for t in tasks if t.get('id') == task_id), None)
     if existing and existing.get('state') not in (None, '', 'Inbox'):

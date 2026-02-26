@@ -239,11 +239,25 @@ def push_to_feishu():
         print(f'[飞书] 推送失败: {e}', file=sys.stderr)
 
 
+# 旨意标题最低要求
+_MIN_TITLE_LEN = 10
+_JUNK_TITLES = {
+    '?', '？', '好', '好的', '是', '否', '不', '不是', '对', '了解', '收到',
+    '嗯', '哦', '知道了', '开启了么', '可以', '不行', '行', 'ok', 'yes', 'no',
+    '你去开启', '测试', '试试', '看看',
+}
+
+
 def handle_create_task(title, org='中书省', official='中书令', priority='normal', template_id='', params=None):
     """从看板创建新任务（圣旨模板下旨）。"""
     if not title or not title.strip():
         return {'ok': False, 'error': '任务标题不能为空'}
     title = title.strip()
+    # 标题质量校验：防止闲聊被误建为旨意
+    if len(title) < _MIN_TITLE_LEN:
+        return {'ok': False, 'error': f'标题过短（{len(title)}<{_MIN_TITLE_LEN}字），不像是旨意'}
+    if title.lower() in _JUNK_TITLES:
+        return {'ok': False, 'error': f'「{title}」不是有效旨意，请输入具体工作指令'}
     # 生成 task id: JJC-YYYYMMDD-NNN
     today = datetime.datetime.now().strftime('%Y%m%d')
     tasks = load_tasks()
