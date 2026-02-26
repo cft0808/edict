@@ -658,6 +658,7 @@
       <span class="sess-filter" data-sf="bingbu" onclick="filterSessions('bingbu',this)">兵部</span>
       <span class="sess-filter" data-sf="xingbu" onclick="filterSessions('xingbu',this)">刑部</span>
       <span class="sess-filter" data-sf="gongbu" onclick="filterSessions('gongbu',this)">工部</span>
+      <span class="sess-filter" data-sf="libu_hr" onclick="filterSessions('libu_hr',this)">吏部</span>
       <span class="sess-filter" data-sf="menxia" onclick="filterSessions('menxia',this)">门下省</span>
       <span class="sess-filter" data-sf="zaochao" onclick="filterSessions('zaochao',this)">钦天监</span>
     </div>
@@ -786,7 +787,7 @@ const PIPE = [
 const PIPE_STATE_IDX = {Inbox:0,Taizi:1,Zhongshu:2,Menxia:3,Assigned:4,Doing:5,Review:6,Done:7,Blocked:5,Cancelled:5,Next:4};
 
 /* ══ DEPT COLORS ══ */
-const DEPT_COLOR = {'太子':'#e8a040','中书省':'#a07aff','门下省':'#6a9eff','尚书省':'#6aef9a','礼部':'#f5c842','户部':'#ff9a6a','兵部':'#ff5270','刑部':'#cc4444','工部':'#44aaff','皇上':'#ffd700','回奏':'#2ecc8a'};
+const DEPT_COLOR = {'太子':'#e8a040','中书省':'#a07aff','门下省':'#6a9eff','尚书省':'#6aef9a','礼部':'#f5c842','户部':'#ff9a6a','兵部':'#ff5270','刑部':'#cc4444','工部':'#44aaff','吏部':'#9b59b6','皇上':'#ffd700','回奏':'#2ecc8a'};
 function deptColor(d){return DEPT_COLOR[d]||'#6a9eff'}
 
 /* ══ UTILS ══ */
@@ -927,6 +928,7 @@ function renderMonitor(tasks){
     {id:'bingbu',  label:'兵部',  emoji:'⚔️',role:'兵部尚书',rank:'正二品'},
     {id:'xingbu',  label:'刑部',  emoji:'⚖️',role:'刑部尚书',rank:'正二品'},
     {id:'gongbu',  label:'工部',  emoji:'🔧',role:'工部尚书',rank:'正二品'},
+    {id:'libu_hr', label:'吏部',  emoji:'👔',role:'吏部尚书',rank:'正二品'},
     {id:'zaochao', label:'钦天监',emoji:'🌟',role:'朝报官',  rank:'正三品'},
   ];
 
@@ -1211,7 +1213,7 @@ function renderLiveActivity(data){
   if(dot){dot.classList.toggle('idle',!isActive);}
 
   // Agent label map
-  const _agentLabels={main:'太子',zhongshu:'中书省',menxia:'门下省',shangshu:'尚书省',libu:'礼部',hubu:'户部',bingbu:'兵部',xingbu:'刑部',gongbu:'工部',zaochao:'钦天监'};
+  const _agentLabels={main:'太子',zhongshu:'中书省',menxia:'门下省',shangshu:'尚书省',libu:'礼部',hubu:'户部',bingbu:'兵部',xingbu:'刑部',gongbu:'工部',libu_hr:'吏部',zaochao:'钦天监'};
 
   const entries=data.activity.map(a=>{
     const time=a.at?fmtActivityTime(a.at):'';

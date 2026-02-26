@@ -380,7 +380,7 @@ _STATE_AGENT_MAP = {
 }
 _ORG_AGENT_MAP = {
     '礼部': 'libu', '户部': 'hubu', '兵部': 'bingbu',
-    '刑部': 'xingbu', '工部': 'gongbu',
+    '刑部': 'xingbu', '工部': 'gongbu', '吏部': 'libu_hr',
 }
 
 
