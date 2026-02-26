@@ -23,6 +23,7 @@ MODEL_PRICING = {
 }
 
 OFFICIALS = [
+    {'id':'main',    'label':'太子',  'role':'太子',    'emoji':'🤴','rank':'储君'},
     {'id':'zhongshu','label':'中书省','role':'中书令',  'emoji':'📜','rank':'正一品'},
     {'id':'menxia',  'label':'门下省','role':'侍中',    'emoji':'🔍','rank':'正一品'},
     {'id':'shangshu','label':'尚书省','role':'尚书令',  'emoji':'📮','rank':'正一品'},

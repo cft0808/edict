@@ -15,6 +15,7 @@ DATA = BASE / 'data'
 OPENCLAW_CFG = pathlib.Path.home() / '.openclaw' / 'openclaw.json'
 
 ID_LABEL = {
+    'main':     {'label': '太子',   'role': '太子',     'duty': '飞书消息分拣与回奏',  'emoji': '🤴'},
     'zhongshu': {'label': '中书省', 'role': '中书令',   'duty': '起草任务令与优先级',  'emoji': '📜'},
     'menxia':   {'label': '门下省', 'role': '侍中',     'duty': '审议与退回机制',      'emoji': '🔍'},
     'shangshu': {'label': '尚书省', 'role': '尚书令',   'duty': '派单与升级裁决',      'emoji': '📮'},
@@ -81,6 +82,7 @@ def main():
     agents_list = agents_cfg.get('list', [])
 
     result = []
+    seen_ids = set()
     for ag in agents_list:
         ag_id = ag.get('id', '')
         if ag_id not in ID_LABEL:
@@ -95,6 +97,29 @@ def main():
             'workspace': workspace,
             'skills': get_skills(workspace),
             'allowAgents': ag.get('subagents', {}).get('allowAgents', []),
+        })
+        seen_ids.add(ag_id)
+
+    # 补充不在 openclaw.json agents list 中的 agent（main 是默认agent, zaochao 独立运行）
+    EXTRA_AGENTS = {
+        'main':    {'model': default_model, 'workspace': str(pathlib.Path.home() / '.openclaw/workspace-main'),
+                    'allowAgents': ['zhongshu','menxia','shangshu','hubu','libu','bingbu','xingbu','gongbu']},
+        'zaochao': {'model': default_model, 'workspace': str(pathlib.Path.home() / '.openclaw/workspace-zaochao'),
+                    'allowAgents': []},
+    }
+    for ag_id, extra in EXTRA_AGENTS.items():
+        if ag_id in seen_ids or ag_id not in ID_LABEL:
+            continue
+        meta = ID_LABEL[ag_id]
+        result.append({
+            'id': ag_id,
+            'label': meta['label'], 'role': meta['role'], 'duty': meta['duty'], 'emoji': meta['emoji'],
+            'model': extra['model'],
+            'defaultModel': default_model,
+            'workspace': extra['workspace'],
+            'skills': get_skills(extra['workspace']),
+            'allowAgents': extra['allowAgents'],
+            'isDefaultModel': True,
         })
 
     payload = {

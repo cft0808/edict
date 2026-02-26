@@ -1211,7 +1211,7 @@ function renderLiveActivity(data){
   if(dot){dot.classList.toggle('idle',!isActive);}
 
   // Agent label map
-  const _agentLabels={main:'太子',zhongshu:'中书省',menxia:'门下省',shangshu:'尚书省',libu:'礼部',hubu:'户部',bingbu:'兵部',xingbu:'刑部',gongbu:'工部'};
+  const _agentLabels={main:'太子',zhongshu:'中书省',menxia:'门下省',shangshu:'尚书省',libu:'礼部',hubu:'户部',bingbu:'兵部',xingbu:'刑部',gongbu:'工部',zaochao:'钦天监'};
 
   const entries=data.activity.map(a=>{
     const time=a.at?fmtActivityTime(a.at):'';
