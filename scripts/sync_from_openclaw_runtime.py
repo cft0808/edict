@@ -109,7 +109,16 @@ def build_task(agent_id, session_key, row, now_ms):
     model = row.get('model') or '-'
 
     title_label = (row.get('origin') or {}).get('label') or session_key
-    title = f"{title_label} 会话"
+    # 清洗会话标题：agent:xxx:cron:uuid → 定时任务, agent:xxx:subagent:uuid → 子任务
+    import re
+    if re.match(r'agent:\w+:cron:', title_label):
+        title = f"{org}定时任务"
+    elif re.match(r'agent:\w+:subagent:', title_label):
+        title = f"{org}子任务"
+    elif title_label == session_key or len(title_label) > 40:
+        title = f"{org}会话"
+    else:
+        title = f"{title_label} 会话"
     session_file = row.get('sessionFile', '')
 
     return {
@@ -197,6 +206,15 @@ def main():
                 pass
 
         tasks.sort(key=lambda x: x.get('sourceMeta', {}).get('updatedAt', 0), reverse=True)
+
+        # 去重（同一 id 只保留第一个=最新的）
+        seen_ids = set()
+        deduped = []
+        for t in tasks:
+            if t['id'] not in seen_ids:
+                seen_ids.add(t['id'])
+                deduped.append(t)
+        tasks = deduped
 
         # ── 保留已有的 JJC-* 旨意任务（不覆盖皇上下旨记录）──
         existing_tasks_file = DATA / 'tasks_source.json'

@@ -253,6 +253,11 @@ def handle_create_task(title, org='中书省', official='中书令', priority='n
     if not title or not title.strip():
         return {'ok': False, 'error': '任务标题不能为空'}
     title = title.strip()
+    # 剥离 Conversation info 元数据
+    title = re.split(r'\n*Conversation info\s*\(', title, maxsplit=1)[0].strip()
+    title = re.split(r'\n*```', title, maxsplit=1)[0].strip()
+    if len(title) > 100:
+        title = title[:100] + '…'
     # 标题质量校验：防止闲聊被误建为旨意
     if len(title) < _MIN_TITLE_LEN:
         return {'ok': False, 'error': f'标题过短（{len(title)}<{_MIN_TITLE_LEN}字），不像是旨意'}
@@ -535,6 +540,13 @@ def get_task_activity(task_id):
         for e in entries:
             e['agent'] = aid  # 标记来源 agent
         all_activity.extend(entries)
+
+    # 如果按 task_id 精确匹配无结果，退化为显示主 agent 最近活动
+    if not all_activity and agent_id:
+        fallback = get_agent_activity(agent_id, limit=15, task_id=None)
+        for e in fallback:
+            e['agent'] = agent_id
+        all_activity = fallback
 
     # 按时间排序
     def sort_key(e):

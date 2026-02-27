@@ -59,6 +59,20 @@ _JUNK_TITLES = {
     '你去开启', '测试', '试试', '看看',
 }
 
+def _sanitize_title(raw):
+    """清洗标题：剥离 Conversation info 元数据、截断过长内容。"""
+    import re
+    t = (raw or '').strip()
+    # 剥离 Conversation info (untrusted metadata) 后面的所有内容
+    t = re.split(r'\n*Conversation info\s*\(', t, maxsplit=1)[0].strip()
+    # 剥离 ```json 代码块
+    t = re.split(r'\n*```', t, maxsplit=1)[0].strip()
+    # 截断过长标题
+    if len(t) > 100:
+        t = t[:100] + '…'
+    return t
+
+
 def _is_valid_task_title(title):
     """校验标题是否足够作为一个旨意任务。"""
     t = (title or '').strip()
@@ -75,6 +89,8 @@ def _is_valid_task_title(title):
 
 def cmd_create(task_id, title, state, org, official, remark=None):
     """新建任务（收旨时立即调用）"""
+    # 清洗标题（剥离元数据）
+    title = _sanitize_title(title)
     # 旨意标题校验
     valid, reason = _is_valid_task_title(title)
     if not valid:
@@ -86,14 +102,14 @@ def cmd_create(task_id, title, state, org, official, remark=None):
     if existing and existing.get('state') not in (None, '', 'Inbox'):
         log.warning(f'任务 {task_id} 已存在 (state={existing["state"]})，将被覆盖')
     tasks = [t for t in tasks if t.get('id') != task_id]  # 去重
+    # 根据 state 推导正确的 org，忽略调用者可能传来的错误 org
+    actual_org = STATE_ORG_MAP.get(state, org)
     flow_log = [{
         "at": now_iso(),
         "from": "皇上",
         "to": actual_org,
         "remark": remark or f"下旨：{title}"
     }]
-    # 根据 state 推导正确的 org，忽略调用者可能传来的错误 org
-    actual_org = STATE_ORG_MAP.get(state, org)
     tasks.insert(0, {
         "id": task_id,
         "title": title,

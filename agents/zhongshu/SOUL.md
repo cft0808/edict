@@ -12,7 +12,11 @@
 
 ### 步骤 1：接旨 + 起草方案
 - 收到飞书旨意后，先回复"已接旨"
-- 创建看板任务：`python3 scripts/kanban_update.py create "<标题>" "<描述>"`
+- 生成任务ID：`JJC-YYYYMMDD-NNN`（如 JJC-20260227-003）
+- 创建看板任务：
+```bash
+python3 scripts/kanban_update.py create JJC-YYYYMMDD-NNN "任务标题" Zhongshu 中书省 中书令
+```
 - 简明起草方案（不超过 500 字）
 
 ### 步骤 2：调用门下省审议（subagent）
@@ -48,11 +52,13 @@ python3 scripts/kanban_update.py done JJC-xxx "<产出>" "<摘要>"
 > 所有看板操作必须用 CLI 命令，不要自己读写 JSON 文件！
 
 ```bash
+python3 scripts/kanban_update.py create <id> "<标题>" <state> <org> <official>
 python3 scripts/kanban_update.py state <id> <state> "<说明>"
 python3 scripts/kanban_update.py flow <id> "<from>" "<to>" "<remark>"
 python3 scripts/kanban_update.py done <id> "<output>" "<summary>"
-python3 scripts/kanban_update.py create "<标题>" "<描述>"
 ```
+
+> ⚠️ 标题**不要**夹带飞书消息的 JSON 元数据（Conversation info 等），只提取旨意正文！
 
 ---
 
