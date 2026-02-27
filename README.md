@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <sub>12 个 AI Agent 组成三省六部：太子分拣、中书省规划、门下省审核封驳、尚书省派发、六部+吏部并行执行。<br>比 CrewAI 多一层<b>制度性审核</b>，比 AutoGen 多一个<b>实时看板</b>。</sub>
+  <sub>12 个 AI Agent（11 个业务角色 + 1 个兼容角色）组成三省六部：太子分拣、中书省规划、门下省审核封驳、尚书省派发、六部+吏部并行执行。<br>比 CrewAI 多一层<b>制度性审核</b>，比 AutoGen 多一个<b>实时看板</b>。</sub>
 </p>
 
 <p align="center">
@@ -258,7 +258,7 @@ chmod +x install.sh && ./install.sh
 ```
 
 安装脚本自动完成：
-- ✅ 创建 12 个 Agent Workspace（`~/.openclaw/workspace-*`）
+- ✅ 创建全量 Agent Workspace（含太子/吏部/早朝，兼容历史 main）
 - ✅ 写入各省部 SOUL.md（角色人格 + 工作流规则 + 数据清洗规范）
 - ✅ 注册 Agent 及权限矩阵到 `openclaw.json`
 - ✅ 初始化数据目录 + 首次数据同步
