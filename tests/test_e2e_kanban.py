@@ -12,7 +12,11 @@ from kanban_update import (
 )
 
 # 确保 data 目录和 tasks_source.json 存在（CI 环境可能没有）
-TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
+# CI 中 'data' 可能是一个遗留符号链接文件而非目录，需先移除
+data_dir = TASKS_FILE.parent
+if data_dir.exists() and not data_dir.is_dir():
+    data_dir.unlink()
+data_dir.mkdir(parents=True, exist_ok=True)
 if not TASKS_FILE.exists():
     TASKS_FILE.write_text('[]')
 

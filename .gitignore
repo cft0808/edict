@@ -26,3 +26,4 @@ venv/
 
 # Backups
 *.bak*
+data
