@@ -148,6 +148,8 @@ def main():
 
     # 自动部署 SOUL.md 到 workspace（如果项目里有更新）
     deploy_soul_files()
+    # 同步 scripts/ 到各 workspace（保持 kanban_update.py 等最新）
+    sync_scripts_to_workspaces()
 
 
 # 项目 agents/ 目录名 → 运行时 agent_id 映射
@@ -164,6 +166,49 @@ _SOUL_DEPLOY_MAP = {
     'libu_hr': 'libu_hr',
     'zaochao': 'zaochao',
 }
+
+def sync_scripts_to_workspaces():
+    """将项目 scripts/ 目录同步到各 agent workspace（保持 kanban_update.py 等最新）"""
+    scripts_src = BASE / 'scripts'
+    if not scripts_src.is_dir():
+        return
+    synced = 0
+    for proj_name, runtime_id in _SOUL_DEPLOY_MAP.items():
+        ws_scripts = pathlib.Path.home() / f'.openclaw/workspace-{runtime_id}' / 'scripts'
+        ws_scripts.mkdir(parents=True, exist_ok=True)
+        for src_file in scripts_src.iterdir():
+            if src_file.suffix not in ('.py', '.sh') or src_file.stem.startswith('__'):
+                continue
+            dst_file = ws_scripts / src_file.name
+            try:
+                src_text = src_file.read_bytes()
+            except Exception:
+                continue
+            try:
+                dst_text = dst_file.read_bytes() if dst_file.exists() else b''
+            except Exception:
+                dst_text = b''
+            if src_text != dst_text:
+                dst_file.write_bytes(src_text)
+                synced += 1
+    # also sync to workspace-main for legacy compatibility
+    ws_main_scripts = pathlib.Path.home() / '.openclaw/workspace-main/scripts'
+    ws_main_scripts.mkdir(parents=True, exist_ok=True)
+    for src_file in scripts_src.iterdir():
+        if src_file.suffix not in ('.py', '.sh') or src_file.stem.startswith('__'):
+            continue
+        dst_file = ws_main_scripts / src_file.name
+        try:
+            src_text = src_file.read_bytes()
+            dst_text = dst_file.read_bytes() if dst_file.exists() else b''
+            if src_text != dst_text:
+                dst_file.write_bytes(src_text)
+                synced += 1
+        except Exception:
+            pass
+    if synced:
+        log.info(f'{synced} script files synced to workspaces')
+
 
 def deploy_soul_files():
     """将项目 agents/xxx/SOUL.md 部署到 ~/.openclaw/workspace-xxx/soul.md"""
