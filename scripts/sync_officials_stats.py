@@ -23,7 +23,7 @@ MODEL_PRICING = {
 }
 
 OFFICIALS = [
-    {'id':'main',    'label':'太子',  'role':'太子',    'emoji':'🤴','rank':'储君'},
+    {'id':'taizi',   'label':'太子',  'role':'太子',    'emoji':'🤴','rank':'储君'},
     {'id':'zhongshu','label':'中书省','role':'中书令',  'emoji':'📜','rank':'正一品'},
     {'id':'menxia',  'label':'门下省','role':'侍中',    'emoji':'🔍','rank':'正一品'},
     {'id':'shangshu','label':'尚书省','role':'尚书令',  'emoji':'📮','rank':'正一品'},
@@ -50,17 +50,32 @@ def _load_openclaw_cfg():
         _OPENCLAW_CACHE = rj(OPENCLAW_CFG, {})
     return _OPENCLAW_CACHE
 
+
+def normalize_model(model_value, fallback='anthropic/claude-sonnet-4-6'):
+    if isinstance(model_value, str) and model_value:
+        return model_value
+    if isinstance(model_value, dict):
+        return model_value.get('primary') or model_value.get('id') or fallback
+    return fallback
+
 def get_model(agent_id):
     cfg = _load_openclaw_cfg()
-    default = cfg.get('agents',{}).get('defaults',{}).get('model',{}).get('primary','anthropic/claude-sonnet-4-6')
+    default = normalize_model(cfg.get('agents',{}).get('defaults',{}).get('model',{}), 'anthropic/claude-sonnet-4-6')
     for a in cfg.get('agents',{}).get('list',[]):
         if a.get('id') == agent_id:
-            return a.get('model', default)
+            return normalize_model(a.get('model', default), default)
+    # 兼容历史：太子曾使用 main 作为运行时 id
+    if agent_id == 'taizi':
+        for a in cfg.get('agents',{}).get('list',[]):
+            if a.get('id') == 'main':
+                return normalize_model(a.get('model', default), default)
     return default
 
 def scan_agent(agent_id):
     """从 sessions.json 读取 token 统计（累计所有 session）"""
     sj = AGENTS_ROOT / agent_id / 'sessions' / 'sessions.json'
+    if not sj.exists() and agent_id == 'taizi':
+        sj = AGENTS_ROOT / 'main' / 'sessions' / 'sessions.json'
     if not sj.exists():
         return {'tokens_in':0,'tokens_out':0,'cache_read':0,'cache_write':0,'sessions':0,'last_active':None,'messages':0}
     
@@ -154,7 +169,7 @@ def main():
         result.append({
             **off,
             'model': model,
-            'model_short': model.split('/')[-1] if '/' in model else model,
+            'model_short': model.split('/')[-1] if isinstance(model, str) and '/' in model else str(model),
             'sessions': ss['sessions'],
             'tokens_in': ss['tokens_in'],
             'tokens_out': ss['tokens_out'],

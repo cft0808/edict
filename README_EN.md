@@ -200,7 +200,7 @@ chmod +x install.sh && ./install.sh
 ```
 
 The installer automatically:
-- Creates 9 agent workspaces (`~/.openclaw/workspace-*`)
+- Creates workspaces for all departments (`~/.openclaw/workspace-*`, including Crown Prince/HR/Briefing)
 - Writes SOUL.md personality files for each department
 - Registers agents + permission matrix in `openclaw.json`
 - Initializes data directory + first sync

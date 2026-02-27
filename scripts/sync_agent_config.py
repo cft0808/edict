@@ -15,7 +15,8 @@ DATA = BASE / 'data'
 OPENCLAW_CFG = pathlib.Path.home() / '.openclaw' / 'openclaw.json'
 
 ID_LABEL = {
-    'main':     {'label': '太子',   'role': '太子',     'duty': '飞书消息分拣与回奏',  'emoji': '🤴'},
+    'taizi':    {'label': '太子',   'role': '太子',     'duty': '飞书消息分拣与回奏',  'emoji': '🤴'},
+    'main':     {'label': '太子',   'role': '太子',     'duty': '飞书消息分拣与回奏',  'emoji': '🤴'},  # 兼容旧配置
     'zhongshu': {'label': '中书省', 'role': '中书令',   'duty': '起草任务令与优先级',  'emoji': '📜'},
     'menxia':   {'label': '门下省', 'role': '侍中',     'duty': '审议与退回机制',      'emoji': '🔍'},
     'shangshu': {'label': '尚书省', 'role': '尚书令',   'duty': '派单与升级裁决',      'emoji': '📮'},
@@ -44,6 +45,14 @@ KNOWN_MODELS = [
     {'id': 'copilot/gemini-2.5-pro',      'label': 'Gemini 2.5 Pro',    'provider': 'Copilot'},
     {'id': 'copilot/o3-mini',             'label': 'o3-mini',           'provider': 'Copilot'},
 ]
+
+
+def normalize_model(model_value, fallback='unknown'):
+    if isinstance(model_value, str) and model_value:
+        return model_value
+    if isinstance(model_value, dict):
+        return model_value.get('primary') or model_value.get('id') or fallback
+    return fallback
 
 
 def get_skills(workspace: str):
@@ -79,7 +88,7 @@ def main():
         return
 
     agents_cfg = cfg.get('agents', {})
-    default_model = agents_cfg.get('defaults', {}).get('model', {}).get('primary', 'unknown')
+    default_model = normalize_model(agents_cfg.get('defaults', {}).get('model', {}), 'unknown')
     agents_list = agents_cfg.get('list', [])
 
     result = []
@@ -93,7 +102,7 @@ def main():
         result.append({
             'id': ag_id,
             'label': meta['label'], 'role': meta['role'], 'duty': meta['duty'], 'emoji': meta['emoji'],
-            'model': ag.get('model', default_model),
+            'model': normalize_model(ag.get('model', default_model), default_model),
             'defaultModel': default_model,
             'workspace': workspace,
             'skills': get_skills(workspace),
@@ -101,8 +110,10 @@ def main():
         })
         seen_ids.add(ag_id)
 
-    # 补充不在 openclaw.json agents list 中的 agent（main 是默认agent, zaochao 独立运行）
+    # 补充不在 openclaw.json agents list 中的 agent（兼容旧版 main）
     EXTRA_AGENTS = {
+        'taizi':   {'model': default_model, 'workspace': str(pathlib.Path.home() / '.openclaw/workspace-taizi'),
+                    'allowAgents': ['zhongshu']},
         'main':    {'model': default_model, 'workspace': str(pathlib.Path.home() / '.openclaw/workspace-main'),
                     'allowAgents': ['zhongshu','menxia','shangshu','hubu','libu','bingbu','xingbu','gongbu','libu_hr']},
         'zaochao': {'model': default_model, 'workspace': str(pathlib.Path.home() / '.openclaw/workspace-zaochao'),
@@ -141,7 +152,7 @@ def main():
 
 # 项目 agents/ 目录名 → 运行时 agent_id 映射
 _SOUL_DEPLOY_MAP = {
-    'taizi': 'main',       # 太子项目名taizi，运行时为main
+    'taizi': 'taizi',
     'zhongshu': 'zhongshu',
     'menxia': 'menxia',
     'shangshu': 'shangshu',
@@ -173,8 +184,8 @@ def deploy_soul_files():
         if src_text != dst_text:
             ws_dst.write_text(src_text, encoding='utf-8')
             deployed += 1
-        # main agent 还需要一份在 agents/main/ 下
-        if runtime_id == 'main':
+        # 太子兼容：同步一份到 legacy main agent 目录
+        if runtime_id == 'taizi':
             ag_dst = pathlib.Path.home() / '.openclaw/agents/main/SOUL.md'
             ag_dst.parent.mkdir(parents=True, exist_ok=True)
             try:
@@ -188,3 +199,7 @@ def deploy_soul_files():
         sess_dir.mkdir(parents=True, exist_ok=True)
     if deployed:
         log.info(f'{deployed} SOUL.md files deployed')
+
+
+if __name__ == '__main__':
+    main()

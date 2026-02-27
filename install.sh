@@ -51,7 +51,7 @@ check_deps() {
 create_workspaces() {
   info "创建 Agent Workspace..."
   
-  AGENTS=(zhongshu menxia shangshu hubu libu bingbu xingbu gongbu zaochao)
+  AGENTS=(taizi zhongshu menxia shangshu hubu libu bingbu xingbu gongbu libu_hr zaochao)
   for agent in "${AGENTS[@]}"; do
     ws="$OC_HOME/workspace-$agent"
     mkdir -p "$ws/skills"
@@ -89,14 +89,17 @@ cfg_path = pathlib.Path.home() / '.openclaw' / 'openclaw.json'
 cfg = json.loads(cfg_path.read_text())
 
 AGENTS = [
+  {"id": "taizi",    "subagents": {"allowAgents": ["zhongshu"]}},
     {"id": "zhongshu", "subagents": {"allowAgents": ["menxia", "shangshu"]}},
     {"id": "menxia",   "subagents": {"allowAgents": ["shangshu", "zhongshu"]}},
-    {"id": "shangshu", "subagents": {"allowAgents": ["zhongshu", "menxia", "hubu", "libu", "bingbu", "xingbu", "gongbu"]}},
+  {"id": "shangshu", "subagents": {"allowAgents": ["zhongshu", "menxia", "hubu", "libu", "bingbu", "xingbu", "gongbu", "libu_hr"]}},
     {"id": "hubu",     "subagents": {"allowAgents": ["shangshu"]}},
     {"id": "libu",     "subagents": {"allowAgents": ["shangshu"]}},
     {"id": "bingbu",   "subagents": {"allowAgents": ["shangshu"]}},
     {"id": "xingbu",   "subagents": {"allowAgents": ["shangshu"]}},
     {"id": "gongbu",   "subagents": {"allowAgents": ["shangshu"]}},
+  {"id": "libu_hr",  "subagents": {"allowAgents": ["shangshu"]}},
+  {"id": "zaochao",  "subagents": {"allowAgents": []}},
 ]
 
 agents_cfg = cfg.setdefault('agents', {})
