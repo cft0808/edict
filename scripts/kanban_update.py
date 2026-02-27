@@ -52,7 +52,7 @@ def find_task(tasks, task_id):
 
 
 # 旨意标题最低要求
-_MIN_TITLE_LEN = 10
+_MIN_TITLE_LEN = 6
 _JUNK_TITLES = {
     '?', '？', '好', '好的', '是', '否', '不', '不是', '对', '了解', '收到',
     '嗯', '哦', '知道了', '开启了么', '可以', '不行', '行', 'ok', 'yes', 'no',
@@ -60,32 +60,60 @@ _JUNK_TITLES = {
 }
 
 def _sanitize_title(raw):
-    """清洗标题：剥离 Conversation info 元数据、传旨前缀、截断过长内容。"""
+    """清洗标题：剥离文件路径、URL、Conversation 元数据、传旨前缀、截断过长内容。"""
     import re
     t = (raw or '').strip()
-    # 剥离 Conversation info (untrusted metadata) 后面的所有内容
-    t = re.split(r'\n*Conversation info\s*\(', t, maxsplit=1)[0].strip()
-    # 剥离 ```json 代码块
+    # 1) 剥离 Conversation info / Conversation 后面的所有内容
+    t = re.split(r'\n*Conversation\b', t, maxsplit=1)[0].strip()
+    # 2) 剥离 ```json 代码块
     t = re.split(r'\n*```', t, maxsplit=1)[0].strip()
-    # 清理常见前缀: "传旨:" "下旨:" 等
-    t = re.sub(r'^(传旨|下旨)[：:\uff1a]\s*', '', t)
-    # 截断过长标题
-    if len(t) > 100:
-        t = t[:100] + '…'
+    # 3) 剥离 Unix/Mac 文件路径 (/Users/xxx, /home/xxx, /opt/xxx, ./xxx)
+    t = re.sub(r'[/\\.~][A-Za-z0-9_\-./]+(?:\.(?:py|js|ts|json|md|sh|yaml|yml|txt|csv|html|css|log))?', '', t)
+    # 4) 剥离 URL
+    t = re.sub(r'https?://\S+', '', t)
+    # 5) 清理常见前缀: "传旨:" "下旨:" "下旨（xxx）:" 等
+    t = re.sub(r'^(传旨|下旨)([（(][^)）]*[)）])?[：:\uff1a]\s*', '', t)
+    # 6) 剥离系统元数据关键词
+    t = re.sub(r'(message_id|session_id|chat_id|open_id|user_id|tenant_key)\s*[:=]\s*\S+', '', t)
+    # 7) 合并多余空白
+    t = re.sub(r'\s+', ' ', t).strip()
+    # 8) 截断过长标题
+    if len(t) > 80:
+        t = t[:80] + '…'
+    return t
+
+
+def _sanitize_remark(raw):
+    """清洗流转备注：与标题相同的清洗策略。"""
+    import re
+    t = (raw or '').strip()
+    t = re.split(r'\n*Conversation\b', t, maxsplit=1)[0].strip()
+    t = re.sub(r'[/\\.~][A-Za-z0-9_\-./]+(?:\.(?:py|js|ts|json|md|sh|yaml|yml|txt|csv|html|css|log))?', '', t)
+    t = re.sub(r'https?://\S+', '', t)
+    t = re.sub(r'(message_id|session_id|chat_id|open_id|user_id|tenant_key)\s*[:=]\s*\S+', '', t)
+    t = re.sub(r'\s+', ' ', t).strip()
+    if len(t) > 120:
+        t = t[:120] + '…'
     return t
 
 
 def _is_valid_task_title(title):
     """校验标题是否足够作为一个旨意任务。"""
+    import re
     t = (title or '').strip()
     if len(t) < _MIN_TITLE_LEN:
         return False, f'标题过短（{len(t)}<{_MIN_TITLE_LEN}字），疑似非旨意'
     if t.lower() in _JUNK_TITLES:
         return False, f'标题 "{t}" 不是有效旨意'
     # 纯标点或问号
-    import re
     if re.fullmatch(r'[\s?？!！.。,，…·\-—~]+', t):
         return False, '标题只有标点符号'
+    # 看起来像文件路径
+    if re.match(r'^[/\\~.]', t) or re.search(r'/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+', t):
+        return False, f'标题看起来像文件路径，请用中文概括任务'
+    # 只剩标点和空白（清洗后可能变空）
+    if re.fullmatch(r'[\s\W]*', t):
+        return False, '标题清洗后为空'
     return True, ''
 
 
@@ -111,11 +139,12 @@ def cmd_create(task_id, title, state, org, official, remark=None):
     tasks = [t for t in tasks if t.get('id') != task_id]  # 去重
     # 根据 state 推导正确的 org，忽略调用者可能传来的错误 org
     actual_org = STATE_ORG_MAP.get(state, org)
+    clean_remark = _sanitize_remark(remark) if remark else f"下旨：{title}"
     flow_log = [{
         "at": now_iso(),
         "from": "皇上",
         "to": actual_org,
-        "remark": remark or f"下旨：{title}"
+        "remark": clean_remark
     }]
     tasks.insert(0, {
         "id": task_id,
@@ -163,13 +192,14 @@ def cmd_flow(task_id, from_dept, to_dept, remark):
         return
     if 'flow_log' not in t:
         t['flow_log'] = []
+    clean_remark = _sanitize_remark(remark)
     t['flow_log'].append({
         "at": now_iso(),
         "from": from_dept,
         "to": to_dept,
-        "remark": remark
+        "remark": clean_remark
     })
-    t['now'] = remark[:60]
+    t['now'] = clean_remark[:60]
     t['updatedAt'] = now_iso()
     save(tasks)
     log.info(f'✅ {task_id} 流转记录: {from_dept} → {to_dept}')
@@ -243,23 +273,32 @@ def cmd_todo(task_id, todo_id, title, status='not-started'):
     total = len(t['todos'])
     log.info(f'✅ {task_id} todo [{done}/{total}]: {todo_id} → {status}')
 
+_CMD_MIN_ARGS = {
+    'create': 6, 'state': 3, 'flow': 5, 'done': 2, 'block': 3, 'todo': 4,
+}
+
 if __name__ == '__main__':
     args = sys.argv[1:]
     if not args:
         print(__doc__)
         sys.exit(0)
     cmd = args[0]
-    if cmd == 'create' and len(args) >= 6:
+    if cmd in _CMD_MIN_ARGS and len(args) < _CMD_MIN_ARGS[cmd]:
+        print(f'错误："{cmd}" 命令至少需要 {_CMD_MIN_ARGS[cmd]} 个参数，实际 {len(args)} 个')
+        print(__doc__)
+        sys.exit(1)
+    if cmd == 'create':
         cmd_create(args[1], args[2], args[3], args[4], args[5], args[6] if len(args)>6 else None)
-    elif cmd == 'state' and len(args) >= 3:
+    elif cmd == 'state':
         cmd_state(args[1], args[2], args[3] if len(args)>3 else None)
-    elif cmd == 'flow' and len(args) >= 5:
+    elif cmd == 'flow':
         cmd_flow(args[1], args[2], args[3], args[4])
-    elif cmd == 'done' and len(args) >= 2:
+    elif cmd == 'done':
         cmd_done(args[1], args[2] if len(args)>2 else '', args[3] if len(args)>3 else '')
-    elif cmd == 'block' and len(args) >= 3:
+    elif cmd == 'block':
         cmd_block(args[1], args[2])
-    elif cmd == 'todo' and len(args) >= 4:
+    elif cmd == 'todo':
         cmd_todo(args[1], args[2], args[3] if len(args) > 3 else '', args[4] if len(args) > 4 else 'not-started')
     else:
         print(__doc__)
+        sys.exit(1)

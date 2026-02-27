@@ -65,6 +65,8 @@ python3 scripts/kanban_update.py done <id> "<output>" "<summary>"
 ```
 
 > ⚠️ 标题**不要**夹带飞书消息的 JSON 元数据（Conversation info 等），只提取旨意正文！
+> ⚠️ 标题必须是中文概括的一句话（10-30字），**严禁**包含文件路径、URL、代码片段！
+> ⚠️ flow/state 的说明文本也不要粘贴原始消息，用自己的话概括！
 
 ---
 
