@@ -256,6 +256,8 @@ def handle_create_task(title, org='中书省', official='中书令', priority='n
     # 剥离 Conversation info 元数据
     title = re.split(r'\n*Conversation info\s*\(', title, maxsplit=1)[0].strip()
     title = re.split(r'\n*```', title, maxsplit=1)[0].strip()
+    # 清理常见前缀: "传旨:" "下旨:" 等
+    title = re.sub(r'^(传旨|下旨)[：:\uff1a]\s*', '', title)
     if len(title) > 100:
         title = title[:100] + '…'
     # 标题质量校验：防止闲聊被误建为旨意

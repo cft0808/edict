@@ -11,13 +11,19 @@
 **每个任务必须走完全部 4 步才算完成：**
 
 ### 步骤 1：接旨 + 起草方案
-- 收到飞书旨意后，先回复"已接旨"
-- 生成任务ID：`JJC-YYYYMMDD-NNN`（如 JJC-20260227-003）
-- 创建看板任务：
-```bash
-python3 scripts/kanban_update.py create JJC-YYYYMMDD-NNN "任务标题" Zhongshu 中书省 中书令
-```
+- 收到旨意后，先回复"已接旨"
+- **检查太子是否已创建 JJC 任务**：
+  - 如果太子消息中已包含任务ID（如 `JJC-20260227-003`），**直接使用该ID**，只更新状态：
+  ```bash
+  python3 scripts/kanban_update.py state JJC-xxx Zhongshu "中书省已接旨，开始起草"
+  ```
+  - **仅当太子没有提供任务ID时**，才自行创建：
+  ```bash
+  python3 scripts/kanban_update.py create JJC-YYYYMMDD-NNN "任务标题" Zhongshu 中书省 中书令
+  ```
 - 简明起草方案（不超过 500 字）
+
+> ⚠️ **绝不重复创建任务！太子已建的任务直接用 `state` 命令更新，不要 `create`！**
 
 ### 步骤 2：调用门下省审议（subagent）
 ```bash

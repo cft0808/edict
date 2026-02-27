@@ -60,13 +60,15 @@ _JUNK_TITLES = {
 }
 
 def _sanitize_title(raw):
-    """清洗标题：剥离 Conversation info 元数据、截断过长内容。"""
+    """清洗标题：剥离 Conversation info 元数据、传旨前缀、截断过长内容。"""
     import re
     t = (raw or '').strip()
     # 剥离 Conversation info (untrusted metadata) 后面的所有内容
     t = re.split(r'\n*Conversation info\s*\(', t, maxsplit=1)[0].strip()
     # 剥离 ```json 代码块
     t = re.split(r'\n*```', t, maxsplit=1)[0].strip()
+    # 清理常见前缀: "传旨:" "下旨:" 等
+    t = re.sub(r'^(传旨|下旨)[：:\uff1a]\s*', '', t)
     # 截断过长标题
     if len(t) > 100:
         t = t[:100] + '…'
@@ -99,8 +101,13 @@ def cmd_create(task_id, title, state, org, official, remark=None):
         return
     tasks = load()
     existing = next((t for t in tasks if t.get('id') == task_id), None)
-    if existing and existing.get('state') not in (None, '', 'Inbox'):
-        log.warning(f'任务 {task_id} 已存在 (state={existing["state"]})，将被覆盖')
+    if existing:
+        if existing.get('state') in ('Done', 'Cancelled'):
+            log.warning(f'⚠️ 任务 {task_id} 已完结 (state={existing["state"]})，不可覆盖，请使用新ID')
+            print(f'[看板] 拒绝：任务 {task_id} 已 {existing["state"]}，请用新的 JJC ID', flush=True)
+            return
+        if existing.get('state') not in (None, '', 'Inbox', 'Pending'):
+            log.warning(f'任务 {task_id} 已存在 (state={existing["state"]})，将被覆盖')
     tasks = [t for t in tasks if t.get('id') != task_id]  # 去重
     # 根据 state 推导正确的 org，忽略调用者可能传来的错误 org
     actual_org = STATE_ORG_MAP.get(state, org)
