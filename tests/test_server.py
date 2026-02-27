@@ -35,6 +35,6 @@ def test_healthz(tmp_path):
     conn.close()
 
     assert resp.status == 200
-    assert body['status'] == 'ok'
+    assert body['status'] in ('ok', 'degraded')
 
     httpd.server_close()

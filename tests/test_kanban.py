@@ -17,11 +17,11 @@ def test_create_and_get(tmp_path):
     original = kb.TASKS_FILE
     kb.TASKS_FILE = tasks_file
     try:
-        kb.cmd_create('TEST-001', '测试任务', 'Inbox', '工部', '工部尚书')
+        kb.cmd_create('TEST-001', '测试任务创建和查询功能验证', 'Inbox', '工部', '工部尚书')
         tasks = json.loads(tasks_file.read_text())
         assert any(t.get('id') == 'TEST-001' for t in tasks)
         t = next(t for t in tasks if t['id'] == 'TEST-001')
-        assert t['title'] == '测试任务'
+        assert t['title'] == '测试任务创建和查询功能验证'
         assert t['state'] == 'Inbox'
         assert t['org'] == '工部'
     finally:
