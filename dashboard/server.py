@@ -377,10 +377,13 @@ _STATE_AGENT_MAP = {
     'Assigned': 'shangshu',
     'Doing': None,         # 六部，需从 org 推断
     'Review': 'shangshu',
+    'Next': None,          # 待执行，从 org 推断
+    'Pending': 'zhongshu', # 待处理，默认中书省
 }
 _ORG_AGENT_MAP = {
     '礼部': 'libu', '户部': 'hubu', '兵部': 'bingbu',
     '刑部': 'xingbu', '工部': 'gongbu', '吏部': 'libu_hr',
+    '中书省': 'zhongshu', '门下省': 'menxia', '尚书省': 'shangshu',
 }
 
 
@@ -500,7 +503,7 @@ def get_task_activity(task_id):
 
     # 确定当前 agent + 可能的关联 agents（任务可能经过多个 agent）
     agent_id = _STATE_AGENT_MAP.get(state)
-    if agent_id is None and state == 'Doing':
+    if agent_id is None and state in ('Doing', 'Next'):
         agent_id = _ORG_AGENT_MAP.get(org)
 
     # 收集所有可能涉及的 agent（从流转日志推断）
@@ -565,16 +568,18 @@ def get_task_activity(task_id):
 
 # 状态推进顺序（手动推进用）
 _STATE_FLOW = {
+    'Pending':  ('Taizi', '皇上', '太子', '待处理旨意转交太子分拣'),
     'Taizi':    ('Zhongshu', '太子', '中书省', '太子分拣完毕，转中书省起草'),
     'Zhongshu': ('Menxia', '中书省', '门下省', '中书省方案提交门下省审议'),
     'Menxia':   ('Assigned', '门下省', '尚书省', '门下省准奏，转尚书省派发'),
     'Assigned': ('Doing', '尚书省', '六部', '尚书省开始派发执行'),
+    'Next':     ('Doing', '尚书省', '六部', '待执行任务开始执行'),
     'Doing':    ('Review', '六部', '尚书省', '各部完成，进入汇总'),
     'Review':   ('Done', '尚书省', '太子', '全流程完成，回奏太子转报皇上'),
 }
 _STATE_LABELS = {
-    'Taizi': '太子', 'Zhongshu': '中书省', 'Menxia': '门下省', 'Assigned': '尚书省',
-    'Doing': '执行中', 'Review': '审查', 'Done': '完成',
+    'Pending': '待处理', 'Taizi': '太子', 'Zhongshu': '中书省', 'Menxia': '门下省',
+    'Assigned': '尚书省', 'Next': '待执行', 'Doing': '执行中', 'Review': '审查', 'Done': '完成',
 }
 
 def handle_advance_state(task_id, comment=''):
