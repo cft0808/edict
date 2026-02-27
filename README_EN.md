@@ -31,10 +31,21 @@
 ## 🎬 Demo
 
 <p align="center">
+  <video src="docs/Agent_video_Pippit_20260225121727.mp4" width="100%" autoplay muted loop playsinline controls>
+    Your browser does not support video playback. See the GIF below or <a href="docs/Agent_video_Pippit_20260225121727.mp4">download the video</a>.
+  </video>
+  <br>
+  <sub>🎥 Full demo: AI Multi-Agent collaboration with Three Departments & Six Ministries</sub>
+</p>
+
+<details>
+<summary>📸 GIF Preview (loads faster)</summary>
+<p align="center">
   <img src="docs/demo.gif" alt="Edict Demo" width="100%">
   <br>
-  <sub>Issue command → Planning proposes → Review audits → Ministries execute → Report back (30s)</sub>
+  <sub>Issue edict → Crown Prince triage → Planning → Review → Ministries execute → Report back (30s)</sub>
 </p>
+</details>
 
 > 🐳 **No OpenClaw?** Run `docker run -p 7891:7891 cft0808/edict` to try the full dashboard with simulated data.
 

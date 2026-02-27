@@ -31,10 +31,21 @@
 ## 🎬 Demo
 
 <p align="center">
+  <video src="docs/Agent_video_Pippit_20260225121727.mp4" width="100%" autoplay muted loop playsinline controls>
+    您的浏览器不支持视频播放，请查看下方 GIF 或 <a href="docs/Agent_video_Pippit_20260225121727.mp4">下载视频</a>。
+  </video>
+  <br>
+  <sub>🎥 三省六部 AI 多 Agent 协作全流程演示</sub>
+</p>
+
+<details>
+<summary>📸 GIF 预览（加载更快）</summary>
+<p align="center">
   <img src="docs/demo.gif" alt="三省六部 Demo" width="100%">
   <br>
-  <sub>飞书下旨 → 中书省规划 → 门下省审议 → 六部并行执行 → 奏折回报（30 秒）</sub>
+  <sub>飞书下旨 → 太子分拣 → 中书省规划 → 门下省审议 → 六部并行执行 → 奏折回报（30 秒）</sub>
 </p>
+</details>
 
 > 🐳 **没有 OpenClaw？** 跑一行 `docker run -p 7891:7891 cft0808/edict` 即可体验完整看板 Demo（预置模拟数据）。
 
