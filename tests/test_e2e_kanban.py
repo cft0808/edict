@@ -11,6 +11,11 @@ from kanban_update import (
     cmd_create, cmd_flow, cmd_state, cmd_done, load, TASKS_FILE
 )
 
+# 确保 data 目录和 tasks_source.json 存在（CI 环境可能没有）
+TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
+if not TASKS_FILE.exists():
+    TASKS_FILE.write_text('[]')
+
 # 备份原始数据
 backup = TASKS_FILE.read_text()
 passed = 0
