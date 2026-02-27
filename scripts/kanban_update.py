@@ -90,6 +90,8 @@ def _sanitize_remark(raw):
     t = re.split(r'\n*Conversation\b', t, maxsplit=1)[0].strip()
     t = re.sub(r'[/\\.~][A-Za-z0-9_\-./]+(?:\.(?:py|js|ts|json|md|sh|yaml|yml|txt|csv|html|css|log))?', '', t)
     t = re.sub(r'https?://\S+', '', t)
+    # 剥离"下旨（xxx）："前缀
+    t = re.sub(r'^(传旨|下旨)([（(][^)）]*[)）])?[：:\uff1a]\s*', '', t)
     t = re.sub(r'(message_id|session_id|chat_id|open_id|user_id|tenant_key)\s*[:=]\s*\S+', '', t)
     t = re.sub(r'\s+', ' ', t).strip()
     if len(t) > 120:
