@@ -496,6 +496,159 @@ def get_agent_activity(agent_id, limit=30, task_id=None):
     return entries[-limit:]
 
 
+def _extract_keywords(title):
+    """从任务标题中提取有意义的关键词（用于 session 内容匹配）。"""
+    stop = {'的', '了', '在', '是', '有', '和', '与', '或', '一个', '一篇', '关于', '进行',
+            '写', '做', '请', '把', '给', '用', '要', '需要', '面向', '风格', '包含',
+            '出', '个', '不', '可以', '应该', '如何', '怎么', '什么', '这个', '那个'}
+    # 提取英文词
+    en_words = re.findall(r'[a-zA-Z][\w.-]{1,}', title)
+    # 提取 2-4 字中文词组（更短的颗粒度）
+    cn_words = re.findall(r'[\u4e00-\u9fff]{2,4}', title)
+    all_words = en_words + cn_words
+    kws = [w for w in all_words if w not in stop and len(w) >= 2]
+    # 去重保序
+    seen = set()
+    unique = []
+    for w in kws:
+        if w.lower() not in seen:
+            seen.add(w.lower())
+            unique.append(w)
+    return unique[:8]  # 最多 8 个关键词
+
+
+def get_agent_activity_by_keywords(agent_id, keywords, limit=20):
+    """从 agent session 中按关键词匹配获取活动条目。
+    找到包含关键词的 session 文件，只读该文件的活动。
+    """
+    sessions_dir = OCLAW_HOME / 'agents' / agent_id / 'sessions'
+    if not sessions_dir.exists():
+        return []
+
+    jsonl_files = sorted(sessions_dir.glob('*.jsonl'), key=lambda f: f.stat().st_mtime, reverse=True)
+    if not jsonl_files:
+        return []
+
+    # 找到包含关键词的 session 文件
+    target_file = None
+    for sf in jsonl_files[:5]:
+        try:
+            content = sf.read_text(errors='ignore')
+        except Exception:
+            continue
+        hits = sum(1 for kw in keywords if kw.lower() in content.lower())
+        if hits >= min(2, len(keywords)):
+            target_file = sf
+            break
+
+    if not target_file:
+        return []
+
+    # 解析 session 文件，按 user 消息分割为对话段
+    # 找到包含关键词的对话段，只返回该段的活动
+    try:
+        lines = target_file.read_text(errors='ignore').splitlines()
+    except Exception:
+        return []
+
+    # 第一遍：找到关键词匹配的 user 消息位置
+    user_msg_indices = []  # (line_index, user_text)
+    for i, ln in enumerate(lines):
+        try:
+            item = json.loads(ln)
+        except Exception:
+            continue
+        msg = item.get('message') or {}
+        if msg.get('role') == 'user':
+            text = ''
+            for c in msg.get('content', []):
+                if c.get('type') == 'text' and c.get('text'):
+                    text += c['text']
+            user_msg_indices.append((i, text))
+
+    # 找到与关键词匹配度最高的 user 消息
+    best_idx = -1
+    best_hits = 0
+    for line_idx, utext in user_msg_indices:
+        hits = sum(1 for kw in keywords if kw.lower() in utext.lower())
+        if hits > best_hits:
+            best_hits = hits
+            best_idx = line_idx
+
+    # 确定对话段的行范围：从匹配的 user 消息到下一个 user 消息之前
+    if best_idx >= 0 and best_hits >= min(2, len(keywords)):
+        # 找下一个 user 消息的位置
+        next_user_idx = len(lines)
+        for line_idx, _ in user_msg_indices:
+            if line_idx > best_idx:
+                next_user_idx = line_idx
+                break
+        start_line = best_idx
+        end_line = next_user_idx
+    else:
+        # 没找到匹配的对话段，返回空
+        return []
+
+    # 第二遍：只解析对话段内的行
+    entries = []
+    for ln in lines[start_line:end_line]:
+        try:
+            item = json.loads(ln)
+        except Exception:
+            continue
+        msg = item.get('message') or {}
+        role = msg.get('role', '')
+        ts = item.get('timestamp', '')
+
+        if role == 'assistant':
+            text = ''
+            thinking = ''
+            tool_calls = []
+            for c in msg.get('content', []):
+                if c.get('type') == 'text' and c.get('text'):
+                    text = c['text'].strip()
+                elif c.get('type') == 'thinking' and c.get('thinking'):
+                    thinking = c['thinking'].strip()[:200]
+                elif c.get('type') == 'tool_use':
+                    tool_calls.append({
+                        'name': c.get('name', ''),
+                        'input_preview': json.dumps(c.get('input', {}), ensure_ascii=False)[:100]
+                    })
+            entry = {'at': ts, 'kind': 'assistant'}
+            if text:
+                entry['text'] = text[:300]
+            if thinking:
+                entry['thinking'] = thinking
+            if tool_calls:
+                entry['tools'] = tool_calls
+            if text or thinking or tool_calls:
+                entries.append(entry)
+        elif role == 'toolResult':
+            tool = msg.get('toolName', '')
+            details = msg.get('details') or {}
+            code = details.get('exitCode')
+            output = ''
+            for c in msg.get('content', []):
+                if c.get('type') == 'text' and c.get('text'):
+                    output = c['text'].strip()[:200]
+                    break
+            entries.append({
+                'at': ts, 'kind': 'tool_result',
+                'tool': tool, 'exitCode': code,
+                'output': output
+            })
+        elif role == 'user':
+            text = ''
+            for c in msg.get('content', []):
+                if c.get('type') == 'text' and c.get('text'):
+                    text = c['text'].strip()
+                    break
+            if text:
+                entries.append({'at': ts, 'kind': 'user', 'text': text[:200]})
+
+    return entries[-limit:]
+
+
 def get_task_activity(task_id):
     """获取任务关联 Agent 的实时活动（按 task_id 过滤）。"""
     tasks = load_tasks()
@@ -541,12 +694,25 @@ def get_task_activity(task_id):
             e['agent'] = aid  # 标记来源 agent
         all_activity.extend(entries)
 
-    # 如果按 task_id 精确匹配无结果，退化为显示主 agent 最近活动
+    # 如果按 task_id 精确匹配无结果，尝试用标题关键词匹配
     if not all_activity and agent_id:
-        fallback = get_agent_activity(agent_id, limit=15, task_id=None)
-        for e in fallback:
-            e['agent'] = agent_id
-        all_activity = fallback
+        title = task.get('title', '')
+        # 对 OC-* 任务直接读其 session 文件（无需匹配）
+        session_output = task.get('output', '')
+        if session_output and str(task_id).startswith('OC-') and pathlib.Path(session_output).exists():
+            fallback = get_agent_activity(agent_id, limit=15, task_id=None)
+            # 只取该 session 文件的活动
+            for e in fallback:
+                e['agent'] = agent_id
+            all_activity = fallback
+        elif title and len(title) >= 6:
+            # 用标题关键词在 session 中搜索匹配
+            keywords = _extract_keywords(title)
+            if keywords:
+                fallback = get_agent_activity_by_keywords(agent_id, keywords, limit=20)
+                for e in fallback:
+                    e['agent'] = agent_id
+                all_activity = fallback
 
     # 按时间排序
     def sort_key(e):
