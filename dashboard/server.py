@@ -649,6 +649,100 @@ def get_agent_activity_by_keywords(agent_id, keywords, limit=20):
     return entries[-limit:]
 
 
+def get_agent_latest_segment(agent_id, limit=20):
+    """获取 Agent 最新一轮对话段（最后一条 user 消息起的所有内容）。
+    用于活跃任务没有精确匹配时，展示 Agent 的实时工作状态。
+    """
+    sessions_dir = OCLAW_HOME / 'agents' / agent_id / 'sessions'
+    if not sessions_dir.exists():
+        return []
+
+    jsonl_files = sorted(sessions_dir.glob('*.jsonl'),
+                         key=lambda f: f.stat().st_mtime, reverse=True)
+    if not jsonl_files:
+        return []
+
+    # 读取最新的 session 文件
+    target_file = jsonl_files[0]
+    try:
+        lines = target_file.read_text(errors='ignore').splitlines()
+    except Exception:
+        return []
+
+    # 找到最后一条 user 消息的行号
+    last_user_idx = -1
+    for i, ln in enumerate(lines):
+        try:
+            item = json.loads(ln)
+        except Exception:
+            continue
+        msg = item.get('message') or {}
+        if msg.get('role') == 'user':
+            last_user_idx = i
+
+    if last_user_idx < 0:
+        return []
+
+    # 从最后一条 user 消息开始，解析到文件末尾
+    entries = []
+    for ln in lines[last_user_idx:]:
+        try:
+            item = json.loads(ln)
+        except Exception:
+            continue
+        msg = item.get('message') or {}
+        role = msg.get('role', '')
+        ts = item.get('timestamp', '')
+
+        if role == 'assistant':
+            text = ''
+            thinking = ''
+            tool_calls = []
+            for c in msg.get('content', []):
+                if c.get('type') == 'text' and c.get('text'):
+                    text = c['text'].strip()
+                elif c.get('type') == 'thinking' and c.get('thinking'):
+                    thinking = c['thinking'].strip()[:200]
+                elif c.get('type') == 'tool_use':
+                    tool_calls.append({
+                        'name': c.get('name', ''),
+                        'input_preview': json.dumps(c.get('input', {}), ensure_ascii=False)[:100]
+                    })
+            entry = {'at': ts, 'kind': 'assistant'}
+            if text:
+                entry['text'] = text[:300]
+            if thinking:
+                entry['thinking'] = thinking
+            if tool_calls:
+                entry['tools'] = tool_calls
+            if text or thinking or tool_calls:
+                entries.append(entry)
+        elif role == 'toolResult':
+            tool = msg.get('toolName', '')
+            details = msg.get('details') or {}
+            code = details.get('exitCode')
+            output = ''
+            for c in msg.get('content', []):
+                if c.get('type') == 'text' and c.get('text'):
+                    output = c['text'].strip()[:200]
+                    break
+            entries.append({
+                'at': ts, 'kind': 'tool_result',
+                'tool': tool, 'exitCode': code,
+                'output': output
+            })
+        elif role == 'user':
+            text = ''
+            for c in msg.get('content', []):
+                if c.get('type') == 'text' and c.get('text'):
+                    text = c['text'].strip()
+                    break
+            if text:
+                entries.append({'at': ts, 'kind': 'user', 'text': text[:200]})
+
+    return entries[-limit:]
+
+
 def get_task_activity(task_id):
     """获取任务关联 Agent 的实时活动（按 task_id 过滤）。"""
     tasks = load_tasks()
@@ -694,6 +788,9 @@ def get_task_activity(task_id):
             e['agent'] = aid  # 标记来源 agent
         all_activity.extend(entries)
 
+    # 活动来源标记
+    activity_source = 'task'  # task=精确匹配, keyword=关键词匹配, agent_latest=Agent最新活动
+
     # 如果按 task_id 精确匹配无结果，尝试用标题关键词匹配
     if not all_activity and agent_id:
         title = task.get('title', '')
@@ -701,18 +798,29 @@ def get_task_activity(task_id):
         session_output = task.get('output', '')
         if session_output and str(task_id).startswith('OC-') and pathlib.Path(session_output).exists():
             fallback = get_agent_activity(agent_id, limit=15, task_id=None)
-            # 只取该 session 文件的活动
             for e in fallback:
                 e['agent'] = agent_id
             all_activity = fallback
+            activity_source = 'keyword'
         elif title and len(title) >= 6:
-            # 用标题关键词在 session 中搜索匹配
             keywords = _extract_keywords(title)
             if keywords:
                 fallback = get_agent_activity_by_keywords(agent_id, keywords, limit=20)
                 for e in fallback:
                     e['agent'] = agent_id
                 all_activity = fallback
+                if all_activity:
+                    activity_source = 'keyword'
+
+    # 如果仍无结果，且任务在活跃状态，展示 Agent 最新一轮对话
+    _ACTIVE_STATES = {'Zhongshu', 'Menxia', 'Assigned', 'Doing', 'Review', 'Next'}
+    if not all_activity and agent_id and state in _ACTIVE_STATES:
+        latest = get_agent_latest_segment(agent_id, limit=20)
+        for e in latest:
+            e['agent'] = agent_id
+        all_activity = latest
+        if all_activity:
+            activity_source = 'agent_latest'
 
     # 按时间排序
     def sort_key(e):
@@ -740,6 +848,7 @@ def get_task_activity(task_id):
         'agentLabel': _STATE_LABELS.get(state, state),
         'lastActive': last_active,
         'activity': all_activity,
+        'activitySource': activity_source,
         'relatedAgents': list(related_agents),
     }
 
