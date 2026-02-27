@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <sub>9 个 AI Agent 组成三省六部：中书省规划、门下省审核封驳、尚书省派发、六部并行执行。<br>比 CrewAI 多一层<b>制度性审核</b>，比 AutoGen 多一个<b>实时看板</b>。</sub>
+  <sub>12 个 AI Agent 组成三省六部：太子分拣、中书省规划、门下省审核封驳、尚书省派发、六部+吏部并行执行。<br>比 CrewAI 多一层<b>制度性审核</b>，比 AutoGen 多一个<b>实时看板</b>。</sub>
 </p>
 
 <p align="center">
@@ -20,7 +20,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/OpenClaw-Required-blue?style=flat-square" alt="OpenClaw">
   <img src="https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/Agents-9_Specialized-8B5CF6?style=flat-square" alt="Agents">
+  <img src="https://img.shields.io/badge/Agents-12_Specialized-8B5CF6?style=flat-square" alt="Agents">
   <img src="https://img.shields.io/badge/Dashboard-Real--time-F59E0B?style=flat-square" alt="Dashboard">
   <img src="https://img.shields.io/badge/License-MIT-22C55E?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/Zero_Deps-stdlib_only-EC4899?style=flat-square" alt="Zero Dependencies">
@@ -51,7 +51,7 @@
 **三省六部的思路完全不同** —— 我们用了一个在中国存在 1400 年的制度架构：
 
 ```
-你 (皇上) → 中书省 (规划) → 门下省 (审议) → 尚书省 (派发) → 六部 (执行) → 回奏
+你 (皇上) → 太子 (分拣) → 中书省 (规划) → 门下省 (审议) → 尚书省 (派发) → 六部 (执行) → 回奏
 ```
 
 这不是花哨的 metaphor，这是**真正的分权制衡**：
@@ -93,11 +93,13 @@ CrewAI 和 AutoGen 的 Agent 协作模式是 **"做完就交"**——没有人�
 
 ## ✨ 功能全景
 
-### 🏛️ 九部制 Agent 架构
+### 🏛️ 十二部制 Agent 架构
+- **太子** 消息分拣 —— 闲聊自动回复，旨意才建任务
 - **三省**（中书·门下·尚书）负责规划、审议、派发
-- **六部**（户·礼·兵·刑·工 + 早朝官）负责专项执行
+- **七部**（户·礼·兵·刑·工·吏 + 早朝官）负责专项执行
 - 严格的权限矩阵 —— 谁能给谁发消息，白纸黑字
 - 每个 Agent 独立 Workspace · 独立 Skills · 独立模型
+- **旨意数据清洗** —— 标题/备注自动剥离文件路径、元数据、无效前缀
 
 ### 📋 军机处看板（10 个功能面板）
 
@@ -245,8 +247,8 @@ chmod +x install.sh && ./install.sh
 ```
 
 安装脚本自动完成：
-- ✅ 创建 9 个 Agent Workspace（`~/.openclaw/workspace-*`）
-- ✅ 写入各省部 SOUL.md（角色人格 + 工作流规则）
+- ✅ 创建 12 个 Agent Workspace（`~/.openclaw/workspace-*`）
+- ✅ 写入各省部 SOUL.md（角色人格 + 工作流规则 + 数据清洗规范）
 - ✅ 注册 Agent 及权限矩阵到 `openclaw.json`
 - ✅ 初始化数据目录 + 首次数据同步
 - ✅ 重启 Gateway 使配置生效
@@ -277,6 +279,11 @@ open http://127.0.0.1:7891
                            └─────────────────┬─────────────────┘
                                              │ 下旨
                            ┌─────────────────▼─────────────────┐
+                           │          � 太子 (taizi)            │
+                           │    分拣：闲聊直接回 / 旨意建任务      │
+                           └─────────────────┬─────────────────┘
+                                             │ 传旨
+                           ┌─────────────────▼─────────────────┐
                            │          📜 中书省 (zhongshu)       │
                            │       接旨 → 规划 → 拆解子任务       │
                            └─────────────────┬─────────────────┘
@@ -295,12 +302,17 @@ open http://127.0.0.1:7891
                          │💰 户部│ │📝 礼部│ │⚔️ 兵部│ │⚖️ 刑部│ │🔧 工部│
                          │ 数据  │ │ 文档  │ │ 工程  │ │ 合规  │ │ 基建  │
                          └──────┘ └──────┘ └──────┘ └─────┘ └──────┘
+                                                               ┌──────┐
+                                                               │📋 吏部│
+                                                               │ 人事  │
+                                                               └──────┘
 ```
 
 ### 各省部职责
 
 | 部门 | Agent ID | 职责 | 擅长领域 |
 |------|----------|------|---------|
+| � **太子** | `taizi` | 消息分拣、需求整理 | 闲聊识别、旨意提炼、标题概括 |
 | 📜 **中书省** | `zhongshu` | 接旨、规划、拆解 | 需求理解、任务分解、方案设计 |
 | 🔍 **门下省** | `menxia` | 审议、把关、封驳 | 质量评审、风险识别、标准把控 |
 | 📮 **尚书省** | `shangshu` | 派发、协调、汇总 | 任务调度、进度跟踪、结果整合 |
@@ -309,24 +321,27 @@ open http://127.0.0.1:7891
 | ⚔️ **兵部** | `bingbu` | 代码、算法、巡检 | 功能开发、Bug 修复、代码审查 |
 | ⚖️ **刑部** | `xingbu` | 安全、合规、审计 | 安全扫描、合规检查、红线管控 |
 | 🔧 **工部** | `gongbu` | CI/CD、部署、工具 | Docker 配置、流水线、自动化 |
+| 📋 **吏部** | `libu_hr` | 人事、Agent 管理 | Agent 注册、权限维护、培训 |
+| 🌅 **早朝官** | `zaochao` | 每日早朝、新闻聚合 | 定时播报、数据汇总 |
 
 ### 权限矩阵
 
 > 不是想发就能发 —— 真正的分权制衡
 
-| From ↓ \ To → | 中书 | 门下 | 尚书 | 户 | 礼 | 兵 | 刑 | 工 |
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **中书省** | — | ✅ | ✅ | | | | | |
-| **门下省** | ✅ | — | ✅ | | | | | |
-| **尚书省** | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **六部** | | | ✅ | | | | | |
+| From ↓ \ To → | 太子 | 中书 | 门下 | 尚书 | 户 | 礼 | 兵 | 刑 | 工 | 吏 |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **太子** | — | ✅ | | | | | | | | |
+| **中书省** | ✅ | — | ✅ | ✅ | | | | | | |
+| **门下省** | | ✅ | — | ✅ | | | | | | |
+| **尚书省** | | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **六部+吏部** | | | | ✅ | | | | | | |
 
 ### 任务状态流转
 
 ```
-收件 Inbox → 中书规划 → 门下审议 → 已派发 → 执行中 → 待审查 → ✅ 已完成
-                 ↑          │                              │
-                 └──── 封驳 ─┘                    阻塞 Blocked
+皇上 → 太子分拣 → 中书规划 → 门下审议 → 已派发 → 执行中 → 待审查 → ✅ 已完成
+                      ↑          │                              │
+                      └──── 封驳 ─┘                    阻塞 Blocked
 ```
 
 ---
@@ -335,7 +350,8 @@ open http://127.0.0.1:7891
 
 ```
 edict/
-├── agents/                     # 9 个 Agent 的人格模板
+├── agents/                     # 12 个 Agent 的人格模板
+│   ├── taizi/SOUL.md           # 太子 · 消息分拣（含旨意标题规范）
 │   ├── zhongshu/SOUL.md        # 中书省 · 规划中枢
 │   ├── menxia/SOUL.md          # 门下省 · 审议把关
 │   ├── shangshu/SOUL.md        # 尚书省 · 调度大脑
@@ -344,19 +360,23 @@ edict/
 │   ├── bingbu/SOUL.md          # 兵部 · 工程实现
 │   ├── xingbu/SOUL.md          # 刑部 · 合规审计
 │   ├── gongbu/SOUL.md          # 工部 · 基础设施
+│   ├── libu_hr/                # 吏部 · 人事管理
 │   └── zaochao/SOUL.md         # 早朝官 · 情报枢纽
 ├── dashboard/
-│   ├── dashboard.html          # 军机处看板（单文件 · 零依赖 · ~2200 行）
-│   └── server.py               # API 服务器（Python 标准库 · 零依赖）
+│   ├── dashboard.html          # 军机处看板（单文件 · 零依赖 · ~2500 行）
+│   └── server.py               # API 服务器（Python 标准库 · 零依赖 · ~1200 行）
 ├── scripts/
 │   ├── run_loop.sh             # 数据刷新循环（每 15 秒）
+│   ├── kanban_update.py        # 看板 CLI（含旨意数据清洗 + 标题校验）
 │   ├── sync_from_openclaw_runtime.py
 │   ├── sync_agent_config.py
 │   ├── sync_officials_stats.py
 │   ├── fetch_morning_news.py
 │   ├── refresh_live_data.py
 │   ├── apply_model_changes.py
-│   └── kanban_update.py
+│   └── file_lock.py            # 文件锁（防多 Agent 并发写入）
+├── tests/
+│   └── test_e2e_kanban.py      # 端到端测试（17 个断言）
 ├── data/                       # 运行时数据（gitignored）
 ├── docs/                       # 文档 + 截图
 ├── install.sh                  # 一键安装脚本
@@ -421,8 +441,8 @@ edict/
 > 完整路线图及参与方式：[ROADMAP.md](ROADMAP.md)
 
 ### Phase 1 — 核心架构 ✅
-- [x] 九部制 Agent 架构 + 权限矩阵
-- [x] 军机处实时看板（10 个功能面板）
+- [x] 十二部制 Agent 架构（太子 + 三省 + 七部 + 早朝官）+ 权限矩阵
+- [x] 军机处实时看板（10 个功能面板 + 实时活动面板）
 - [x] 任务叫停 / 取消 / 恢复
 - [x] 奏折系统（自动归档 + 五阶段时间线）
 - [x] 圣旨模板库（9 个预设 + 参数表单）
@@ -431,6 +451,10 @@ edict/
 - [x] 模型热切换 + 技能管理 + 技能添加
 - [x] 官员总览 + Token 消耗统计
 - [x] 小任务 / 会话监控
+- [x] 太子消息分拣（闲聊自动回复 / 旨意建任务）
+- [x] 旨意数据清洗（路径/元数据/前缀自动剥离）
+- [x] 重复任务防护 + 已完成任务保护
+- [x] 端到端测试覆盖（17 个断言）
 
 ### Phase 2 — 制度深化 🚧
 - [ ] 御批模式（人工审批 + 一键准奏/封驳）

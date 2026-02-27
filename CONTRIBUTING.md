@@ -76,10 +76,12 @@ open http://127.0.0.1:7892
 
 | 目录/文件 | 说明 | 改动频率 |
 |----------|------|---------|
-| `dashboard/dashboard.html` | 看板前端（单文件，~2200 行） | 🔥 高 |
-| `dashboard/server.py` | API 服务器（Python stdlib） | 🔥 高 |
-| `agents/*/SOUL.md` | Agent 人格模板 | 🔶 中 |
-| `scripts/*.py` | 数据同步脚本 | 🔶 中 |
+| `dashboard/dashboard.html` | 看板前端（单文件，~2500 行） | 🔥 高 |
+| `dashboard/server.py` | API 服务器（stdlib，~1200 行） | 🔥 高 |
+| `agents/*/SOUL.md` | 12 个 Agent 人格模板 | 🔶 中 |
+| `scripts/kanban_update.py` | 看板 CLI + 数据清洗（~300 行） | 🔶 中 |
+| `scripts/*.py` | 数据同步 / 自动化脚本 | 🔶 中 |
+| `tests/test_e2e_kanban.py` | E2E 看板测试（17 断言） | 🔶 中 |
 | `install.sh` | 安装脚本 | 🟢 低 |
 
 ---
@@ -149,6 +151,10 @@ docs: 更新 README 截图
 ```bash
 # 编译检查
 python3 -m py_compile dashboard/server.py
+python3 -m py_compile scripts/kanban_update.py
+
+# E2E 看板测试（9 场景 17 断言）
+python3 tests/test_e2e_kanban.py
 
 # 验证数据同步
 python3 scripts/refresh_live_data.py

@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <sub>9 AI agents form the Three Departments & Six Ministries: Planning proposes, Review vetoes, Dispatch assigns, Ministries execute.<br>Built-in <b>institutional review gates</b> that CrewAI doesn't have. A <b>real-time dashboard</b> that AutoGen doesn't have.</sub>
+  <sub>12 AI agents form the Three Departments & Six Ministries: Crown Prince triages, Planning proposes, Review vetoes, Dispatch assigns, Ministries execute.<br>Built-in <b>institutional review gates</b> that CrewAI doesn't have. A <b>real-time dashboard</b> that AutoGen doesn't have.</sub>
 </p>
 
 <p align="center">
@@ -20,7 +20,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/OpenClaw-Required-blue?style=flat-square" alt="OpenClaw">
   <img src="https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/Agents-9_Specialized-8B5CF6?style=flat-square" alt="Agents">
+  <img src="https://img.shields.io/badge/Agents-12_Specialized-8B5CF6?style=flat-square" alt="Agents">
   <img src="https://img.shields.io/badge/Dashboard-Real--time-F59E0B?style=flat-square" alt="Dashboard">
   <img src="https://img.shields.io/badge/License-MIT-22C55E?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/Zero_Deps-stdlib_only-EC4899?style=flat-square" alt="Zero Dependencies">
@@ -45,16 +45,18 @@
 Most multi-agent frameworks let AI agents talk freely, producing opaque results you can't audit or intervene in. **Edict** takes a radically different approach — borrowing the governance system that ran China for 1,400 years:
 
 ```
-You (Emperor) → Planning Dept → Review Dept → Dispatch Dept → 6 Ministries → Report Back
-   皇上           中书省           门下省          尚书省           六部          回奏
+You (Emperor) → Crown Prince (Triage) → Planning Dept → Review Dept → Dispatch Dept → 6 Ministries → Report Back
+   皇上              太子               中书省          门下省         尚书省           六部          回奏
 ```
 
 This isn't a cute metaphor. It's **real separation of powers** for AI:
 
+- **Crown Prince (太子)** triages messages — casual chat gets auto-replied, real commands become tasks
 - **Planning (中书省)** breaks your command into actionable sub-tasks
 - **Review (门下省)** audits the plan — can reject and force re-planning
 - **Dispatch (尚书省)** assigns approved tasks to specialist ministries
-- **6 Ministries** execute in parallel, each with distinct expertise
+- **7 Ministries** execute in parallel, each with distinct expertise
+- **Data sanitization** auto-strips file paths, metadata, and junk from task titles
 - Everything flows through a **real-time dashboard** you can monitor and intervene
 
 ---
@@ -100,11 +102,13 @@ This is why Edict produces reliable results on complex tasks: there's a mandator
 
 ## ✨ Features
 
-### 🏛️ Nine-Department Agent Architecture
+### 🏛️ Twelve-Department Agent Architecture
+- **Crown Prince** (太子) message triage — auto-reply casual chat, create tasks for real commands
 - **Three Departments** (Planning · Review · Dispatch) for governance
-- **Six Ministries** (Finance · Docs · Engineering · Compliance · Infrastructure + Briefing) for execution
+- **Seven Ministries** (Finance · Docs · Engineering · Compliance · Infrastructure · HR + Briefing) for execution
 - Strict permission matrix — who can message whom is enforced
 - Each agent: own workspace, own skills, own LLM model
+- **Data sanitization** — auto-strips file paths, metadata, invalid prefixes from titles/remarks
 
 ### 📋 Command Center Dashboard (10 Panels)
 
@@ -217,6 +221,11 @@ open http://127.0.0.1:7891
                            └─────────────────┬─────────────────┘
                                              │ Issue edict
                            ┌─────────────────▼─────────────────┐
+                           │     👑 Crown Prince (太子)          │
+                           │   Triage: chat → reply / cmd → task │
+                           └─────────────────┬─────────────────┘
+                                             │ Forward edict
+                           ┌─────────────────▼─────────────────┐
                            │      📜 Planning Dept (中书省)      │
                            │     Receive → Plan → Decompose      │
                            └─────────────────┬─────────────────┘
@@ -235,12 +244,17 @@ open http://127.0.0.1:7891
                          │💰 Fin.│ │📝 Docs│ │⚔️ Eng.│ │⚖️ Law│ │🔧 Ops│
                          │ 户部  │ │ 礼部  │ │ 兵部  │ │ 刑部 │ │ 工部  │
                          └──────┘ └──────┘ └──────┘ └─────┘ └──────┘
+                                                               ┌──────┐
+                                                               │📋 HR  │
+                                                               │ 吏部  │
+                                                               └──────┘
 ```
 
 ### Agent Roles
 
 | Dept | Agent ID | Role | Expertise |
 |------|----------|------|-----------|
+| 👑 **Crown Prince** | `taizi` | Triage, summarize | Chat detection, intent extraction |
 | 📜 **Planning** | `zhongshu` | Receive, plan, decompose | Requirements, architecture |
 | 🔍 **Review** | `menxia` | Audit, gatekeep, veto | Quality, risk, standards |
 | 📮 **Dispatch** | `shangshu` | Assign, coordinate, collect | Scheduling, tracking |
@@ -249,22 +263,25 @@ open http://127.0.0.1:7891
 | ⚔️ **Engineering** | `bingbu` | Code, algorithms, checks | Development, code review |
 | ⚖️ **Compliance** | `xingbu` | Security, compliance, audit | Security scanning |
 | 🔧 **Infrastructure** | `gongbu` | CI/CD, deploy, tooling | Docker, pipelines |
+| 📋 **HR** | `libu_hr` | Agent management, training | Registration, permissions |
+| 🌅 **Briefing** | `zaochao` | Daily briefing, news | Scheduled reports, summaries |
 
 ### Permission Matrix
 
-| From ↓ \ To → | Planning | Review | Dispatch | Ministries |
-|:---:|:---:|:---:|:---:|:---:|
-| **Planning** | — | ✅ | ✅ | |
-| **Review** | ✅ | — | ✅ | |
-| **Dispatch** | ✅ | ✅ | — | ✅ all |
-| **Ministries** | | | ✅ | |
+| From ↓ \ To → | Prince | Planning | Review | Dispatch | Ministries |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Crown Prince** | — | ✅ | | | |
+| **Planning** | ✅ | — | ✅ | ✅ | |
+| **Review** | | ✅ | — | ✅ | |
+| **Dispatch** | | ✅ | ✅ | — | ✅ all |
+| **Ministries** | | | | ✅ | |
 
 ### State Machine
 
 ```
-Inbox → Planning → Review → Assigned → Executing → Under Review → ✅ Done
-            ↑         │                                    │
-            └── Veto ──┘                          Blocked ──
+Emperor → Prince Triage → Planning → Review → Assigned → Executing → ✅ Done
+                              ↑          │                       │
+                              └── Veto ──┘              Blocked ──
 ```
 
 ---
@@ -273,11 +290,23 @@ Inbox → Planning → Review → Assigned → Executing → Under Review → �
 
 ```
 edict/
-├── agents/                     # 9 agent personality templates (SOUL.md)
+├── agents/                     # 12 agent personality templates (SOUL.md)
+│   ├── taizi/                  #   Crown Prince (triage)
+│   ├── zhongshu/               #   Planning Dept
+│   ├── menxia/                 #   Review Dept
+│   ├── shangshu/               #   Dispatch Dept
+│   ├── hubu/ libu/ bingbu/     #   Finance / Docs / Engineering
+│   ├── xingbu/ gongbu/         #   Compliance / Infrastructure
+│   ├── libu_hr/                #   HR Dept
+│   └── zaochao/                #   Morning Briefing
 ├── dashboard/
-│   ├── dashboard.html          # Single-file dashboard (zero deps, ~2200 lines)
-│   └── server.py               # API server (Python stdlib only)
+│   ├── dashboard.html          # Single-file dashboard (~2500 lines)
+│   └── server.py               # API server (stdlib, ~1200 lines)
 ├── scripts/                    # Data sync & automation scripts
+│   ├── kanban_update.py        #   Kanban CLI with data sanitization (~300 lines)
+│   └── ...                     #   fetch_morning_news, sync, screenshots, etc.
+├── tests/                      # E2E tests
+│   └── test_e2e_kanban.py      #   Kanban sanitization tests (17 assertions)
 ├── data/                       # Runtime data (gitignored)
 ├── docs/                       # Documentation + screenshots
 ├── install.sh                  # One-click installer
@@ -304,7 +333,8 @@ edict/
 > Full roadmap with contribution opportunities: [ROADMAP.md](ROADMAP.md)
 
 ### Phase 1 — Core Architecture ✅
-- [x] Nine-department agent architecture + permissions
+- [x] Twelve-department agent architecture + permissions
+- [x] Crown Prince triage layer (chat vs task auto-routing)
 - [x] Real-time dashboard (10 panels)
 - [x] Task stop / cancel / resume
 - [x] Memorial archive (5-phase timeline)
@@ -314,6 +344,9 @@ edict/
 - [x] Hot-swap LLM models + skill management
 - [x] Officials overview + token stats
 - [x] Session monitoring
+- [x] Edict data sanitization (title/remark cleaning, dirty data rejection)
+- [x] Duplicate task overwrite protection
+- [x] E2E kanban tests (17 assertions)
 
 ### Phase 2 — Institutional Depth 🚧
 - [ ] Imperial approval mode (human-in-the-loop)

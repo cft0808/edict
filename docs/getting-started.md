@@ -31,23 +31,24 @@ chmod +x install.sh && ./install.sh
 ```
 
 安装脚本会自动完成：
-- ✅ 创建 9 个 Agent Workspace（`~/.openclaw/workspace-*`）
+- ✅ 创建 12 个 Agent Workspace（`~/.openclaw/workspace-*`）
 - ✅ 写入各省部 SOUL.md 人格文件
 - ✅ 注册 Agent 及权限矩阵到 `openclaw.json`
+- ✅ 配置旨意数据清洗规则
 - ✅ 初始化数据目录
 - ✅ 执行首次数据同步
 - ✅ 重启 Gateway 使配置生效
 
 ## 第三步：配置消息渠道
 
-在 OpenClaw 中配置消息渠道（Feishu / Telegram / Signal），将 `zhongshu` Agent 设为旨意入口。
+在 OpenClaw 中配置消息渠道（Feishu / Telegram / Signal），将 `taizi`（太子）Agent 设为旨意入口。太子会自动分拣闲聊与指令，指令类消息提炼标题后转发中书省。
 
 ```bash
 # 查看当前渠道
 openclaw channels list
 
-# 添加飞书渠道
-openclaw channels add --type feishu --agent zhongshu
+# 添加飞书渠道（入口设为太子）
+openclaw channels add --type feishu --agent taizi
 ```
 
 参考 OpenClaw 文档：https://docs.openclaw.ai/channels
@@ -69,7 +70,7 @@ open http://127.0.0.1:7891
 
 ## 第五步：发送第一道旨意
 
-通过消息渠道给中书省发送任务：
+通过消息渠道发送任务（太子会自动识别并转发到中书省）：
 
 ```
 请帮我用 Python 写一个文本分类器：
@@ -89,7 +90,7 @@ open http://127.0.0.1:7891
 
 任务流转路径：
 ```
-收件 → 中书规划 → 门下审议 → 已派发 → 执行中 → 待审查 → 已完成
+收件 → 太子分拣 → 中书规划 → 门下审议 → 已派发 → 执行中 → 已完成
 ```
 
 ---
