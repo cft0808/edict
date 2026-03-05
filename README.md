@@ -623,8 +623,6 @@ curl http://localhost:7891/api/remote-skills-list
 
 [![Star History Chart](https://api.star-history.com/svg?repos=cft0808/edict&type=Date)](https://star-history.com/#cft0808/edict&Date)
 
-[![Star History Chart](https://api.star-history.com/svg?repos=cft0808/edict&type=Date)](https://star-history.com/#cft0808/edict&Date)
-
 ---
 
 ## 📄 License
