@@ -98,6 +98,7 @@ class Task(Base):
     scheduler = Column(JSONB, default=dict, comment="调度器元数据")
     template_id = Column(String(64), default="", comment="模板ID")
     template_params = Column(JSONB, default=dict, comment="模板参数")
+    meta = Column(JSONB, default=dict, comment="元数据")
     ac = Column(Text, default="", comment="验收标准")
     target_dept = Column(String(64), default="", comment="目标部门")
 
@@ -136,7 +137,8 @@ class Task(Base):
             "templateParams": self.template_params or {},
             "ac": self.ac,
             "targetDept": self.target_dept,
-            "_scheduler": self.scheduler or {},
+            "scheduler": self.scheduler or {},
             "createdAt": self.created_at.isoformat() if self.created_at else "",
+            "meta": self.meta or {},
             "updatedAt": self.updated_at.isoformat() if self.updated_at else "",
         }
