@@ -1956,8 +1956,13 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
                     'lastDispatchTrigger': trigger,
                 }))
                 return
+            # NOTE: do not hardcode channel=feishu. In environments without Feishu channel,
+            # this causes: invalid agent params: unknown channel: feishu
+            # Also avoid --deliver unless you can provide a valid --channel/--reply-channel.
+            # For automated dispatch, we only need to trigger the agent turn; agents will
+            # update the kanban themselves via scripts.
             cmd = ['openclaw', 'agent', '--agent', agent_id, '-m', msg,
-                   '--deliver', '--channel', 'feishu', '--timeout', '300']
+                   '--timeout', '300']
             max_retries = 2
             err = ''
             for attempt in range(1, max_retries + 1):

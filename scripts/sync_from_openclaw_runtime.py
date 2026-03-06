@@ -312,7 +312,23 @@ def main():
             try:
                 existing = json.loads(existing_tasks_file.read_text())
                 jjc_existing = [t for t in existing if str(t.get('id', '')).startswith('JJC')]
-                
+
+                # ✅ 防止 JJC 任务 state 被旧快照误降级：
+                # 1) 默认以 progress_log 最近一次上报的 state 为准（若存在）
+                # 2) 但加入“反降级”硬规则：若当前 state 属于执行态(Doing/Review/Blocked)，禁止降级为 Assigned/Next/Inbox。
+                for t in jjc_existing:
+                    current_state = str(t.get('state') or '').strip()
+                    pl = t.get('progress_log') or []
+                    if pl:
+                        last = pl[-1] or {}
+                        last_state = str(last.get('state') or '').strip()
+                        if last_state:
+                            # 反降级：执行态不得被 progress 尾部错误固化为 Assigned/Next/Inbox
+                            if current_state in ('Doing', 'Review', 'Blocked') and last_state in ('Assigned', 'Next', 'Inbox'):
+                                pass
+                            else:
+                                t['state'] = last_state
+
                 # 去掉 tasks 里已有的 JJC（以防重复），再把旨意放到最前面
                 tasks = [t for t in tasks if not str(t.get('id', '')).startswith('JJC')]
                 tasks = jjc_existing + tasks

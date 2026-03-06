@@ -86,6 +86,7 @@ class TaskService:
                 "state": initial_state.value,
                 "priority": priority,
                 "assignee_org": assignee_org,
+                "meta": meta or {},
             },
         )
 
