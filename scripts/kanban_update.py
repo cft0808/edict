@@ -32,7 +32,7 @@ log = logging.getLogger('kanban')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(message)s', datefmt='%H:%M:%S')
 
 # 文件锁 —— 防止多 Agent 同时读写 tasks_source.json
-from file_lock import atomic_json_read, atomic_json_update, atomic_json_write  # noqa: E402
+from file_lock import atomic_json_read, atomic_json_update  # noqa: E402
 
 STATE_ORG_MAP = {
     'Taizi': '太子', 'Zhongshu': '中书省', 'Menxia': '门下省', 'Assigned': '尚书省',
@@ -66,8 +66,8 @@ MAX_PROGRESS_LOG = 100  # 单任务最大进展日志条数
 def load():
     return atomic_json_read(TASKS_FILE, [])
 
-def save(tasks):
-    atomic_json_write(TASKS_FILE, tasks)
+def trigger_refresh():
+    """异步触发 REFRESH_SCRIPT 更新 live_status，避免阻塞主更新流程。"""
     # 异步触发刷新，不阻塞调用方
     try:
         subprocess.Popen(['python3', str(REFRESH_SCRIPT)],
@@ -201,7 +201,7 @@ def cmd_create(task_id, title, state, org, official, remark=None):
         })
         return tasks
     atomic_json_update(TASKS_FILE, modifier, [])
-    save(load())  # trigger refresh
+    trigger_refresh()
     log.info(f'✅ 创建 {task_id} | {title[:30]} | state={state}')
 
 
@@ -222,7 +222,7 @@ def cmd_state(task_id, new_state, now_text=None):
         t['updatedAt'] = now_iso()
         return tasks
     atomic_json_update(TASKS_FILE, modifier, [])
-    save(load())  # trigger refresh
+    trigger_refresh()
     log.info(f'✅ {task_id} 状态更新: {old_state[0]} → {new_state}')
 
 
@@ -240,7 +240,7 @@ def cmd_flow(task_id, from_dept, to_dept, remark):
         t['updatedAt'] = now_iso()
         return tasks
     atomic_json_update(TASKS_FILE, modifier, [])
-    save(load())  # trigger refresh
+    trigger_refresh()
     log.info(f'✅ {task_id} 流转记录: {from_dept} → {to_dept}')
 
 
@@ -261,7 +261,7 @@ def cmd_done(task_id, output_path='', summary=''):
         t['updatedAt'] = now_iso()
         return tasks
     atomic_json_update(TASKS_FILE, modifier, [])
-    save(load())  # trigger refresh
+    trigger_refresh()
     log.info(f'✅ {task_id} 已完成')
 
 
@@ -277,7 +277,7 @@ def cmd_block(task_id, reason):
         t['updatedAt'] = now_iso()
         return tasks
     atomic_json_update(TASKS_FILE, modifier, [])
-    save(load())  # trigger refresh
+    trigger_refresh()
     log.warning(f'⚠️ {task_id} 已阻塞: {reason}')
 
 
@@ -366,7 +366,7 @@ def cmd_progress(task_id, now_text, todos_pipe='', tokens=0, cost=0.0, elapsed=0
         total_cnt[0] = len(t.get('todos', []))
         return tasks
     atomic_json_update(TASKS_FILE, modifier, [])
-    save(load())  # trigger refresh
+    trigger_refresh()
     res_info = ''
     if tokens or cost or elapsed:
         res_info = f' [res: {tokens}tok/${cost:.4f}/{elapsed}s]'
@@ -406,7 +406,7 @@ def cmd_todo(task_id, todo_id, title, status='not-started', detail=''):
         result_info[1] = len(t['todos'])
         return tasks
     atomic_json_update(TASKS_FILE, modifier, [])
-    save(load())  # trigger refresh
+    trigger_refresh()
     log.info(f'✅ {task_id} todo [{result_info[0]}/{result_info[1]}]: {todo_id} → {status}')
 
 _CMD_MIN_ARGS = {

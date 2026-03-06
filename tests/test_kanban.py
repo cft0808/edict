@@ -61,3 +61,26 @@ def test_block_and_unblock(tmp_path):
         assert tasks[0]['block'] == '等待依赖'
     finally:
         kb.TASKS_FILE = original
+
+
+def test_state_update_does_not_reload_file_again(tmp_path, monkeypatch):
+    """state 更新后不应再次 load/save 同一文件。"""
+    tasks_file = tmp_path / 'tasks_source.json'
+    tasks_file.write_text(json.dumps([
+        {'id': 'T-3', 'title': 'perf', 'state': 'Inbox'}
+    ]))
+
+    original = kb.TASKS_FILE
+    kb.TASKS_FILE = tasks_file
+    popen_calls = []
+    def fail_on_reload(*_args, **_kwargs):
+        raise AssertionError('unexpected reload')
+    monkeypatch.setattr(kb.subprocess, 'Popen', lambda *args, **kwargs: popen_calls.append((args, kwargs)))
+    monkeypatch.setattr(kb, 'atomic_json_read', fail_on_reload)
+    try:
+        kb.cmd_state('T-3', 'Doing')
+        tasks = json.loads(tasks_file.read_text())
+        assert tasks[0]['state'] == 'Doing'
+        assert len(popen_calls) == 1
+    finally:
+        kb.TASKS_FILE = original
