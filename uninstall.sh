@@ -25,7 +25,7 @@ usage() {
   echo "用法: ./uninstall.sh [--purge]"
   echo ""
   echo "选项:"
-  echo "  --purge   执行严格深度清理（尽可能彻底移除安装/首次同步产物）"
+  echo "  --purge   执行深度清理（清理安装脚本产生的备份）"
   echo "  -h, --help  显示帮助"
 }
 
@@ -35,7 +35,6 @@ error() { echo -e "${RED}❌ $1${NC}"; }
 info()  { echo -e "${BLUE}ℹ️  $1${NC}"; }
 
 AGENTS=(taizi zhongshu menxia shangshu hubu libu bingbu xingbu gongbu libu_hr zaochao)
-ALL_RUNTIME_IDS=(taizi zhongshu menxia shangshu hubu libu bingbu xingbu gongbu libu_hr zaochao main)
 
 parse_args() {
   while [ "$#" -gt 0 ]; do
@@ -59,13 +58,7 @@ parse_args() {
 
 # ── Step 0: 依赖检查 ──────────────────────────────────────────
 check_deps() {
-  info "检查依赖..."
-
-  if ! command -v python3 &>/dev/null; then
-    error "未找到 python3"
-    exit 1
-  fi
-  log "Python3: $(python3 --version)"
+  info "检查环境..."
 
   if [ ! -d "$OC_HOME" ]; then
     warn "未找到 OpenClaw 目录: $OC_HOME（可能已卸载）"
@@ -149,15 +142,28 @@ unregister_agents() {
     return
   fi
 
+  if ! command -v python3 &>/dev/null; then
+    warn "未找到 python3，跳过 agents 注销"
+    warn "请手动编辑 openclaw.json 移除三省六部 agents"
+    return
+  fi
+
   cp "$OC_CFG" "$OC_CFG.bak.sansheng-uninstall-$(date +%Y%m%d-%H%M%S)"
   log "已备份配置: $OC_CFG.bak.*"
 
   python3 << 'PYEOF'
 import json
 import pathlib
+import tempfile
+import shutil
 
 cfg_path = pathlib.Path.home() / '.openclaw' / 'openclaw.json'
-cfg = json.loads(cfg_path.read_text())
+
+try:
+    cfg = json.loads(cfg_path.read_text())
+except Exception as e:
+    print(f'ERROR: Failed to parse {cfg_path}: {e}')
+    exit(1)
 
 remove_ids = {
     'taizi', 'zhongshu', 'menxia', 'shangshu',
@@ -172,8 +178,17 @@ before = len(agents_list)
 agents_cfg['list'] = [a for a in agents_list if a.get('id') not in remove_ids]
 cfg['agents'] = agents_cfg
 
-cfg_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
-print(f'Done: {before - len(agents_cfg["list"])} agents removed')
+# 原子写入：先写临时文件，再 mv
+temp_fd, temp_path = tempfile.mkstemp(dir=cfg_path.parent, suffix='.tmp')
+try:
+    with open(temp_fd, 'w') as f:
+        json.dump(cfg, f, ensure_ascii=False, indent=2)
+    shutil.move(temp_path, cfg_path)
+    print(f'Done: {before - len(agents_cfg["list"])} agents removed')
+except Exception as e:
+    pathlib.Path(temp_path).unlink(missing_ok=True)
+    print(f'ERROR: Failed to write config: {e}')
+    exit(1)
 PYEOF
 
   log "Agents 注销完成"
@@ -210,51 +225,36 @@ cleanup_repo_data() {
   fi
 }
 
-# ── Step 5: 严格深度清理（--purge）───────────────────────────
+# ── Step 5: 深度清理（--purge）───────────────────────────
 purge_cleanup() {
   if ! $PURGE; then
     return
   fi
 
-  info "执行 --purge 严格深度清理..."
+  info "执行 --purge 深度清理..."
 
-  # 1) 删除 ~/.openclaw/agents 下相关目录（含 legacy main）
-  for agent in "${ALL_RUNTIME_IDS[@]}"; do
+  # 1) 删除 ~/.openclaw/agents 下相关目录（如果存在）
+  for agent in "${AGENTS[@]}"; do
     if [ -d "$OC_HOME/agents/$agent" ]; then
       rm -rf "$OC_HOME/agents/$agent"
       log "已删除: $OC_HOME/agents/$agent"
     fi
   done
 
-  # 2) 清理首次同步写入的 workspace scripts（含 legacy main）
-  for runtime_id in "${ALL_RUNTIME_IDS[@]}"; do
-    ws_scripts="$OC_HOME/workspace-$runtime_id/scripts"
-    if [ -d "$ws_scripts" ]; then
-      rm -rf "$ws_scripts"
-      log "已删除: $ws_scripts"
-    fi
-  done
-
-  # 3) 删除可能由首次同步创建的 legacy 兼容目录
-  if [ -d "$OC_HOME/workspace-main" ]; then
-    rmdir "$OC_HOME/workspace-main" 2>/dev/null || true
-  fi
-
-  # 4) 清理本项目生成的配置备份
-  rm -f "$OC_CFG".bak.sansheng-* "$OC_CFG".bak.sansheng-uninstall-* 2>/dev/null || true
+  # 2) 清理本项目生成的配置备份
+  rm -f "$OC_CFG".bak.sansheng-* 2>/dev/null || true
   log "已清理 openclaw.json 相关备份（sansheng 前缀）"
 
-  # 5) 清理本仓库 data 目录（若为空则删除）
+  # 3) 清理安装脚本产生的备份（仅 pre-install-*, 不删 pre-uninstall-*）
+  if [ -d "$OC_HOME/backups" ]; then
+    rm -rf "$OC_HOME/backups"/pre-install-* 2>/dev/null || true
+    log "已清理 pre-install 备份"
+  fi
+
+  # 4) 清理本仓库 data 目录（若为空则删除）
   if [ -d "$REPO_DIR/data" ] && [ -z "$(ls -A "$REPO_DIR/data" 2>/dev/null)" ]; then
     rmdir "$REPO_DIR/data" 2>/dev/null || true
     log "data 目录为空，已删除: $REPO_DIR/data"
-  fi
-
-  # 6) 清理 pre-uninstall/pre-install 备份（仅本项目脚本创建）
-  if [ -d "$OC_HOME/backups" ]; then
-    rm -rf "$OC_HOME/backups"/pre-uninstall-* 2>/dev/null || true
-    rm -rf "$OC_HOME/backups"/pre-install-* 2>/dev/null || true
-    log "已清理 pre-uninstall/pre-install 备份"
   fi
 }
 
@@ -286,18 +286,20 @@ restart_gateway
 echo ""
 echo -e "${GREEN}╔══════════════════════════════════════════════════╗${NC}"
 if $PURGE; then
-  echo -e "${GREEN}║  🧹  三省六部严格深度卸载完成（--purge）！         ║${NC}"
+  echo -e "${GREEN}║  🧹  三省六部深度卸载完成（--purge）！           ║${NC}"
 else
   echo -e "${GREEN}║  🧹  三省六部卸载完成！                           ║${NC}"
 fi
 echo -e "${GREEN}╚══════════════════════════════════════════════════╝${NC}"
 echo ""
-echo "说明："
-echo "  1. 已移除三省六部 agents 注册与 workspace"
-echo "  2. 已清理本仓库 data 下初始化文件"
+echo "已执行："
+echo "  1. 备份现有数据到 ~/.openclaw/backups/pre-uninstall-*"
+echo "  2. 删除三省六部 workspace（~/.openclaw/workspace-*）"
+echo "  3. 从 openclaw.json 注销三省六部 agents"
+echo "  4. 清理本仓库 data/ 下初始化文件"
 if $PURGE; then
-  echo "  3. 已执行严格深度清理（含 legacy main 兼容产物、同步脚本产物、备份清理）"
+  echo "  5. 深度清理（安装备份、sansheng-* 配置备份）"
 else
-  echo "  3. 如需严格深度清理，请执行: ./uninstall.sh --purge"
+  echo "  5. 如需深度清理，请执行: ./uninstall.sh --purge"
 fi
 echo ""

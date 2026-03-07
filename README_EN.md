@@ -231,20 +231,20 @@ open http://127.0.0.1:7891
 # Standard uninstall (recommended first)
 chmod +x uninstall.sh && ./uninstall.sh
 
-# Deep uninstall (extra cache/backup cleanup)
+# Deep uninstall (extra cleanup of installer backups)
 ./uninstall.sh --purge
 ```
 
 The uninstall script will:
-- Back up existing OpenClaw workspaces and config to `~/.openclaw/backups/pre-uninstall-*`
-- Remove Three Departments & Six Ministries workspaces (`~/.openclaw/workspace-*`)
-- Unregister related agents from `~/.openclaw/openclaw.json`
-- Clean installer-initialized files in the repo `data/` directory
+- ✅ Back up existing data to `~/.openclaw/backups/pre-uninstall-*`
+- ✅ Remove Three Departments & Six Ministries workspaces (`~/.openclaw/workspace-{taizi,zhongshu,menxia,...}`)
+- ✅ Unregister related agents from `openclaw.json`
+- ✅ Clean installer-initialized files in the repo `data/` directory
 
 `--purge` additionally:
-- Removes related directories under `~/.openclaw/agents/` (if present)
-- Cleans project-generated backups like `openclaw.json.bak.sansheng-*`
-- Cleans `pre-uninstall-*` backups and removes `data/` if it becomes empty
+- ✅ Removes related directories under `~/.openclaw/agents/` (if present)
+- ✅ Cleans installer-generated `pre-install-*` backups
+- ✅ Cleans project-generated backups like `openclaw.json.bak.sansheng-*`
 
 ---
 
