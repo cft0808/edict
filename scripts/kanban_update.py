@@ -30,7 +30,25 @@ if hasattr(sys.stderr, 'reconfigure'):
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
 
-_BASE = pathlib.Path(__file__).resolve().parent.parent
+def _resolve_repo_base():
+    env = os.environ.get('EDICT_REPO_DIR', '').strip()
+    candidates = []
+    if env:
+        candidates.append(pathlib.Path(env))
+    candidates.extend([
+        pathlib.Path.home() / 'edict',
+        pathlib.Path(__file__).resolve().parent.parent,
+    ])
+    for c in candidates:
+        try:
+            if (c / 'dashboard' / 'server.py').exists() and (c / 'scripts' / 'refresh_live_data.py').exists():
+                return c
+        except Exception:
+            pass
+    return pathlib.Path(__file__).resolve().parent.parent
+
+
+_BASE = _resolve_repo_base()
 TASKS_FILE = _BASE / 'data' / 'tasks_source.json'
 REFRESH_SCRIPT = _BASE / 'scripts' / 'refresh_live_data.py'
 

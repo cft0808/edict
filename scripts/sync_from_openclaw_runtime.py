@@ -17,6 +17,41 @@ SYNC_STATUS = DATA / 'sync_status.json'
 SESSIONS_ROOT = pathlib.Path.home() / '.openclaw' / 'agents'
 
 
+def looks_mojibake(value):
+    if not isinstance(value, str) or not value:
+        return False
+    bad_tokens = ['鎴', '鍒', '浠', '锟', '宸', '馃', '�']
+    return any(tok in value for tok in bad_tokens)
+
+
+def try_unmojibake(value):
+    if not isinstance(value, str):
+        return value
+    candidates = [value]
+    try:
+        candidates.append(value.encode('latin1', errors='ignore').decode('utf-8', errors='ignore'))
+    except Exception:
+        pass
+    try:
+        candidates.append(value.encode('gbk', errors='ignore').decode('utf-8', errors='ignore'))
+    except Exception:
+        pass
+    for c in candidates:
+        if c and not looks_mojibake(c):
+            return c
+    return value
+
+
+def clean_text(value):
+    if not isinstance(value, str):
+        return value
+    v = value.replace('[[reply_to_current]]', '').replace('\ufeff', '').replace('\x00', '')
+    v = try_unmojibake(v)
+    v = v.replace('宸叉帴鏃', '已接旨').replace('锟斤拷', '�')
+    v = ''.join(ch for ch in v if ch >= ' ' or ch in '\n\t')
+    return v.strip()
+
+
 def write_status(**kwargs):
     atomic_json_write(SYNC_STATUS, kwargs)
 
@@ -64,7 +99,7 @@ def load_activity(session_file, limit=12):
         return []
     rows = []
     try:
-        lines = p.read_text(errors='ignore').splitlines()
+        lines = p.read_text(encoding='utf-8', errors='replace').splitlines()
     except Exception:
         return []
 
@@ -83,12 +118,14 @@ def load_activity(session_file, limit=12):
         msg = item.get('message') or {}
         role = msg.get('role')
         ts = item.get('timestamp') or ''
+        if role == 'assistant' and msg.get('errorMessage') == 'terminated':
+            continue
 
         if role == 'toolResult':
             tool = msg.get('toolName', '-')
             details = msg.get('details') or {}
             # If tool output is short, show it
-            content = msg.get('content', [{'text': ''}])[0].get('text', '')
+            content = clean_text(msg.get('content', [{'text': ''}])[0].get('text', ''))
             if len(content) < 50:
                 text = f"Tool '{tool}' returned: {content}"
             else:
@@ -99,11 +136,11 @@ def load_activity(session_file, limit=12):
             text = ''
             for c in msg.get('content', []):
                 if c.get('type') == 'text' and c.get('text'):
-                    raw_text = c.get('text').strip()
+                    raw_text = clean_text(c.get('text', '').strip())
                     # Clean up common prefixes
-                    clean_text = raw_text.replace('[[reply_to_current]]', '').strip()
-                    if clean_text:
-                        text = clean_text
+                    cleaned = raw_text.replace('[[reply_to_current]]', '').strip()
+                    if cleaned:
+                        text = cleaned
                     break
             if text:
                 # Prioritize showing the "thought" - usually the first few sentences
@@ -117,7 +154,7 @@ def load_activity(session_file, limit=12):
              text = ''
              for c in msg.get('content', []):
                 if c.get('type') == 'text':
-                     text = c.get('text', '')[:100]
+                     text = clean_text(c.get('text', '')[:100])
              if text:
                  rows.append({'at': ts, 'kind': 'user', 'text': f"User: {text}..."})
 
@@ -151,14 +188,14 @@ def build_task(agent_id, session_key, row, now_ms):
             # Look for next assistant message (which is actually previous in time)
             for next_act in acts[1:]:
                 if next_act['kind'] == 'assistant':
-                    latest_act = f"正在执行: {next_act['text'][:80]}"
+                    latest_act = clean_text(f"正在执行: {next_act['text'][:80]}")
                     break
             else:
                 latest_act = first_act['text'][:60]
         elif first_act['kind'] == 'assistant':
-             latest_act = f"思考中: {first_act['text'][:80]}"
+             latest_act = clean_text(f"思考中: {first_act['text'][:80]}")
         else:
-             latest_act = acts[0]['text'][:60]
+             latest_act = clean_text(acts[0]['text'][:60])
     
     title_label = (row.get('origin') or {}).get('label') or session_key
     # 清洗会话标题：agent:xxx:cron:uuid → 定时任务, agent:xxx:subagent:uuid → 子任务
