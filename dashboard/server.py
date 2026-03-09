@@ -670,13 +670,8 @@ _AGENT_DEPTS = [
 
 
 def _check_gateway_alive():
-    """检测 Gateway 进程是否在运行。"""
-    try:
-        result = subprocess.run(['pgrep', '-f', 'openclaw-gateway'],
-                                capture_output=True, text=True, timeout=5)
-        return result.returncode == 0
-    except Exception:
-        return False
+    """跨平台检查 Gateway 是否在线：以本地 HTTP probe 为准。"""
+    return _check_gateway_probe()
 
 
 def _check_gateway_probe():
