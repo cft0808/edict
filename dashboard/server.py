@@ -15,6 +15,13 @@ import json, pathlib, subprocess, sys, threading, argparse, datetime, logging, r
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
+import shutil
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
 
 # 引入文件锁工具，确保与其他脚本并发安全
 scripts_dir = str(pathlib.Path(__file__).parent.parent / 'scripts')
@@ -60,7 +67,7 @@ _MIME_TYPES = {
 
 def read_json(path, default=None):
     try:
-        return json.loads(path.read_text())
+        return json.loads(path.read_text(encoding='utf-8-sig'))
     except Exception:
         return default if default is not None else {}
 
@@ -669,14 +676,24 @@ _AGENT_DEPTS = [
 ]
 
 
+def _find_openclaw_cmd():
+    """跨平台定位 openclaw CLI，可用于 subprocess 调用。"""
+    candidates = [
+        shutil.which('openclaw'),
+        shutil.which('openclaw.cmd'),
+        shutil.which('openclaw.ps1'),
+        r'C:\nvm4w\nodejs\openclaw.cmd',
+        r'C:\nvm4w\nodejs\openclaw',
+    ]
+    for c in candidates:
+        if c and pathlib.Path(c).exists():
+            return c
+    return 'openclaw'
+
+
 def _check_gateway_alive():
-    """检测 Gateway 进程是否在运行。"""
-    try:
-        result = subprocess.run(['pgrep', '-f', 'openclaw-gateway'],
-                                capture_output=True, text=True, timeout=5)
-        return result.returncode == 0
-    except Exception:
-        return False
+    """跨平台检查 Gateway 是否在线：以本地 HTTP probe 为准。"""
+    return _check_gateway_probe()
 
 
 def _check_gateway_probe():
@@ -833,7 +850,7 @@ def wake_agent(agent_id, message=''):
 
     def do_wake():
         try:
-            cmd = ['openclaw', 'agent', '--agent', runtime_id, '-m', msg, '--timeout', '120']
+            cmd = [_find_openclaw_cmd(), 'agent', '--agent', runtime_id, '-m', msg, '--timeout', '120']
             log.info(f'🔔 唤醒 {agent_id}...')
             # 带重试（最多2次）
             for attempt in range(1, 3):
@@ -1258,6 +1275,17 @@ def _collect_message_text(msg):
     return ''.join(parts)
 
 
+
+
+def _clean_garbled_text(text):
+    """尽量清洗常见乱码与不可显示字符，避免前端出现大面积锟斤拷。"""
+    if not isinstance(text, str):
+        return ''
+    t = text.replace('\ufeff', '').replace('\x00', '')
+    if '锟斤拷' in t:
+        t = t.replace('锟斤拷', '�')
+    t = ''.join(ch for ch in t if ch >= ' ' or ch in '\n\t')
+    return t.strip()
 def _parse_activity_entry(item):
     """将 session jsonl 的 message 统一解析成看板活动条目。"""
     msg = item.get('message') or {}
@@ -1270,9 +1298,9 @@ def _parse_activity_entry(item):
         tool_calls = []
         for c in msg.get('content', []) or []:
             if c.get('type') == 'text' and c.get('text') and not text:
-                text = str(c.get('text', '')).strip()
+                text = _clean_garbled_text(str(c.get('text', '')).strip())
             elif c.get('type') == 'thinking' and c.get('thinking') and not thinking:
-                thinking = str(c.get('thinking', '')).strip()[:200]
+                thinking = _clean_garbled_text(str(c.get('thinking', '')).strip())[:200]
             elif c.get('type') == 'tool_use':
                 tool_calls.append({
                     'name': c.get('name', ''),
@@ -1297,13 +1325,13 @@ def _parse_activity_entry(item):
         output = ''
         for c in msg.get('content', []) or []:
             if c.get('type') == 'text' and c.get('text'):
-                output = str(c.get('text', '')).strip()[:200]
+                output = _clean_garbled_text(str(c.get('text', '')).strip())[:200]
                 break
         if not output:
             for key in ('output', 'stdout', 'stderr', 'message'):
                 val = details.get(key)
                 if isinstance(val, str) and val.strip():
-                    output = val.strip()[:200]
+                    output = _clean_garbled_text(val.strip())[:200]
                     break
 
         entry = {
@@ -1322,7 +1350,7 @@ def _parse_activity_entry(item):
         text = ''
         for c in msg.get('content', []) or []:
             if c.get('type') == 'text' and c.get('text'):
-                text = str(c.get('text', '')).strip()
+                text = _clean_garbled_text(str(c.get('text', '')).strip())
                 break
         if not text:
             return None
@@ -1350,7 +1378,7 @@ def get_agent_activity(agent_id, limit=30, task_id=None):
 
     for session_file in files_to_scan:
         try:
-            lines = session_file.read_text(errors='ignore').splitlines()
+            lines = session_file.read_text(encoding='utf-8', errors='replace').splitlines()
         except Exception:
             continue
 
@@ -1416,7 +1444,7 @@ def get_agent_activity_by_keywords(agent_id, keywords, limit=20):
     target_file = None
     for sf in jsonl_files[:5]:
         try:
-            content = sf.read_text(errors='ignore')
+            content = sf.read_text(encoding='utf-8', errors='replace')
         except Exception:
             continue
         hits = sum(1 for kw in keywords if kw.lower() in content.lower())
@@ -1956,7 +1984,7 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
                     'lastDispatchTrigger': trigger,
                 }))
                 return
-            cmd = ['openclaw', 'agent', '--agent', agent_id, '-m', msg,
+            cmd = [_find_openclaw_cmd(), 'agent', '--agent', agent_id, '-m', msg,
                    '--deliver', '--channel', 'feishu', '--timeout', '300']
             max_retries = 2
             err = ''
@@ -2487,3 +2515,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
