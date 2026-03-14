@@ -4199,6 +4199,57 @@ def _pick_execution_dept(task, dept_dispatches):
     return ''
 
 
+def _should_auto_handoff_to_zhongshu(text):
+    if not text:
+        return False
+    content = text.replace('\n', ' ')
+    patterns = [
+        r'(转交|移交|转呈|交由|交付|送交).{0,6}中书省',
+        r'中书省.{0,8}(起草|拟定|撰写).{0,4}方案',
+        r'中书省.{0,6}确认',
+    ]
+    return any(re.search(p, content) for p in patterns)
+
+
+def _auto_handoff_to_zhongshu(task_id, reason_text=''):
+    tasks = load_tasks()
+    task = next((t for t in tasks if t.get('id') == task_id), None)
+    if not task:
+        return {'ok': False, 'reason': 'task_not_found'}
+    cur_state = task.get('state', '')
+    if cur_state != 'Taizi':
+        return {'ok': False, 'reason': f'state={cur_state}'}
+
+    _ensure_scheduler(task)
+    _scheduler_snapshot(task, 'taizi-auto-handoff-before')
+    run_id = _new_run_id()
+    _acquire_lease(task, stage=cur_state, role='taizi-auto-handoff', owner_run_id=run_id, ttl_sec=180, force_takeover=True)
+    version = task.get('_scheduler', {}).get('stateVersion')
+    remark = reason_text or '太子已转交中书省起草执行方案'
+    commit = commit_state_change(
+        task,
+        action='advance',
+        reason_code='taizi_auto_handoff',
+        owner_run_id=run_id,
+        expected_version=version,
+        to_state='Zhongshu',
+        to_org='中书省',
+        now_text='中书省起草执行方案',
+        block_text='无',
+        flow_from='太子',
+        flow_to='中书省',
+        flow_remark=remark,
+        force=True,
+    )
+    if not commit.get('committed'):
+        save_tasks(tasks)
+        return {'ok': False, 'reason': f'commit_blocked:{commit.get("blockedBy")}'}
+    _scheduler_mark_progress(task, '太子自动转交中书省', reason_code='taizi_auto_handoff')
+    save_tasks(tasks)
+    dispatch_for_state(task_id, task, 'Zhongshu', trigger='taizi-auto-handoff', owner_run_id=run_id)
+    return {'ok': True}
+
+
 def _auto_handoff_to_execution(task_id, preferred_dept='', trigger='shangshu-auto-handoff'):
     """尚书省派发后自动切换到六部执行态，并自动派发对应执行 Agent。"""
     tasks = load_tasks()
@@ -4458,6 +4509,15 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition', own
                     log.info(f'✅ {task_id} 自动派发成功 → {agent_id}')
                     dispatch_text = ((result.stdout or '') + '\n' + (result.stderr or '')).strip()
                     bridge = _bridge_apply_kanban_commands(task_id, dispatch_text)
+                    if (
+                        agent_id == 'taizi'
+                        and new_state == 'Taizi'
+                        and not bridge.get('attempted')
+                        and _should_auto_handoff_to_zhongshu(dispatch_text)
+                    ):
+                        auto = _auto_handoff_to_zhongshu(task_id, '太子指令：转交中书省起草执行方案')
+                        if auto.get('ok'):
+                            log.info(f'🚦 {task_id} 太子已转交中书省，自动推进到 Zhongshu')
                     handoff = {'ok': False}
                     handoff_dept = ''
                     if agent_id == 'shangshu' and new_state in ('Assigned', 'Next'):

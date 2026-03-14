@@ -308,3 +308,9 @@ def test_run_agent_sync_routes_non_gemini_aihub_to_openai_protocol(tmp_path, mon
     monkeypatch.setattr(srv, '_run_aihub_openai_chat', lambda model_name, message, timeout_sec=120: 'openai-ok')
     out = srv._run_agent_sync('taizi', '测试消息', timeout_sec=10)
     assert out == 'openai-ok'
+
+
+def test_should_auto_handoff_to_zhongshu():
+    assert srv._should_auto_handoff_to_zhongshu('正在将旨意转交中书省起草执行方案，等待中书省确认')
+    assert srv._should_auto_handoff_to_zhongshu('已交由中书省拟定执行方案')
+    assert not srv._should_auto_handoff_to_zhongshu('仅通报进展，不转交')
