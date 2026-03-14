@@ -235,3 +235,24 @@ def test_finalize_builds_fallback_edict_when_too_close_to_topic(tmp_path, monkey
     final = result.get('final') or {}
     assert final.get('recommended_edict') != session['topic']
     assert '皇上最终拍板' in (final.get('recommended_edict') or '')
+
+
+def test_run_agent_sync_fallbacks_to_aihub_chat_on_schema_error(tmp_path, monkeypatch):
+    data_dir = tmp_path / 'data'
+    data_dir.mkdir()
+    srv.DATA = data_dir
+    (data_dir / 'agent_config.json').write_text(
+        '{"agents":[{"id":"zhongshu","model":"aihub/gemini-3-flash-preview","skills":[]}]}',
+        encoding='utf-8',
+    )
+
+    class _Proc:
+        returncode = 1
+        stdout = ''
+        stderr = 'HTTP 400: Invalid JSON payload received. Unknown name "patternProperties"'
+
+    monkeypatch.setattr(srv.subprocess, 'run', lambda *args, **kwargs: _Proc())
+    monkeypatch.setattr(srv, '_run_aihub_openai_chat', lambda model_name, message, timeout_sec=120: 'fallback-ok')
+
+    out = srv._run_agent_sync('zhongshu', '测试消息', timeout_sec=10)
+    assert out == 'fallback-ok'

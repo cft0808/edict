@@ -15,6 +15,7 @@ import json, pathlib, subprocess, sys, threading, argparse, datetime, logging, r
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 
 # 引入文件锁工具，确保与其他脚本并发安全
 scripts_dir = str(pathlib.Path(__file__).parent.parent / 'scripts')
@@ -941,12 +942,103 @@ def _run_agent_sync(agent_id, message, timeout_sec=120):
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_sec + 15)
     output = (result.stdout or '').strip()
     err = (result.stderr or '').strip()
+    combined = (output + '\n' + err).strip()
+    model_name = _get_agent_model(agent_id)
+    is_aihub_gemini = bool(model_name) and model_name.startswith('aihub/gemini-')
+    schema_error = _looks_like_provider_tool_error(combined)
+
+    if schema_error and is_aihub_gemini:
+        log.warning(f'agent={agent_id} 命中 Gemini schema 兼容错误，改走 aihub 直连兜底')
+        try:
+            return _run_aihub_openai_chat(model_name, message, timeout_sec=timeout_sec)
+        except Exception as fb_err:
+            if result.returncode != 0:
+                raise RuntimeError(f'{err[:240] or output[:240]}; gemini-fallback failed: {str(fb_err)[:200]}')
+            raise RuntimeError(str(fb_err))
+
     if result.returncode != 0:
         raise RuntimeError(err[:400] or output[:400] or f'agent {agent_id} failed')
     text = output or err
     if _looks_like_provider_tool_error(text):
         raise RuntimeError(text[:400])
     return text[:12000]
+
+
+def _get_agent_model(agent_id):
+    cfg = read_json(DATA / 'agent_config.json', {})
+    for ag in cfg.get('agents', []) if isinstance(cfg, dict) else []:
+        if isinstance(ag, dict) and ag.get('id') == agent_id:
+            return str(ag.get('model') or '').strip()
+    return ''
+
+
+def _get_aihub_openai_provider():
+    cfg = read_json(OCLAW_HOME / 'openclaw.json', {})
+    models = cfg.get('models', {}) if isinstance(cfg, dict) else {}
+    providers = models.get('providers', {}) if isinstance(models, dict) else {}
+    aihub = providers.get('aihub', {}) if isinstance(providers, dict) else {}
+    if not isinstance(aihub, dict):
+        return None
+    base_url = str(aihub.get('baseUrl') or '').strip().rstrip('/')
+    api_key = str(aihub.get('apiKey') or '').strip()
+    api_type = str(aihub.get('api') or '').strip()
+    if not base_url or not api_key:
+        return None
+    if api_type and api_type != 'openai-completions':
+        return None
+    return {
+        'baseUrl': base_url,
+        'apiKey': api_key,
+    }
+
+
+def _run_aihub_openai_chat(model_name, message, timeout_sec=120):
+    provider = _get_aihub_openai_provider()
+    if not provider:
+        raise RuntimeError('未找到 aihub openai-completions provider 配置')
+    model_id = model_name.split('/', 1)[1] if '/' in model_name else model_name
+    endpoint = provider['baseUrl'] + '/chat/completions'
+    payload = {
+        'model': model_id,
+        'messages': [{'role': 'user', 'content': message}],
+        'temperature': 0.2,
+        'stream': False,
+    }
+    req = Request(
+        endpoint,
+        data=json.dumps(payload).encode('utf-8'),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {provider["apiKey"]}',
+        },
+        method='POST',
+    )
+    try:
+        with urlopen(req, timeout=max(20, int(timeout_sec) + 10)) as resp:
+            text = resp.read().decode('utf-8', 'ignore')
+    except HTTPError as e:
+        body = ''
+        try:
+            body = (e.read() or b'').decode('utf-8', 'ignore')
+        except Exception:
+            body = ''
+        raise RuntimeError(body[:260] or str(e))
+    except Exception as e:
+        raise RuntimeError(str(e))
+    try:
+        obj = json.loads(text)
+    except Exception:
+        raise RuntimeError('aihub 返回非 JSON 响应')
+    choices = obj.get('choices')
+    if isinstance(choices, list) and choices:
+        msg = choices[0].get('message', {}) if isinstance(choices[0], dict) else {}
+        content = msg.get('content')
+        if isinstance(content, str) and content.strip():
+            return content.strip()[:12000]
+    out = str(obj.get('output_text') or '').strip()
+    if out:
+        return out[:12000]
+    raise RuntimeError('aihub 响应缺少可用内容')
 
 
 def _load_court_session(session_id):
