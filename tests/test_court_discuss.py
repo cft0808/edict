@@ -122,7 +122,7 @@ def test_court_discuss_handoff_to_taizi(tmp_path, monkeypatch):
     assert handoff['linkedTaskId'] == 'JJC-TEST-COURT-001'
 
 
-def test_court_discuss_finalize_auto_handoff(tmp_path, monkeypatch):
+def test_court_discuss_finalize_only_prepare_edict(tmp_path, monkeypatch):
     _setup_env(tmp_path, monkeypatch)
 
     started = srv.handle_court_discuss(
@@ -135,10 +135,10 @@ def test_court_discuss_finalize_auto_handoff(tmp_path, monkeypatch):
     def _mock_finalize(session, force=False):
         session['final'] = {
             'ready_for_edict': True,
-            'clarified_goal': '自动交办',
+            'clarified_goal': '先生成可编辑旨意',
             'risks': [],
             'questions_to_emperor': [],
-            'recommended_edict': '请太子立即牵头执行本次议政结论',
+            'recommended_edict': '请太子牵头执行本次议政结论（可先编辑）',
             'recommended_target_dept': '中书省',
             'recommended_priority': 'high',
         }
@@ -147,16 +147,20 @@ def test_court_discuss_finalize_auto_handoff(tmp_path, monkeypatch):
         return {'ok': True, 'final': session['final']}
 
     monkeypatch.setattr(srv, '_finalize_court_session', _mock_finalize)
-    monkeypatch.setattr(
-        srv,
-        'handle_create_task',
-        lambda *args, **kwargs: {'ok': True, 'taskId': 'JJC-TEST-COURT-002'},
-    )
+    called = {'create_task': 0}
+
+    def _mock_create_task(*args, **kwargs):
+        called['create_task'] += 1
+        return {'ok': True, 'taskId': 'JJC-TEST-COURT-002'}
+
+    monkeypatch.setattr(srv, 'handle_create_task', _mock_create_task)
 
     finalized = srv.handle_court_discuss(action='finalize', session_id=sid)
     assert finalized['ok'] is True
-    assert finalized['status'] == 'handoffed'
-    assert finalized['linkedTaskId'] == 'JJC-TEST-COURT-002'
+    assert finalized['status'] == 'done'
+    assert finalized.get('linkedTaskId', '') == ''
+    assert finalized.get('final', {}).get('recommended_edict')
+    assert called['create_task'] == 0
 
 
 def test_court_round_degrades_on_agent_schema_error(tmp_path, monkeypatch):

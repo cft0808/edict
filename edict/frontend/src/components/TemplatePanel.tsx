@@ -214,7 +214,7 @@ export default function TemplatePanel() {
       toast('请先开始议政', 'err');
       return;
     }
-    if (!confirm('确认皇上拍板结束，并立即自动下旨进入执行阶段？')) return;
+    if (!confirm('确认皇上拍板结束，并将综合旨意复制到自由下旨区？')) return;
     setDiscussLoading(true);
     try {
       const r = await api.courtDiscuss({
@@ -224,12 +224,21 @@ export default function TemplatePanel() {
       });
       setDiscussResult(r);
       if (r.ok) {
+        const edict = buildDiscussConclusionForFreeEdict(r);
+        if (edict) {
+          setFreeTitle(edict);
+        }
+        if (r.final?.recommended_target_dept) {
+          setFreeTargetDept(r.final.recommended_target_dept);
+        }
+        if (r.final?.recommended_priority) {
+          setFreePriority(r.final.recommended_priority);
+        }
         setDiscussWindowOpen(false);
         setEmperorNote('');
-        toast(`✅ 皇上已拍板并下旨：${r.linkedTaskId || '已进入办理流程'}`, 'ok');
-        loadAll();
+        toast('✅ 已形成综合旨意，已复制到自由下旨区，请修改后下达', 'ok');
       } else {
-        toast(r.error || '拍板执行失败', 'err');
+        toast(r.error || '拍板失败', 'err');
       }
     } catch {
       toast('⚠️ 服务器连接失败', 'err');
@@ -300,33 +309,6 @@ export default function TemplatePanel() {
     }
     setDiscussWindowOpen(false);
     toast('已将议政结论填入自由下旨区', 'ok');
-  };
-
-  const handoffCourtDiscuss = async () => {
-    if (!discussSessionId) {
-      toast('请先开始议政', 'err');
-      return;
-    }
-    if (!confirm('确认将议政结论交由太子办理？')) return;
-    setDiscussLoading(true);
-    try {
-      const r = await api.courtDiscuss({
-        action: 'handoff',
-        sessionId: discussSessionId,
-        emperorNote: emperorNote.trim(),
-      });
-      setDiscussResult(r);
-      if (r.ok) {
-        toast(`📜 已交由太子办理：${r.linkedTaskId || '已创建任务'}`, 'ok');
-        loadAll();
-      } else {
-        toast(r.error || '交办失败', 'err');
-      }
-    } catch {
-      toast('⚠️ 服务器连接失败', 'err');
-    } finally {
-      setDiscussLoading(false);
-    }
   };
 
   const terminateCourtDiscuss = async () => {
@@ -757,7 +739,7 @@ export default function TemplatePanel() {
                       onClick={finalizeCourtDiscuss}
                       disabled={discussLoading || Boolean(discussResult?.roundRunning)}
                     >
-                      拍板并执行
+                      拍板并生成旨意
                     </button>
                     <button
                       type="button"
@@ -775,15 +757,6 @@ export default function TemplatePanel() {
                     <button type="button" className="btn btn-g" onClick={adoptDiscussEdict}>
                       采用到自由下旨
                     </button>
-                    {discussResult?.final?.ready_for_edict ? (
-                      <button type="button" className="tpl-go" onClick={handoffCourtDiscuss} disabled={discussLoading}>
-                        交由太子办理
-                      </button>
-                    ) : (
-                      <button type="button" className="tpl-go" disabled title="结论未达到可办理状态">
-                        当前不宜办理
-                      </button>
-                    )}
                     <button
                       type="button"
                       className="btn btn-g"

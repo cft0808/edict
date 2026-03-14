@@ -1849,17 +1849,14 @@ def handle_court_discuss(action='start', topic='', participants=None, session_id
     if action == 'finalize':
         if session.get('status') == 'handoffed':
             return _build_court_response(session, f'该话题已交办：{session.get("linkedTaskId")}')
+        if session.get('status') == 'done' and session.get('final'):
+            return _build_court_response(session, '议政已结束，请在自由下旨区修改后下达')
         if session.get('roundRunning'):
             return {'ok': False, 'error': f'第{int(session.get("currentRound") or 0)}轮发言进行中，请稍后再形成结论'}
         finalized = _finalize_court_session(session, force=bool(force))
         if not finalized.get('ok'):
             return finalized
-        handoff = _handoff_court_session(session, force=True)
-        if not handoff.get('ok'):
-            _upsert_court_session(session)
-            return {'ok': False, 'error': handoff.get('error') or '自动交办失败'}
-        session['status'] = 'handoffed'
-        session['message'] = f'皇上拍板：议政结束，已交由太子督办（{session.get("linkedTaskId", "")}）'
+        session['message'] = '皇上已拍板：请先修改旨意后再下达'
         _upsert_court_session(session)
         return _build_court_response(session, session.get('message', ''))
 
