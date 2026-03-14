@@ -1717,6 +1717,50 @@ def _finalize_court_session(session, force=False):
     return {'ok': True, 'final': final}
 
 
+def _handoff_court_session(session, force=False):
+    if session.get('status') == 'terminated':
+        return {'ok': False, 'error': '话题已终止，无法交办'}
+    if session.get('roundRunning'):
+        return {
+            'ok': False,
+            'error': f'第{int(session.get("currentRound") or 0)}轮发言进行中，请等待本轮结束后再交办',
+        }
+    if session.get('linkedTaskId'):
+        return {'ok': True, 'taskId': session.get('linkedTaskId', ''), 'reused': True}
+    if not session.get('final'):
+        finalized = _finalize_court_session(session, force=bool(force))
+        if not finalized.get('ok'):
+            return finalized
+
+    final = session.get('final') or {}
+    if not bool(final.get('ready_for_edict')) and not force:
+        return {'ok': False, 'error': '当前结论未达到可下旨状态，如需强制交办请传 force=true'}
+
+    title = str(final.get('recommended_edict') or session.get('topic') or '').strip()
+    if not title:
+        return {'ok': False, 'error': '结论缺少可交办内容'}
+    target_dept = str(final.get('recommended_target_dept') or '').strip()
+    priority = str(final.get('recommended_priority') or 'normal').strip()
+    create = handle_create_task(
+        title=title,
+        org='中书省',
+        official='中书令',
+        priority=priority,
+        template_id='court-discuss',
+        params={'source': 'court-discuss', 'sessionId': session.get('id', '')},
+        target_dept=target_dept,
+    )
+    if not create.get('ok'):
+        return {'ok': False, 'error': create.get('error') or '交办失败'}
+
+    session['status'] = 'handoffed'
+    session['linkedTaskId'] = create.get('taskId', '')
+    session['handoffAt'] = now_iso()
+    session['updatedAt'] = now_iso()
+    session['message'] = f'已交由太子办理：{session["linkedTaskId"]}'
+    return {'ok': True, 'taskId': session.get('linkedTaskId', '')}
+
+
 def handle_court_discuss(action='start', topic='', participants=None, session_id='', force=False, emperor_note=''):
     # emperor_note 用于皇上在每轮拍板前补充要求
     action = (action or 'start').strip().lower()
@@ -1803,53 +1847,26 @@ def handle_court_discuss(action='start', topic='', participants=None, session_id
         return _build_court_response(latest, latest.get('message', ''))
 
     if action == 'finalize':
-        if session.get('status') == 'done':
-            return _build_court_response(session, '会话已结束')
+        if session.get('status') == 'handoffed':
+            return _build_court_response(session, f'该话题已交办：{session.get("linkedTaskId")}')
         if session.get('roundRunning'):
             return {'ok': False, 'error': f'第{int(session.get("currentRound") or 0)}轮发言进行中，请稍后再形成结论'}
         finalized = _finalize_court_session(session, force=bool(force))
         if not finalized.get('ok'):
             return finalized
+        handoff = _handoff_court_session(session, force=True)
+        if not handoff.get('ok'):
+            _upsert_court_session(session)
+            return {'ok': False, 'error': handoff.get('error') or '自动交办失败'}
+        session['status'] = 'handoffed'
+        session['message'] = f'皇上拍板：议政结束，已交由太子督办（{session.get("linkedTaskId", "")}）'
         _upsert_court_session(session)
         return _build_court_response(session, session.get('message', ''))
 
     if action == 'handoff':
-        if session.get('status') == 'terminated':
-            return _build_court_response(session, '话题已终止，无法交办')
-        if session.get('roundRunning'):
-            return {'ok': False, 'error': f'第{int(session.get("currentRound") or 0)}轮发言进行中，请等待本轮结束后再交办'}
-        if session.get('linkedTaskId'):
-            return _build_court_response(session, f'该话题已交办：{session.get("linkedTaskId")}')
-        if not session.get('final'):
-            finalized = _finalize_court_session(session, force=bool(force))
-            if not finalized.get('ok'):
-                return finalized
-        final = session.get('final') or {}
-        if not bool(final.get('ready_for_edict')) and not force:
-            return {'ok': False, 'error': '当前结论未达到可下旨状态，如需强制交办请传 force=true'}
-
-        title = str(final.get('recommended_edict') or session.get('topic') or '').strip()
-        if not title:
-            return {'ok': False, 'error': '结论缺少可交办内容'}
-        target_dept = str(final.get('recommended_target_dept') or '').strip()
-        priority = str(final.get('recommended_priority') or 'normal').strip()
-        create = handle_create_task(
-            title=title,
-            org='中书省',
-            official='中书令',
-            priority=priority,
-            template_id='court-discuss',
-            params={'source': 'court-discuss', 'sessionId': session.get('id', '')},
-            target_dept=target_dept,
-        )
-        if not create.get('ok'):
-            return {'ok': False, 'error': create.get('error') or '交办失败'}
-
-        session['status'] = 'handoffed'
-        session['linkedTaskId'] = create.get('taskId', '')
-        session['handoffAt'] = now_iso()
-        session['updatedAt'] = now_iso()
-        session['message'] = f'已交由太子办理：{session["linkedTaskId"]}'
+        handoff = _handoff_court_session(session, force=bool(force))
+        if not handoff.get('ok'):
+            return {'ok': False, 'error': handoff.get('error') or '交办失败'}
         _upsert_court_session(session)
         return _build_court_response(session, session.get('message', ''))
 

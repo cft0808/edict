@@ -217,31 +217,19 @@ export default function TemplatePanel() {
     if (!confirm('确认皇上拍板结束，并立即自动下旨进入执行阶段？')) return;
     setDiscussLoading(true);
     try {
-      const finalized = await api.courtDiscuss({
+      const r = await api.courtDiscuss({
         action: 'finalize',
         sessionId: discussSessionId,
         emperorNote: emperorNote.trim(),
       });
-      setDiscussResult(finalized);
-      if (!finalized.ok) {
-        toast(finalized.error || '结束讨论失败', 'err');
-        return;
-      }
-
-      const handed = await api.courtDiscuss({
-        action: 'handoff',
-        sessionId: discussSessionId,
-        emperorNote: emperorNote.trim(),
-        force: true,
-      });
-      setDiscussResult(handed);
-      if (handed.ok) {
+      setDiscussResult(r);
+      if (r.ok) {
         setDiscussWindowOpen(false);
         setEmperorNote('');
-        toast(`✅ 皇上已拍板并下旨：${handed.linkedTaskId || '已进入办理流程'}`, 'ok');
+        toast(`✅ 皇上已拍板并下旨：${r.linkedTaskId || '已进入办理流程'}`, 'ok');
         loadAll();
       } else {
-        toast(handed.error || '自动下旨失败，请手动交办', 'err');
+        toast(r.error || '拍板执行失败', 'err');
       }
     } catch {
       toast('⚠️ 服务器连接失败', 'err');
