@@ -237,7 +237,7 @@ def test_finalize_builds_fallback_edict_when_too_close_to_topic(tmp_path, monkey
     assert '皇上最终拍板' in (final.get('recommended_edict') or '')
 
 
-def test_run_agent_sync_fallbacks_to_aihub_chat_on_schema_error(tmp_path, monkeypatch):
+def test_run_agent_sync_routes_gemini_to_gemini_protocol(tmp_path, monkeypatch):
     data_dir = tmp_path / 'data'
     data_dir.mkdir()
     srv.DATA = data_dir
@@ -245,14 +245,29 @@ def test_run_agent_sync_fallbacks_to_aihub_chat_on_schema_error(tmp_path, monkey
         '{"agents":[{"id":"zhongshu","model":"aihub/gemini-3-flash-preview","skills":[]}]}',
         encoding='utf-8',
     )
+    called = {'gemini': 0}
 
-    class _Proc:
-        returncode = 1
-        stdout = ''
-        stderr = 'HTTP 400: Invalid JSON payload received. Unknown name "patternProperties"'
+    def _mock_gemini(model_name, message, timeout_sec=120):
+        called['gemini'] += 1
+        return 'gemini-ok'
 
-    monkeypatch.setattr(srv.subprocess, 'run', lambda *args, **kwargs: _Proc())
-    monkeypatch.setattr(srv, '_run_aihub_openai_chat', lambda model_name, message, timeout_sec=120: 'fallback-ok')
+    monkeypatch.setattr(srv, '_run_aihub_gemini_content', _mock_gemini)
+    monkeypatch.setattr(srv, '_run_aihub_openai_chat', lambda *args, **kwargs: 'openai-should-not-run')
 
     out = srv._run_agent_sync('zhongshu', '测试消息', timeout_sec=10)
-    assert out == 'fallback-ok'
+    assert out == 'gemini-ok'
+    assert called['gemini'] == 1
+
+
+def test_run_agent_sync_routes_non_gemini_aihub_to_openai_protocol(tmp_path, monkeypatch):
+    data_dir = tmp_path / 'data'
+    data_dir.mkdir()
+    srv.DATA = data_dir
+    (data_dir / 'agent_config.json').write_text(
+        '{"agents":[{"id":"taizi","model":"aihub/gpt-5.1","skills":[]}]}',
+        encoding='utf-8',
+    )
+
+    monkeypatch.setattr(srv, '_run_aihub_openai_chat', lambda model_name, message, timeout_sec=120: 'openai-ok')
+    out = srv._run_agent_sync('taizi', '测试消息', timeout_sec=10)
+    assert out == 'openai-ok'

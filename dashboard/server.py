@@ -938,24 +938,16 @@ def _looks_like_provider_tool_error(text):
 def _run_agent_sync(agent_id, message, timeout_sec=120):
     if not _SAFE_NAME_RE.match(agent_id):
         raise ValueError(f'agent_id 非法: {agent_id}')
+    model_name = _get_agent_model(agent_id)
+    if _is_gemini_model(model_name):
+        return _run_aihub_gemini_content(model_name, message, timeout_sec=timeout_sec)
+    if _is_aihub_model(model_name):
+        return _run_aihub_openai_chat(model_name, message, timeout_sec=timeout_sec)
+
     cmd = ['openclaw', 'agent', '--agent', agent_id, '-m', message, '--timeout', str(timeout_sec)]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_sec + 15)
     output = (result.stdout or '').strip()
     err = (result.stderr or '').strip()
-    combined = (output + '\n' + err).strip()
-    model_name = _get_agent_model(agent_id)
-    is_aihub_gemini = bool(model_name) and model_name.startswith('aihub/gemini-')
-    schema_error = _looks_like_provider_tool_error(combined)
-
-    if schema_error and is_aihub_gemini:
-        log.warning(f'agent={agent_id} 命中 Gemini schema 兼容错误，改走 aihub 直连兜底')
-        try:
-            return _run_aihub_openai_chat(model_name, message, timeout_sec=timeout_sec)
-        except Exception as fb_err:
-            if result.returncode != 0:
-                raise RuntimeError(f'{err[:240] or output[:240]}; gemini-fallback failed: {str(fb_err)[:200]}')
-            raise RuntimeError(str(fb_err))
-
     if result.returncode != 0:
         raise RuntimeError(err[:400] or output[:400] or f'agent {agent_id} failed')
     text = output or err
@@ -970,6 +962,14 @@ def _get_agent_model(agent_id):
         if isinstance(ag, dict) and ag.get('id') == agent_id:
             return str(ag.get('model') or '').strip()
     return ''
+
+
+def _is_aihub_model(model_name):
+    return bool(model_name) and str(model_name).startswith('aihub/')
+
+
+def _is_gemini_model(model_name):
+    return bool(model_name) and str(model_name).startswith('aihub/gemini-')
 
 
 def _get_aihub_openai_provider():
@@ -990,6 +990,94 @@ def _get_aihub_openai_provider():
         'baseUrl': base_url,
         'apiKey': api_key,
     }
+
+
+def _aihub_base_root(base_url):
+    root = (base_url or '').strip().rstrip('/')
+    if root.endswith('/v1'):
+        root = root[:-3]
+    return root.rstrip('/')
+
+
+def _urlopen_json(req, timeout_sec):
+    with urlopen(req, timeout=max(20, int(timeout_sec) + 10)) as resp:
+        text = resp.read().decode('utf-8', 'ignore')
+    try:
+        return json.loads(text)
+    except Exception:
+        raise RuntimeError('provider 返回非 JSON 响应')
+
+
+def _http_error_message(e):
+    body = ''
+    try:
+        body = (e.read() or b'').decode('utf-8', 'ignore')
+    except Exception:
+        body = ''
+    return body[:320] or str(e)
+
+
+def _extract_text_from_gemini_response(obj):
+    candidates = obj.get('candidates')
+    if not isinstance(candidates, list):
+        return ''
+    for c in candidates:
+        if not isinstance(c, dict):
+            continue
+        content = c.get('content')
+        parts = content.get('parts') if isinstance(content, dict) else None
+        if not isinstance(parts, list):
+            continue
+        chunks = []
+        for p in parts:
+            if isinstance(p, dict) and isinstance(p.get('text'), str):
+                chunks.append(p.get('text'))
+        txt = ''.join(chunks).strip()
+        if txt:
+            return txt
+    return ''
+
+
+def _run_aihub_gemini_content(model_name, message, timeout_sec=120):
+    provider = _get_aihub_openai_provider()
+    if not provider:
+        raise RuntimeError('未找到 aihub provider 配置')
+    model_id = model_name.split('/', 1)[1] if '/' in model_name else model_name
+    root = _aihub_base_root(provider['baseUrl'])
+    payload = {
+        'contents': [{'parts': [{'text': message}]}],
+    }
+    headers = {
+        'Content-Type': 'application/json',
+    }
+    last_error = 'gemini 请求失败'
+    for ver in ('v1beta', 'v1'):
+        endpoint = f'{root}/{ver}/models/{model_id}:generateContent?key={provider["apiKey"]}'
+        req = Request(
+            endpoint,
+            data=json.dumps(payload).encode('utf-8'),
+            headers=headers,
+            method='POST',
+        )
+        try:
+            obj = _urlopen_json(req, timeout_sec=timeout_sec)
+            text = _extract_text_from_gemini_response(obj)
+            if text:
+                return text[:12000]
+            if isinstance(obj, dict) and obj.get('error'):
+                last_error = str(obj.get('error'))
+            else:
+                last_error = 'gemini 返回缺少文本内容'
+        except HTTPError as e:
+            msg = _http_error_message(e)
+            last_error = msg
+            # 非 404/400 直接终止，避免无意义重试
+            if e.code not in (400, 404):
+                break
+        except Exception as e:
+            last_error = str(e)
+            break
+    raise RuntimeError(last_error[:320])
 
 
 def _run_aihub_openai_chat(model_name, message, timeout_sec=120):
