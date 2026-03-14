@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore, TEMPLATES, TPL_CATS } from '../store';
 import type { Template } from '../store';
 import { api, type CourtDiscussResult } from '../api';
@@ -32,6 +32,19 @@ export default function TemplatePanel() {
   const [discussResult, setDiscussResult] = useState<CourtDiscussResult | null>(null);
   const [discussWindowOpen, setDiscussWindowOpen] = useState(false);
   const [emperorNote, setEmperorNote] = useState('');
+
+  useEffect(() => {
+    if (!discussWindowOpen || !discussSessionId) return;
+    const timer = setInterval(async () => {
+      try {
+        const r = await api.courtDiscuss({ action: 'status', sessionId: discussSessionId });
+        setDiscussResult(r);
+      } catch {
+        /* ignore polling errors */
+      }
+    }, 1200);
+    return () => clearInterval(timer);
+  }, [discussWindowOpen, discussSessionId]);
 
   let tpls = TEMPLATES;
   if (tplCatFilter !== '全部') tpls = tpls.filter((t) => t.cat === tplCatFilter);
@@ -164,7 +177,6 @@ export default function TemplatePanel() {
       const r = await api.courtDiscuss({
         action: 'status',
         sessionId: discussSessionId,
-        emperorNote: emperorNote.trim(),
       });
       setDiscussResult(r);
     } catch {
@@ -534,24 +546,6 @@ export default function TemplatePanel() {
                 </div>
               )}
 
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>皇上批示（可选）</div>
-                <textarea
-                  className="tpl-input"
-                  style={{ minHeight: 56, resize: 'vertical' }}
-                  placeholder="例如：请重点评估风险和可执行边界，给出是否应交办太子的明确结论。"
-                  value={emperorNote}
-                  onChange={(e) => setEmperorNote(e.target.value)}
-                  disabled={discussLoading}
-                />
-              </div>
-
-              {(discussResult?.emperorNotes || []).length > 0 && (
-                <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--muted)' }}>
-                  最近批示：{(discussResult?.emperorNotes || []).slice(-1)[0]?.text}
-                </div>
-              )}
-
               {discussResult?.topic && (
                 <div
                   style={{
@@ -632,7 +626,57 @@ export default function TemplatePanel() {
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+              <div
+                style={{
+                  border: '1px solid var(--line)',
+                  borderRadius: 8,
+                  maxHeight: 360,
+                  overflow: 'auto',
+                  padding: 10,
+                  background: 'var(--panel2)',
+                }}
+              >
+                {(discussResult?.discussion || []).length === 0 && (
+                  <div style={{ color: 'var(--muted)', fontSize: 12 }}>暂无讨论记录</div>
+                )}
+                {(discussResult?.discussion || []).map((x, i) => (
+                  <div
+                    key={`${x.round}-${x.agentId}-${i}`}
+                    style={{
+                      border: x.error ? '1px solid #ff7d7d66' : '1px solid var(--line)',
+                      borderRadius: 8,
+                      padding: 8,
+                      marginBottom: 8,
+                      background: x.error ? '#ff7d7d12' : 'var(--panel)',
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, marginBottom: 4 }}>
+                      第{x.round}轮 · 第{x.turn || '?'}位/{x.totalTurns || '?'} · {x.agentLabel}
+                      {x.error && <span style={{ marginLeft: 8, color: '#ff7d7d' }}>（发言降级）</span>}
+                    </div>
+                    <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5, fontSize: 12 }}>{x.reply}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 12, marginBottom: 10 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>皇上发言（本轮批示）</div>
+                <textarea
+                  className="tpl-input"
+                  style={{ minHeight: 56, resize: 'vertical' }}
+                  placeholder="例如：请收敛到可执行方案；若仍有模型兼容问题，直接给出是否终止建议。"
+                  value={emperorNote}
+                  onChange={(e) => setEmperorNote(e.target.value)}
+                  disabled={discussLoading}
+                />
+                {(discussResult?.emperorNotes || []).length > 0 && (
+                  <div style={{ marginTop: 6, fontSize: 12, color: 'var(--muted)' }}>
+                    最近批示：{(discussResult?.emperorNotes || []).slice(-1)[0]?.text}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
                 <button type="button" className="btn btn-g" onClick={refreshCourtDiscussStatus} disabled={discussLoading}>
                   刷新
                 </button>
@@ -642,7 +686,7 @@ export default function TemplatePanel() {
                       继续一轮
                     </button>
                     <button type="button" className="tpl-go" onClick={finalizeCourtDiscuss} disabled={discussLoading}>
-                      结束并形成结论
+                      形成结论
                     </button>
                     <button
                       type="button"
@@ -680,39 +724,6 @@ export default function TemplatePanel() {
                     </button>
                   </>
                 )}
-              </div>
-
-              <div
-                style={{
-                  border: '1px solid var(--line)',
-                  borderRadius: 8,
-                  maxHeight: 360,
-                  overflow: 'auto',
-                  padding: 10,
-                  background: 'var(--panel2)',
-                }}
-              >
-                {(discussResult?.discussion || []).length === 0 && (
-                  <div style={{ color: 'var(--muted)', fontSize: 12 }}>暂无讨论记录</div>
-                )}
-                {(discussResult?.discussion || []).map((x, i) => (
-                  <div
-                    key={`${x.round}-${x.agentId}-${i}`}
-                    style={{
-                      border: x.error ? '1px solid #ff7d7d66' : '1px solid var(--line)',
-                      borderRadius: 8,
-                      padding: 8,
-                      marginBottom: 8,
-                      background: x.error ? '#ff7d7d12' : 'var(--panel)',
-                    }}
-                  >
-                    <div style={{ fontWeight: 700, marginBottom: 4 }}>
-                      第{x.round}轮 · 第{x.turn || '?'}位/{x.totalTurns || '?'} · {x.agentLabel}
-                      {x.error && <span style={{ marginLeft: 8, color: '#ff7d7d' }}>（发言降级）</span>}
-                    </div>
-                    <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5, fontSize: 12 }}>{x.reply}</div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>

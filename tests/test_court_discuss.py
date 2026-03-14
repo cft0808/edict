@@ -53,7 +53,18 @@ def _setup_env(tmp_path, monkeypatch):
     srv.DATA = data_dir
     monkeypatch.setattr(srv, '_check_gateway_alive', lambda: True)
     monkeypatch.setattr(srv, '_check_agent_workspace', lambda aid: True)
-    monkeypatch.setattr(srv, '_run_court_round', _mock_round)
+
+    def _mock_start_round(session_id):
+        session = srv._load_court_session(session_id)
+        if not session:
+            return {'ok': False, 'error': 'session not found'}
+        _mock_round(session)
+        session['roundRunning'] = False
+        session['currentRound'] = int(session.get('rounds') or 0)
+        srv._upsert_court_session(session)
+        return {'ok': True, 'message': 'mock async round done'}
+
+    monkeypatch.setattr(srv, '_start_court_round_async', _mock_start_round)
 
 
 def test_court_discuss_terminate_topic(tmp_path, monkeypatch):

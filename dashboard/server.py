@@ -971,6 +971,29 @@ def _upsert_court_session(session):
     atomic_json_update(target, updater, [])
 
 
+def _update_court_session(session_id, updater):
+    target = DATA / 'court_discussions.json'
+    holder = {'session': None}
+
+    def _apply(items):
+        if not isinstance(items, list):
+            items = []
+        out = []
+        for item in items:
+            if isinstance(item, dict) and item.get('id') == session_id:
+                session = dict(item)
+                updater(session)
+                holder['session'] = session
+                out.append(session)
+            else:
+                out.append(item)
+        out.sort(key=lambda x: x.get('updatedAt', '') if isinstance(x, dict) else '', reverse=True)
+        return out[:120]
+
+    atomic_json_update(target, _apply, [])
+    return holder['session']
+
+
 def _pick_moderator(selected):
     if 'menxia' in selected:
         return 'menxia'
@@ -1020,6 +1043,8 @@ def _build_court_response(session, message=''):
         'assessment': assessment,
         'suggestedAction': session.get('suggestedAction', 'next'),
         'linkedTaskId': session.get('linkedTaskId', ''),
+        'roundRunning': bool(session.get('roundRunning', False)),
+        'currentRound': int(session.get('currentRound') or 0),
         'emperorNotes': session.get('emperorNotes', [])[-10:],
         'discussion': (session.get('discussion') or [])[-80:],
         'final': session.get('final'),
@@ -1137,6 +1162,185 @@ def _run_court_round(session):
     return round_entries, assessment
 
 
+def _start_court_round_async(session_id):
+    session = _load_court_session(session_id)
+    if not session:
+        return {'ok': False, 'error': f'讨论会话 {session_id} 不存在'}
+    if session.get('roundRunning'):
+        return {'ok': True, 'message': f'第{int(session.get("currentRound") or 0)}轮仍在进行中'}
+    if session.get('status') in ('terminated', 'handoffed'):
+        return {'ok': False, 'error': f'会话状态为 {session.get("status")}，不可继续讨论'}
+
+    next_round = int(session.get('rounds') or 0) + 1
+    run_id = _new_run_id()
+
+    _update_court_session(
+        session_id,
+        lambda s: (
+            s.update({
+                'roundRunning': True,
+                'currentRound': next_round,
+                'runningRunId': run_id,
+                'status': 'ongoing',
+                'updatedAt': now_iso(),
+                'message': f'第 {next_round} 轮议政已开始，正在轮番发言',
+            })
+        ),
+    )
+
+    def _worker():
+        try:
+            latest = _load_court_session(session_id) or {}
+            selected = list(latest.get('participants') or [])
+            topic = (latest.get('topic') or '').strip()
+            if not selected or not topic:
+                raise RuntimeError('会话数据不完整')
+
+            for idx, aid in enumerate(selected):
+                current = _load_court_session(session_id) or {}
+                if current.get('status') in ('terminated', 'handoffed'):
+                    _update_court_session(
+                        session_id,
+                        lambda s: s.update({
+                            'roundRunning': False,
+                            'updatedAt': now_iso(),
+                            'message': f'第 {next_round} 轮已停止（会话状态: {s.get("status")})',
+                        }),
+                    )
+                    return
+
+                transcript = current.get('discussion') or []
+                recent = transcript[-6:]
+                recent_text = '\n\n'.join([
+                    f'[{x.get("agentLabel", "")}] {(x.get("reply", "") or "")[:400]}'
+                    for x in recent
+                ]) if recent else '暂无'
+                emperor_notes = current.get('emperorNotes') or []
+                latest_note = emperor_notes[-1].get('text', '') if emperor_notes else ''
+                label = _agent_label(aid)
+                prompt = (
+                    f'你正在参与御前议政讨论，角色是「{label}」。\n'
+                    f'议题：{topic}\n'
+                    f'当前第 {next_round} 轮，你是本轮第 {idx + 1}/{len(selected)} 位发言。\n\n'
+                    f'最近讨论摘要：\n{recent_text}\n\n'
+                    f'皇上最新批示：{latest_note or "暂无"}\n\n'
+                    f'请输出四段（中文、简洁）：\n'
+                    f'【你认为最关键的澄清点】\n'
+                    f'【你看到的主要风险】\n'
+                    f'【你建议皇上现在做的决定】\n'
+                    f'【可直接执行的修改建议】'
+                )
+
+                reply = ''
+                error_text = ''
+                try:
+                    reply = _run_agent_sync(aid, prompt, timeout_sec=120)
+                except Exception as e:
+                    error_text = _friendly_agent_error(str(e))
+                    reply = (
+                        f'【系统降级】{label} 本轮发言失败：{error_text}\n'
+                        f'【建议】请皇上选择“继续一轮”或调整参与大臣后再议。'
+                    )
+
+                entry = {
+                    'round': next_round,
+                    'turn': idx + 1,
+                    'totalTurns': len(selected),
+                    'agentId': aid,
+                    'agentLabel': label,
+                    'reply': reply[:4000],
+                    'error': bool(error_text),
+                    'at': now_iso(),
+                }
+
+                def _append_entry(s):
+                    s.setdefault('discussion', []).append(entry)
+                    s['updatedAt'] = now_iso()
+                    s['message'] = f'第 {next_round} 轮进行中：{label} 已发言（{idx + 1}/{len(selected)}）'
+
+                _update_court_session(session_id, _append_entry)
+
+            final_session = _load_court_session(session_id) or {}
+            round_entries = [
+                x for x in (final_session.get('discussion') or [])
+                if int(x.get('round') or 0) == next_round
+            ]
+            moderator_id = final_session.get('moderatorId') or _pick_moderator(selected)
+            moderator_label = _agent_label(moderator_id)
+            recent_round_text = '\n\n'.join([
+                f'[{x.get("agentLabel", "")}] {(x.get("reply", "") or "")[:1200]}'
+                for x in round_entries
+            ])
+            assess_prompt = (
+                f'你现在是本轮议政主持人（{moderator_label}）。\n'
+                f'议题：{topic}\n'
+                f'第 {next_round} 轮各方意见如下：\n{recent_round_text}\n\n'
+                f'请只输出 JSON（不要代码块）：\n'
+                f'{{\n'
+                f'  "recommend_stop": true,\n'
+                f'  "reason": "为何建议结束/继续",\n'
+                f'  "question_to_emperor": "请皇上拍板的问题",\n'
+                f'  "focus_next_round": ["若继续，下一轮重点1", "重点2"],\n'
+                f'  "draft_direction": "若现在结束，旨意草案应强调什么"\n'
+                f'}}'
+            )
+
+            assess_raw = ''
+            assess = {}
+            try:
+                assess_raw = _run_agent_sync(moderator_id, assess_prompt, timeout_sec=120)
+                assess = _extract_json_obj(assess_raw) or {}
+            except Exception as e:
+                err_msg = _friendly_agent_error(str(e))
+                has_error_entry = any(bool(x.get('error')) for x in round_entries)
+                assess = {
+                    'recommend_stop': bool(has_error_entry),
+                    'reason': f'主持评估降级：{err_msg}',
+                    'question_to_emperor': '是否继续下一轮讨论，或直接终止该话题？',
+                    'focus_next_round': ['先排查失败大臣模型兼容性', '收敛为可执行目标'],
+                    'draft_direction': '若无共识建议先终止，若有可执行路径则交由太子办理',
+                }
+                assess_raw = str(e)[:2000]
+
+            assessment = {
+                'round': next_round,
+                'moderatorId': moderator_id,
+                'moderatorLabel': moderator_label,
+                'recommend_stop': bool(assess.get('recommend_stop', False)),
+                'reason': str(assess.get('reason') or '').strip(),
+                'question_to_emperor': str(assess.get('question_to_emperor') or '').strip(),
+                'focus_next_round': assess.get('focus_next_round') if isinstance(assess.get('focus_next_round'), list) else [],
+                'draft_direction': str(assess.get('draft_direction') or '').strip(),
+                'raw': assess_raw[:2000],
+                'at': now_iso(),
+            }
+
+            def _finish_round(s):
+                s.setdefault('assessments', []).append(assessment)
+                s['rounds'] = next_round
+                s['suggestedAction'] = 'finalize' if assessment.get('recommend_stop') else 'next'
+                s['roundRunning'] = False
+                s['updatedAt'] = now_iso()
+                s['message'] = (
+                    f'第 {next_round} 轮结束，{moderator_label}建议'
+                    f'{"可请皇上决定结束讨论" if assessment.get("recommend_stop") else "继续讨论一轮"}'
+                )
+
+            _update_court_session(session_id, _finish_round)
+        except Exception as e:
+            _update_court_session(
+                session_id,
+                lambda s: s.update({
+                    'roundRunning': False,
+                    'updatedAt': now_iso(),
+                    'message': f'议政轮次执行失败：{_friendly_agent_error(str(e))}',
+                }),
+            )
+
+    threading.Thread(target=_worker, daemon=True).start()
+    return {'ok': True, 'message': f'第 {next_round} 轮已启动'}
+
+
 def _finalize_court_session(session, force=False):
     topic = session.get('topic', '')
     transcript = session.get('discussion') or []
@@ -1250,21 +1454,23 @@ def handle_court_discuss(action='start', topic='', participants=None, session_id
             'moderatorId': _pick_moderator(selected),
             'status': 'ongoing',
             'rounds': 0,
+            'currentRound': 0,
+            'roundRunning': False,
             'discussion': [],
             'assessments': [],
             'final': None,
             'emperorNotes': [],
             'createdAt': now_iso(),
             'updatedAt': now_iso(),
-            'message': '议政会话已创建',
+            'message': '议政会话已创建，等待发言',
         }
         _append_emperor_note(session, emperor_note)
-        try:
-            _run_court_round(session)
-        except Exception as e:
-            return {'ok': False, 'error': f'首轮讨论失败: {str(e)[:240]}'}
         _upsert_court_session(session)
-        return _build_court_response(session, session.get('message', ''))
+        started = _start_court_round_async(session.get('id', ''))
+        if not started.get('ok'):
+            return started
+        latest = _load_court_session(session.get('id', '')) or session
+        return _build_court_response(latest, latest.get('message', ''))
 
     if not session_id:
         return {'ok': False, 'error': 'sessionId required'}
@@ -1279,18 +1485,21 @@ def handle_court_discuss(action='start', topic='', participants=None, session_id
         return _build_court_response(session, '会话状态已返回')
 
     if action == 'next':
-        if session.get('status') == 'done':
+        if session.get('status') in ('done', 'handoffed', 'terminated'):
             return _build_court_response(session, '会话已结束，无需继续')
-        try:
-            _run_court_round(session)
-        except Exception as e:
-            return {'ok': False, 'error': f'继续讨论失败: {str(e)[:240]}'}
-        _upsert_court_session(session)
-        return _build_court_response(session, session.get('message', ''))
+        if session.get('roundRunning'):
+            return _build_court_response(session, f'第{int(session.get("currentRound") or 0)}轮仍在进行中')
+        started = _start_court_round_async(session_id)
+        if not started.get('ok'):
+            return started
+        latest = _load_court_session(session_id) or session
+        return _build_court_response(latest, latest.get('message', ''))
 
     if action == 'finalize':
         if session.get('status') == 'done':
             return _build_court_response(session, '会话已结束')
+        if session.get('roundRunning'):
+            return {'ok': False, 'error': f'第{int(session.get("currentRound") or 0)}轮发言进行中，请稍后再形成结论'}
         finalized = _finalize_court_session(session, force=bool(force))
         if not finalized.get('ok'):
             return finalized
@@ -1300,6 +1509,8 @@ def handle_court_discuss(action='start', topic='', participants=None, session_id
     if action == 'handoff':
         if session.get('status') == 'terminated':
             return _build_court_response(session, '话题已终止，无法交办')
+        if session.get('roundRunning'):
+            return {'ok': False, 'error': f'第{int(session.get("currentRound") or 0)}轮发言进行中，请等待本轮结束后再交办'}
         if session.get('linkedTaskId'):
             return _build_court_response(session, f'该话题已交办：{session.get("linkedTaskId")}')
         if not session.get('final'):
