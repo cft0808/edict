@@ -106,7 +106,7 @@ def handle_task_action(task_id, action, reason):
         return {'ok': False, 'error': f'任务 {task_id} 不存在'}
 
     old_state = task.get('state', '')
-    _ensure_scheduler(task)
+    sched = _ensure_scheduler(task)
     _scheduler_snapshot(task, f'task-action-before-{action}')
     run_id = _new_run_id()
     _acquire_lease(task, stage=old_state, role='manual', owner_run_id=run_id, ttl_sec=180, force_takeover=True)
@@ -635,7 +635,7 @@ def handle_review_action(task_id, action, comment=''):
     if task.get('state') not in ('Review', 'Menxia'):
         return {'ok': False, 'error': f'任务 {task_id} 当前状态为 {task.get("state")}，无法御批'}
 
-    _ensure_scheduler(task)
+    sched = _ensure_scheduler(task)
     _scheduler_snapshot(task, f'review-before-{action}')
     run_id = _new_run_id()
     _acquire_lease(task, stage=task.get('state', ''), role='manual-review', owner_run_id=run_id, ttl_sec=180, force_takeover=True)
@@ -682,6 +682,11 @@ def handle_review_action(task_id, action, comment=''):
         return {'ok': False, 'error': f'{task_id} 审批提交失败: {commit.get("blockedBy")}'}
     _scheduler_mark_progress(task, f'审议动作 {action} -> {task.get("state")}', reason_code='manual_review_decision')
     _set_cooldown(task, 'noReassignUntil', _COOLDOWN_SECONDS['post_human_decision_reassign'])
+    if next_state != 'Done':
+        cds = sched.setdefault('cooldowns', {})
+        cds.pop('noDispatchUntil', None)
+        cds.pop('noEscalateUntil', None)
+    _release_lease(task, run_id)
     save_tasks(tasks)
 
     # 🚀 审批后自动派发对应 Agent
@@ -2737,6 +2742,11 @@ def handle_scheduler_action(task_id, action, reason='', expected_version=None, o
             wb = sched.setdefault('writeback', {})
             wb['status'] = 'WritebackPending'
             wb['lastError'] = wb.get('lastError') or 'human_resume_writeback'
+        if trigger_dispatch_state:
+            cds = sched.setdefault('cooldowns', {})
+            cds.pop('noDispatchUntil', None)
+            cds.pop('noEscalateUntil', None)
+        _release_lease(task, run_id)
         _set_cooldown(task, 'noReassignUntil', _COOLDOWN_SECONDS['post_human_decision_reassign'])
         save_tasks(tasks)
         if trigger_dispatch_state:
@@ -2756,7 +2766,7 @@ def handle_scheduler_commit(payload):
     task = next((t for t in tasks if t.get('id') == task_id), None)
     if not task:
         return {'ok': False, 'error': f'任务 {task_id} 不存在'}
-    _ensure_scheduler(task)
+    sched = _ensure_scheduler(task)
     sched = task.get('_scheduler') or {}
     owner_run_id = (payload.get('ownerRunId') or '').strip() or _new_run_id()
     expected_version = payload.get('expectedVersion')
@@ -4259,6 +4269,9 @@ def _auto_handoff_to_zhongshu(task_id, reason_text=''):
         save_tasks(tasks)
         return {'ok': False, 'reason': f'commit_blocked:{commit.get("blockedBy")}'}
     _scheduler_mark_progress(task, '太子自动转交中书省', reason_code='taizi_auto_handoff')
+    cds = sched.setdefault('cooldowns', {})
+    cds.pop('noDispatchUntil', None)
+    cds.pop('noEscalateUntil', None)
     _release_lease(task, run_id)
     save_tasks(tasks)
     dispatch_for_state(task_id, task, 'Zhongshu', trigger='taizi-auto-handoff')
@@ -4274,7 +4287,7 @@ def _auto_handoff_to_menxia(task_id, reason_text=''):
     if cur_state != 'Zhongshu':
         return {'ok': False, 'reason': f'state={cur_state}'}
 
-    _ensure_scheduler(task)
+    sched = _ensure_scheduler(task)
     _scheduler_snapshot(task, 'zhongshu-auto-handoff-before')
     run_id = _new_run_id()
     _acquire_lease(task, stage=cur_state, role='zhongshu-auto-handoff', owner_run_id=run_id, ttl_sec=180, force_takeover=True)
@@ -4299,6 +4312,9 @@ def _auto_handoff_to_menxia(task_id, reason_text=''):
         save_tasks(tasks)
         return {'ok': False, 'reason': f'commit_blocked:{commit.get("blockedBy")}'}
     _scheduler_mark_progress(task, '中书省自动提交门下省审议', reason_code='zhongshu_auto_handoff')
+    cds = sched.setdefault('cooldowns', {})
+    cds.pop('noDispatchUntil', None)
+    cds.pop('noEscalateUntil', None)
     _release_lease(task, run_id)
     save_tasks(tasks)
     dispatch_for_state(task_id, task, 'Menxia', trigger='zhongshu-auto-handoff')
@@ -4320,7 +4336,7 @@ def _auto_handoff_to_execution(task_id, preferred_dept='', trigger='shangshu-aut
     if dept not in _EXECUTION_DEPTS:
         return {'ok': False, 'reason': f'dept={dept}'}
 
-    _ensure_scheduler(task)
+    sched = _ensure_scheduler(task)
     _scheduler_snapshot(task, f'{trigger}-before-{cur_state}')
     run_id = _new_run_id()
     _acquire_lease(task, stage=cur_state, role='auto-handoff', owner_run_id=run_id, ttl_sec=180, force_takeover=True)
@@ -4343,6 +4359,10 @@ def _auto_handoff_to_execution(task_id, preferred_dept='', trigger='shangshu-aut
         save_tasks(tasks)
         return {'ok': False, 'reason': f'commit_blocked:{commit.get("blockedBy")}'}
     _scheduler_mark_progress(task, f'自动切换执行：{cur_state} -> Doing ({dept})', reason_code='shangshu_auto_handoff')
+    cds = sched.setdefault('cooldowns', {})
+    cds.pop('noDispatchUntil', None)
+    cds.pop('noEscalateUntil', None)
+    _release_lease(task, run_id)
     save_tasks(tasks)
 
     dispatch_for_state(task_id, task, 'Doing', trigger=trigger, owner_run_id=run_id)

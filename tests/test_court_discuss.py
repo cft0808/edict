@@ -2,6 +2,8 @@
 
 import pathlib
 import sys
+import datetime
+from types import SimpleNamespace
 
 # Add project paths
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -161,6 +163,160 @@ def test_court_discuss_finalize_only_prepare_edict(tmp_path, monkeypatch):
     assert finalized.get('linkedTaskId', '') == ''
     assert finalized.get('final', {}).get('recommended_edict')
     assert called['create_task'] == 0
+
+
+def test_review_approve_clears_dispatch_cooldown_and_dispatches(tmp_path, monkeypatch):
+    data_dir = tmp_path / 'data'
+    data_dir.mkdir()
+    srv.DATA = data_dir
+
+    task = {
+        'id': 'JJC-TEST-REVIEW-001',
+        'title': '测试门下省准奏后应立即派发尚书省',
+        'state': 'Menxia',
+        'org': '门下省',
+        'now': '待御批',
+        'block': '无',
+        'flow_log': [],
+        'updatedAt': srv.now_iso(),
+        '_scheduler': {
+            'stateVersion': 1,
+            'controlState': 'WaitingDecision',
+            'lastProgressAt': srv.now_iso(),
+            'cooldowns': {
+                'noDispatchUntil': (
+                    datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=5)
+                ).isoformat(),
+                'noEscalateUntil': (
+                    datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=5)
+                ).isoformat(),
+            },
+            'lease': {
+                'stage': 'Menxia',
+                'role': 'manual-review',
+                'ownerRunId': '',
+                'acquiredAt': srv.now_iso(),
+                'heartbeatAt': srv.now_iso(),
+                'ttlSec': 180,
+            },
+            'writeback': {'status': 'idle', 'retryCount': 0, 'maxRetry': 2, 'lastError': ''},
+            'dispatchAttempts': 0,
+            'lastDispatchStatus': '',
+            'lastDispatchAgent': '',
+        },
+    }
+    srv.save_tasks([task])
+
+    monkeypatch.setattr(srv, '_check_gateway_alive', lambda: True)
+    monkeypatch.setattr(
+        srv.subprocess,
+        'run',
+        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout='ok', stderr=''),
+    )
+    monkeypatch.setattr(
+        srv,
+        '_bridge_apply_kanban_commands',
+        lambda _task_id, _text: {'attempted': 0, 'applied': 0, 'errors': [], 'deptDispatches': []},
+    )
+
+    class _ImmediateThread:
+        def __init__(self, target=None, daemon=None):
+            self._target = target
+
+        def start(self):
+            if self._target:
+                self._target()
+
+    monkeypatch.setattr(srv.threading, 'Thread', _ImmediateThread)
+
+    approved = srv.handle_review_action('JJC-TEST-REVIEW-001', 'approve', '准奏推进')
+    assert approved.get('ok') is True
+
+    latest = next(t for t in srv.load_tasks() if t.get('id') == 'JJC-TEST-REVIEW-001')
+    sched = latest.get('_scheduler') or {}
+    assert latest.get('state') == 'Assigned'
+    assert latest.get('org') == '尚书省'
+    assert sched.get('lastDispatchAgent') == 'shangshu'
+    assert sched.get('lastDispatchStatus') == 'success'
+    assert int(sched.get('dispatchAttempts') or 0) >= 1
+    assert (sched.get('lease') or {}).get('ownerRunId', '') == ''
+
+
+def test_auto_handoff_to_execution_releases_lease_and_clears_cooldown(tmp_path, monkeypatch):
+    data_dir = tmp_path / 'data'
+    data_dir.mkdir()
+    srv.DATA = data_dir
+
+    task = {
+        'id': 'JJC-TEST-HANDOFF-001',
+        'title': '测试尚书省自动切执行时应立即派发工部',
+        'state': 'Assigned',
+        'org': '尚书省',
+        'now': '待派发',
+        'block': '无',
+        'flow_log': [],
+        'updatedAt': srv.now_iso(),
+        '_scheduler': {
+            'stateVersion': 1,
+            'controlState': 'Assigned',
+            'lastProgressAt': srv.now_iso(),
+            'cooldowns': {
+                'noDispatchUntil': (
+                    datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=5)
+                ).isoformat(),
+                'noEscalateUntil': (
+                    datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=5)
+                ).isoformat(),
+            },
+            'lease': {
+                'stage': 'Assigned',
+                'role': 'auto-handoff',
+                'ownerRunId': '',
+                'acquiredAt': srv.now_iso(),
+                'heartbeatAt': srv.now_iso(),
+                'ttlSec': 180,
+            },
+            'writeback': {'status': 'idle', 'retryCount': 0, 'maxRetry': 2, 'lastError': ''},
+            'dispatchAttempts': 0,
+            'lastDispatchStatus': '',
+            'lastDispatchAgent': '',
+        },
+    }
+    srv.save_tasks([task])
+
+    monkeypatch.setattr(srv, '_check_gateway_alive', lambda: True)
+    monkeypatch.setattr(
+        srv.subprocess,
+        'run',
+        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout='ok', stderr=''),
+    )
+    monkeypatch.setattr(
+        srv,
+        '_bridge_apply_kanban_commands',
+        lambda _task_id, _text: {'attempted': 0, 'applied': 0, 'errors': [], 'deptDispatches': []},
+    )
+
+    class _ImmediateThread:
+        def __init__(self, target=None, daemon=None):
+            self._target = target
+
+        def start(self):
+            if self._target:
+                self._target()
+
+    monkeypatch.setattr(srv.threading, 'Thread', _ImmediateThread)
+
+    out = srv._auto_handoff_to_execution('JJC-TEST-HANDOFF-001', preferred_dept='工部', trigger='unit-test')
+    assert out.get('ok') is True
+
+    latest = next(t for t in srv.load_tasks() if t.get('id') == 'JJC-TEST-HANDOFF-001')
+    sched = latest.get('_scheduler') or {}
+    assert latest.get('state') == 'Doing'
+    assert latest.get('org') == '工部'
+    cds = sched.get('cooldowns') or {}
+    assert 'noDispatchUntil' not in cds
+    assert 'noEscalateUntil' not in cds
+    assert (sched.get('lease') or {}).get('ownerRunId', '') == ''
 
 
 def test_court_round_degrades_on_agent_schema_error(tmp_path, monkeypatch):
