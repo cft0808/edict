@@ -31,7 +31,36 @@
 """
 import json, pathlib, sys, subprocess, logging, os, re
 
-_BASE = pathlib.Path(__file__).resolve().parent.parent
+
+def _find_repo_root():
+    """Resolve the canonical repo root directory.
+
+    Priority:
+    1. EDICT_REPO_DIR environment variable (set by install.sh)
+    2. Walk up from __file__ looking for .git or dashboard/ as repo markers
+    3. Fall back to __file__-based parent (original behavior)
+    """
+    env_dir = os.environ.get('EDICT_REPO_DIR', '').strip()
+    if env_dir:
+        p = pathlib.Path(env_dir)
+        if p.is_dir():
+            return p
+
+    # Walk up from script location looking for repo markers
+    candidate = pathlib.Path(__file__).resolve().parent.parent
+    for _ in range(5):
+        if (candidate / '.git').exists() or (candidate / 'dashboard').is_dir():
+            return candidate
+        parent = candidate.parent
+        if parent == candidate:
+            break
+        candidate = parent
+
+    # Fall back to original behavior
+    return pathlib.Path(__file__).resolve().parent.parent
+
+
+_BASE = _find_repo_root()
 TASKS_FILE = _BASE / 'data' / 'tasks_source.json'
 REFRESH_SCRIPT = _BASE / 'scripts' / 'refresh_live_data.py'
 

@@ -107,6 +107,13 @@ create_workspaces() {
     log "Workspace 已创建: $ws"
   done
 
+  # 写入 EDICT_REPO_DIR 环境变量（供 kanban_update.py 等脚本定位数据目录）
+  for agent in "${AGENTS[@]}"; do
+    ws="$OC_HOME/workspace-$agent"
+    echo "EDICT_REPO_DIR=$REPO_DIR" > "$ws/.env"
+  done
+  log "EDICT_REPO_DIR 已写入所有 workspace/.env"
+
   # 通用 AGENTS.md（工作协议）
   for agent in "${AGENTS[@]}"; do
     cat > "$OC_HOME/workspace-$agent/AGENTS.md" << 'AGENTS_EOF'
