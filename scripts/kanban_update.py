@@ -29,6 +29,7 @@
   # 🔥 实时进展汇报（Agent 主动调用，频率不限）
   python3 kanban_update.py progress JJC-20260223-012 "正在分析需求，拟定3个子方案" "1.调研技术选型|2.撰写设计文档|3.实现原型"
 """
+import datetime
 import json, pathlib, sys, subprocess, logging, os, re
 
 _BASE = pathlib.Path(__file__).resolve().parent.parent
@@ -43,8 +44,9 @@ from file_lock import atomic_json_read, atomic_json_update  # noqa: E402
 from utils import now_iso  # noqa: E402
 
 STATE_ORG_MAP = {
-    'Taizi': '太子', 'Zhongshu': '中书省', 'Menxia': '门下省', 'Assigned': '尚书省',
-    'Doing': '执行中', 'Review': '尚书省', 'Done': '完成', 'Blocked': '阻塞',
+    'Taizi': '太子', 'Zhongshu': '中书省', 'Menxia': '门下省',
+    'Assigned': '尚书省', 'Doing': '执行中', 'Review': '尚书省',
+    'Next': '尚书省', 'Done': '完成', 'Blocked': '阻塞',
 }
 
 _STATE_AGENT_MAP = {
@@ -259,16 +261,27 @@ def cmd_state(task_id, new_state, now_text=None):
 
 
 def cmd_flow(task_id, from_dept, to_dept, remark):
-    """添加流转记录（原子操作）"""
+    """添加流转记录（原子操作）
+
+    注意：流转只记录状态变迁，不触发状态机校验。
+    如需同时更新状态，请用 cmd_state；流转记录由 Agent 主动调用。
+    """
     clean_remark = _sanitize_remark(remark)
+    agent_id = _infer_agent_id_from_runtime()
+    agent_label = _AGENT_LABELS.get(agent_id, agent_id)
     def modifier(tasks):
         t = find_task(tasks, task_id)
         if not t:
             log.error(f'任务 {task_id} 不存在')
             return tasks
-        t.setdefault('flow_log', []).append({
-            "at": now_iso(), "from": from_dept, "to": to_dept, "remark": clean_remark
-        })
+        entry = {
+            "at": now_iso(), "from": from_dept, "to": to_dept,
+            "remark": clean_remark,
+            "agent": agent_id, "agentLabel": agent_label,
+        }
+        t.setdefault('flow_log', []).append(entry)
+        # 同步更新 org，使看板能正确显示当前所属部门
+        t['org'] = to_dept
         t['updatedAt'] = now_iso()
         return tasks
     atomic_json_update(TASKS_FILE, modifier, [])
@@ -290,6 +303,14 @@ def cmd_done(task_id, output_path='', summary=''):
             "at": now_iso(), "from": t.get('org', '执行部门'),
             "to": "皇上", "remark": f"✅ 完成：{summary or '任务已完成'}"
         })
+        # 同步设置 outputMeta，避免依赖 refresh_live_data.py 异步补充
+        if output_path:
+            p = pathlib.Path(output_path)
+            if p.exists():
+                ts = datetime.datetime.fromtimestamp(p.stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                t['outputMeta'] = {"exists": True, "lastModified": ts}
+            else:
+                t['outputMeta'] = {"exists": False, "lastModified": None}
         t['updatedAt'] = now_iso()
         return tasks
     atomic_json_update(TASKS_FILE, modifier, [])

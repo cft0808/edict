@@ -168,3 +168,69 @@ def test_progress_log_capped(tmp_path):
         assert len(t.get('progress_log', [])) == kb.MAX_PROGRESS_LOG
     finally:
         kb.TASKS_FILE = original
+
+
+def test_flow_org_update(tmp_path):
+    """cmd_flow updates org field to target department (Fix: issue #149 root cause)."""
+    tasks_file = tmp_path / 'tasks_source.json'
+    tasks_file.write_text(json.dumps([
+        {'id': 'T-FLOW-ORG', 'title': 'flow org test', 'state': 'Zhongshu',
+         'org': '中书省', 'flow_log': []}
+    ]))
+    original = kb.TASKS_FILE
+    kb.TASKS_FILE = tasks_file
+    try:
+        kb.cmd_flow('T-FLOW-ORG', '中书省', '门下省', '规划方案提交审核')
+        tasks = json.loads(tasks_file.read_text())
+        t = tasks[0]
+        # org must be updated to target department
+        assert t['org'] == '门下省', f"Expected org=门下省, got {t['org']}"
+        # flow_log entry must have agent attribution
+        assert len(t['flow_log']) == 1
+        # completed by previous test_flow_log
+        assert t['flow_log'][0]['from'] == '中书省'
+        assert t['flow_log'][0]['to'] == '门下省'
+    finally:
+        kb.TASKS_FILE = original
+
+
+def test_done_output_meta(tmp_path):
+    """cmd_done sets outputMeta synchronously without relying on refresh_live_data."""
+    tasks_file = tmp_path / 'tasks_source.json'
+    # Create a real output file
+    out_file = tmp_path / 'result.md'
+    out_file.write_text('# Result')
+    tasks_file.write_text(json.dumps([
+        {'id': 'T-DONE-META', 'title': 'done meta test', 'state': 'Doing',
+         'org': '兵部', 'flow_log': []}
+    ]))
+    original = kb.TASKS_FILE
+    kb.TASKS_FILE = tasks_file
+    try:
+        kb.cmd_done('T-DONE-META', str(out_file), '功能已全部实现')
+        tasks = json.loads(tasks_file.read_text())
+        t = tasks[0]
+        assert t['state'] == 'Done'
+        assert 'outputMeta' in t, "outputMeta must be set by cmd_done"
+        assert t['outputMeta']['exists'] is True
+        assert 'lastModified' in t['outputMeta']
+    finally:
+        kb.TASKS_FILE = original
+
+
+def test_state_org_update(tmp_path):
+    """cmd_state with known state also updates org correctly."""
+    tasks_file = tmp_path / 'tasks_source.json'
+    tasks_file.write_text(json.dumps([
+        {'id': 'T-STATE-ORG', 'title': 'state org test', 'state': 'Zhongshu', 'org': '中书省'}
+    ]))
+    original = kb.TASKS_FILE
+    kb.TASKS_FILE = tasks_file
+    try:
+        kb.cmd_state('T-STATE-ORG', 'Menxia')
+        tasks = json.loads(tasks_file.read_text())
+        t = tasks[0]
+        assert t['state'] == 'Menxia'
+        assert t['org'] == '门下省', f"Expected org=门下省, got {t['org']}"
+    finally:
+        kb.TASKS_FILE = original

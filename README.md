@@ -408,46 +408,54 @@ open http://127.0.0.1:7891
 ## 📁 项目结构
 
 ```
-edict/
 ├── agents/                     # 12 个 Agent 的人格模板
 │   ├── taizi/SOUL.md           # 太子 · 消息分拣（含旨意标题规范）
 │   ├── zhongshu/SOUL.md        # 中书省 · 规划中枢
 │   ├── menxia/SOUL.md          # 门下省 · 审议把关
 │   ├── shangshu/SOUL.md        # 尚书省 · 调度大脑
-│   ├── hubu/SOUL.md            # 户部 · 数据资源
-│   ├── libu/SOUL.md            # 礼部 · 文档规范
-│   ├── bingbu/SOUL.md          # 兵部 · 工程实现
-│   ├── xingbu/SOUL.md          # 刑部 · 合规审计
-│   ├── gongbu/SOUL.md          # 工部 · 基础设施
-│   ├── libu_hr/                # 吏部 · 人事管理
-│   └── zaochao/SOUL.md         # 早朝官 · 情报枢纽
+│   ├── hubu/SOUL.md             # 户部 · 数据资源
+│   ├── libu/SOUL.md             # 礼部 · 文档规范
+│   ├── bingbu/SOUL.md           # 兵部 · 工程实现
+│   ├── xingbu/SOUL.md           # 刑部 · 合规审计
+│   ├── gongbu/SOUL.md           # 工部 · 基础设施
+│   ├── libu_hr/                 # 吏部 · 人事管理
+│   └── zaochao/SOUL.md          # 早朝官 · 情报枢纽
 ├── dashboard/
-│   ├── dashboard.html          # 军机处看板（单文件 · 零依赖 · ~2500 行）
-│   ├── dist/                   # React 前端构建产物（Docker 镜像内包含，本地可选）
-│   ├── court_discuss.py        # 朝堂议政（多官员 LLM 讨论引擎）
-│   └── server.py               # API 服务器（Python 标准库 · 零依赖 · ~2300 行）
+│   ├── dashboard.html           # 军机处看板（单文件 · 零依赖 · ~3000 行）
+│   ├── dist/                    # React 前端构建产物（Docker 镜像内包含，本地可选）
+│   ├── court_discuss.py         # 朝堂议政（多官员 LLM 讨论引擎）
+│   └── server.py                # API 服务器（Python 标准库 · 零依赖 · ~2500 行）
 ├── scripts/
-│   ├── run_loop.sh             # 数据刷新循环（每 15 秒）
-│   ├── kanban_update.py        # 看板 CLI（含旨意数据清洗 + 标题校验）
-│   ├── skill_manager.py        # Skill 管理工具（远程/本地 Skills 添加、更新、移除）
+│   ├── run_loop.sh              # 数据刷新循环（每 15 秒）
+│   ├── kanban_update.py         # 看板 CLI（含旨意数据清洗 + 标题校验）
+│   ├── skill_manager.py         # Skill 管理工具（远程/本地 Skills 添加、更新、移除）
 │   ├── sync_from_openclaw_runtime.py
 │   ├── sync_agent_config.py
 │   ├── sync_officials_stats.py
 │   ├── fetch_morning_news.py
 │   ├── refresh_live_data.py
 │   ├── apply_model_changes.py
-│   └── file_lock.py            # 文件锁（防多 Agent 并发写入）
+│   └── file_lock.py             # 文件锁（防多 Agent 并发写入）
 ├── tests/
-│   └── test_e2e_kanban.py      # 端到端测试（17 个断言）
-├── data/                       # 运行时数据（gitignored）
+│   ├── test_e2e_kanban.py       # 端到端测试（17 个断言）
+│   ├── test_kanban.py
+│   ├── test_file_lock.py
+│   └── test_server.py
+├── data/                        # 运行时数据（gitignored）
 ├── docs/
 │   ├── task-dispatch-architecture.md  # 📚 详细架构文档：任务分发、流转、调度的完整设计（业务+技术）
 │   ├── getting-started.md             # 快速上手指南
 │   ├── wechat-article.md              # 微信文章
 │   └── screenshots/                   # 功能截图（11 张）
-├── install.sh                  # 一键安装脚本
-├── CONTRIBUTING.md             # 贡献指南
-└── LICENSE                     # MIT License
+├── edict/                        # 后端服务（Docker 部署模式，可选）
+│   ├── backend/                   # FastAPI + PostgreSQL + Redis 后端
+│   ├── frontend/                  # React + TypeScript 前端源码
+│   ├── scripts/                   # 后端相关脚本
+│   └── migration/                 # JSON → PostgreSQL 数据迁移
+├── install.sh                    # 一键安装脚本（Linux/macOS）
+├── install.ps1                   # 一键安装脚本（Windows）
+├── CONTRIBUTING.md               # 贡献指南
+└── LICENSE                       # MIT License
 ```
 
 ---

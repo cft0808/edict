@@ -304,7 +304,6 @@ Emperor → Prince Triage → Planning → Review → Assigned → Executing →
 ## 📁 Project Structure
 
 ```
-edict/
 ├── agents/                     # 12 agent personality templates (SOUL.md)
 │   ├── taizi/                  #   Crown Prince (triage)
 │   ├── zhongshu/               #   Planning Dept
@@ -317,15 +316,26 @@ edict/
 ├── dashboard/
 │   ├── dashboard.html          # Dashboard (single file, zero deps, works out of the box)
 │   ├── dist/                   # Pre-built React frontend (included in Docker image)
+│   ├── court_discuss.py        # Multi-agent LLM discussion engine
 │   └── server.py               # API server (stdlib, zero deps)
 ├── scripts/                    # Data sync & automation scripts
-│   ├── kanban_update.py        #   Kanban CLI with data sanitization (~300 lines)
+│   ├── kanban_update.py        #   Kanban CLI with data sanitization (~500 lines)
+│   ├── skill_manager.py        #   Remote/local skill management
+│   ├── run_loop.sh             #   15s auto-refresh loop
 │   └── ...                     #   fetch_morning_news, sync, screenshots, etc.
 ├── tests/                      # E2E tests
-│   └── test_e2e_kanban.py      #   Kanban sanitization tests (17 assertions)
+│   ├── test_e2e_kanban.py      #   Kanban sanitization tests (17 assertions)
+│   ├── test_kanban.py          #   Unit tests for kanban_update.py
+│   ├── test_file_lock.py       #   Concurrency safety tests
+│   └── test_server.py          #   API server tests
 ├── data/                       # Runtime data (gitignored)
 ├── docs/                       # Documentation + screenshots
-├── install.sh                  # One-click installer
+├── edict/                      # Backend services for Docker deployment (optional)
+│   ├── backend/                #   FastAPI + PostgreSQL + Redis
+│   ├── frontend/               #   React + TypeScript source
+│   └── migration/             #   JSON → PostgreSQL migration scripts
+├── install.sh                  # One-click installer (Linux/macOS)
+├── install.ps1                 # One-click installer (Windows)
 └── LICENSE                     # MIT
 ```
 
