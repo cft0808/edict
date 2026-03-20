@@ -3,7 +3,7 @@
 同步 openclaw.json 中的 agent 配置 → data/agent_config.json
 支持自动发现 agent workspace 下的 Skills 目录
 """
-import json, pathlib, datetime, logging
+import json, os, pathlib, datetime, logging
 from file_lock import atomic_json_write
 
 log = logging.getLogger('sync_agent_config')
@@ -206,8 +206,35 @@ _SOUL_DEPLOY_MAP = {
     'zaochao': 'zaochao',
 }
 
+def _sync_script_symlink(src_file: pathlib.Path, dst_file: pathlib.Path) -> bool:
+    """Create a symlink dst_file → src_file (resolved).
+
+    Using symlinks instead of physical copies ensures that ``__file__`` in
+    each script always resolves back to the project ``scripts/`` directory,
+    so relative-path computations like ``Path(__file__).resolve().parent.parent``
+    point to the correct project root regardless of which workspace runs the
+    script.  (Fixes #56 — kanban data-path split)
+
+    Returns True if the link was (re-)created, False if already up-to-date.
+    """
+    src_resolved = src_file.resolve()
+    # Already a correct symlink?
+    if dst_file.is_symlink() and dst_file.resolve() == src_resolved:
+        return False
+    # Remove stale file / old physical copy / broken symlink
+    if dst_file.exists() or dst_file.is_symlink():
+        dst_file.unlink()
+    os.symlink(src_resolved, dst_file)
+    return True
+
+
 def sync_scripts_to_workspaces():
-    """将项目 scripts/ 目录同步到各 agent workspace（保持 kanban_update.py 等最新）"""
+    """将项目 scripts/ 目录同步到各 agent workspace（保持 kanban_update.py 等最新）
+
+    Uses symlinks so that ``__file__`` in workspace copies resolves to the
+    project ``scripts/`` directory, keeping path-derived constants like
+    ``TASKS_FILE`` pointing to the canonical ``data/`` folder.
+    """
     scripts_src = BASE / 'scripts'
     if not scripts_src.is_dir():
         return
@@ -220,16 +247,10 @@ def sync_scripts_to_workspaces():
                 continue
             dst_file = ws_scripts / src_file.name
             try:
-                src_text = src_file.read_bytes()
+                if _sync_script_symlink(src_file, dst_file):
+                    synced += 1
             except Exception:
                 continue
-            try:
-                dst_text = dst_file.read_bytes() if dst_file.exists() else b''
-            except Exception:
-                dst_text = b''
-            if src_text != dst_text:
-                dst_file.write_bytes(src_text)
-                synced += 1
     # also sync to workspace-main for legacy compatibility
     ws_main_scripts = pathlib.Path.home() / '.openclaw/workspace-main/scripts'
     ws_main_scripts.mkdir(parents=True, exist_ok=True)
@@ -238,15 +259,12 @@ def sync_scripts_to_workspaces():
             continue
         dst_file = ws_main_scripts / src_file.name
         try:
-            src_text = src_file.read_bytes()
-            dst_text = dst_file.read_bytes() if dst_file.exists() else b''
-            if src_text != dst_text:
-                dst_file.write_bytes(src_text)
+            if _sync_script_symlink(src_file, dst_file):
                 synced += 1
         except Exception:
             pass
     if synced:
-        log.info(f'{synced} script files synced to workspaces')
+        log.info(f'{synced} script symlinks synced to workspaces')
 
 
 def deploy_soul_files():
