@@ -165,6 +165,19 @@ for ag in AGENTS:
         print(f'  ~ exists: {ag_id} (skipped)')
 
 agents_cfg['list'] = agents_list
+
+# Fix #142: 清理 bindings 中的非法字段（pattern 不被 gateway 支持）
+bindings = cfg.get('bindings', [])
+cleaned = 0
+for b in bindings:
+    match = b.get('match', {})
+    if isinstance(match, dict) and 'pattern' in match:
+        del match['pattern']
+        cleaned += 1
+        print(f'  🧹 cleaned invalid "pattern" from binding: {b.get("agentId", "?")}')
+if cleaned:
+    print(f'Cleaned {cleaned} invalid binding field(s)')
+
 cfg_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
 print(f'Done: {added} agents added')
 PYEOF

@@ -1952,8 +1952,11 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
                     'lastDispatchTrigger': trigger,
                 }))
                 return
+            # Fix #139: dispatch channel 可配置（默认 feishu，支持 telegram/wecom/signal 等）
+            _agent_cfg = read_json(DATA / 'agent_config.json', {})
+            _channel = (_agent_cfg.get('dispatchChannel') or 'feishu').strip()
             cmd = ['openclaw', 'agent', '--agent', agent_id, '-m', msg,
-                   '--deliver', '--channel', 'feishu', '--timeout', '300']
+                   '--deliver', '--channel', _channel, '--timeout', '300']
             max_retries = 2
             err = ''
             for attempt in range(1, max_retries + 1):
@@ -2465,6 +2468,19 @@ class Handler(BaseHTTPRequestHandler):
 
             threading.Thread(target=apply_async, daemon=True).start()
             self.send_json({'ok': True, 'message': f'Queued: {agent_id} → {model}'})
+
+        # Fix #139: 设置派发渠道（feishu/telegram/wecom/signal/tui）
+        elif p == '/api/set-dispatch-channel':
+            channel = body.get('channel', '').strip()
+            allowed = {'feishu', 'telegram', 'wecom', 'signal', 'tui', 'discord', 'slack'}
+            if not channel or channel not in allowed:
+                self.send_json({'ok': False, 'error': f'channel must be one of: {", ".join(sorted(allowed))}'}, 400)
+                return
+            def _set_channel(cfg):
+                cfg['dispatchChannel'] = channel
+                return cfg
+            atomic_json_update(DATA / 'agent_config.json', _set_channel, {})
+            self.send_json({'ok': True, 'message': f'派发渠道已切换为 {channel}'})
 
         # ── 朝堂议政 POST ──
         elif p == '/api/court-discuss/start':
