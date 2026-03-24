@@ -40,6 +40,10 @@ function channelLabel(t: Task): { icon: string; text: string } {
   const now = t.now || '';
   if (now.includes('feishu/direct')) return { icon: '💬', text: '飞书对话' };
   if (now.includes('feishu')) return { icon: '💬', text: '飞书' };
+  if (now.includes('wecom')) return { icon: '📱', text: '企业微信' };
+  if (now.includes('telegram')) return { icon: '✈️', text: 'Telegram' };
+  if (now.includes('discord')) return { icon: '🎮', text: 'Discord' };
+  if (now.includes('slack')) return { icon: '💬', text: 'Slack' };
   if (now.includes('webchat')) return { icon: '🌐', text: 'WebChat' };
   if (now.includes('cron')) return { icon: '⏰', text: '定时' };
   if (now.includes('direct')) return { icon: '📨', text: '直连' };

@@ -816,12 +816,23 @@
         </div>
       </div>
       <div class="sub-section">
-        <div class="sub-sec-title">🔔 飞书推送</div>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <input id="feishu-webhook" class="sub-input" placeholder="飞书 Webhook URL（留空则不推送）" style="flex:1">
-          <button class="btn btn-p" onclick="saveSubConfig()" style="font-size:12px;padding:6px 14px">保存全部配置</button>
+        <div class="sub-sec-title">🔔 消息推送</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+          <select id="notification-channel" class="sub-input" style="max-width:160px">
+            <option value="feishu">💬 飞书 Feishu</option>
+            <option value="wecom">📱 企业微信</option>
+            <option value="telegram">✈️ Telegram</option>
+            <option value="discord">🎮 Discord</option>
+            <option value="slack">💬 Slack</option>
+            <option value="webhook">🔗 通用 Webhook</option>
+          </select>
+          <label style="font-size:12px;display:flex;align-items:center;gap:4px">
+            <input type="checkbox" id="notification-enabled" checked> 启用推送
+          </label>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px">采集完成后自动推送简报链接到飞书群。<a href="https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot" target="_blank" style="color:var(--acc)">如何创建自定义机器人？</a></div>
+        <input id="notification-webhook" class="sub-input" placeholder="Webhook URL（留空则不推送）" style="width:100%;margin-bottom:6px">
+        <button class="btn btn-p" onclick="saveSubConfig()" style="font-size:12px;padding:6px 14px">保存全部配置</button>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">采集完成后自动推送简报链接到对应渠道。</div>
       </div>
       <div id="sub-status" style="font-size:12px;margin-top:8px;display:none"></div>
     </div>
@@ -1972,6 +1983,10 @@ function channelLabel(t){
   const now = t.now||'';
   if(now.includes('feishu/direct')) return {icon:'💬', text:'飞书对话'};
   if(now.includes('feishu'))        return {icon:'💬', text:'飞书'};
+  if(now.includes('wecom'))         return {icon:'📱', text:'企业微信'};
+  if(now.includes('telegram'))      return {icon:'✈️', text:'Telegram'};
+  if(now.includes('discord'))       return {icon:'🎮', text:'Discord'};
+  if(now.includes('slack'))         return {icon:'💬', text:'Slack'};
   if(now.includes('webchat'))       return {icon:'🌐', text:'WebChat'};
   if(now.includes('cron'))          return {icon:'⏰', text:'定时'};
   if(now.includes('direct'))        return {icon:'📨', text:'直连'};
@@ -2168,7 +2183,7 @@ let subConfig = null;
 
 async function loadSubConfig(){
   try{ subConfig = await fetchJ(API+'/morning-config'); }
-  catch(e){ subConfig = { categories: DEFAULT_CATS.map(c=>({name:c,enabled:true})), keywords:[], custom_feeds:[], feishu_webhook:'' }; }
+  catch(e){ subConfig = { categories: DEFAULT_CATS.map(c=>({name:c,enabled:true})), keywords:[], custom_feeds:[], notification:{enabled:true,channel:'feishu',webhook:''} }; }
 }
 
 function renderSubConfig(){
@@ -2203,8 +2218,11 @@ function renderSubConfig(){
   // Feed category dropdown
   const sel = document.getElementById('new-feed-cat');
   sel.innerHTML = allCats.map(c=>`<option value="${c}">${c}</option>`).join('') + '<option value="__new__">+ 新分类…</option>';
-  // Feishu webhook
-  document.getElementById('feishu-webhook').value = subConfig.feishu_webhook||'';
+  // Notification
+  const noti = subConfig.notification || {enabled:true, channel:'feishu', webhook: subConfig.feishu_webhook||''};
+  document.getElementById('notification-channel').value = noti.channel || 'feishu';
+  document.getElementById('notification-enabled').checked = noti.enabled !== false;
+  document.getElementById('notification-webhook').value = noti.webhook || '';
 }
 
 function toggleSubConfig(){
@@ -2270,7 +2288,12 @@ function removeFeed(i){
 }
 
 async function saveSubConfig(){
-  subConfig.feishu_webhook = document.getElementById('feishu-webhook').value.trim();
+  if(!subConfig) subConfig = {};
+  subConfig.notification = {
+    enabled: document.getElementById('notification-enabled').checked,
+    channel: document.getElementById('notification-channel').value,
+    webhook: document.getElementById('notification-webhook').value.trim()
+  };
   const st = document.getElementById('sub-status');
   st.style.display='block'; st.style.color='var(--acc)'; st.textContent='⟳ 保存中…';
   try{
