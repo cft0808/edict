@@ -32,6 +32,7 @@ export const api = {
   officialsStats: () => fetchJ<OfficialsData>(`${API_BASE}/api/officials-stats`),
   morningBrief: () => fetchJ<MorningBrief>(`${API_BASE}/api/morning-brief`),
   morningConfig: () => fetchJ<SubConfig>(`${API_BASE}/api/morning-config`),
+  notificationChannels: () => fetchJ<{ ok: boolean; channels: ChannelInfo[] }>(`${API_BASE}/api/notification-channels`),
   agentsStatus: () => fetchJ<AgentsStatusData>(`${API_BASE}/api/agents-status`),
 
   // 任务实时动态
@@ -285,11 +286,27 @@ export interface CustomFeed {
   category: string;
 }
 
+export type ChannelType = 'feishu' | 'wecom' | 'telegram' | 'discord' | 'slack' | 'webhook';
+
+export interface NotificationConfig {
+  enabled: boolean;
+  channel: ChannelType;
+  webhook: string;
+}
+
 export interface SubConfig {
   categories: SubCategoryConfig[];
   keywords: string[];
   custom_feeds: CustomFeed[];
-  feishu_webhook: string;
+  notification: NotificationConfig;
+  feishu_webhook?: string;
+}
+
+export interface ChannelInfo {
+  id: string;
+  label: string;
+  icon: string;
+  placeholder: string;
 }
 
 export interface ActivityEntry {

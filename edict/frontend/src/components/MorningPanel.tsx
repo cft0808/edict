@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useStore } from '../store';
 import { api } from '../api';
-import type { SubConfig, MorningNewsItem } from '../api';
+import type { SubConfig, MorningNewsItem, NotificationConfig } from '../api';
 
 const CAT_META: Record<string, { icon: string; color: string; desc: string }> = {
   '政治': { icon: '🏛️', color: '#6a9eff', desc: '全球政治动态' },
@@ -192,7 +192,7 @@ export default function MorningPanel() {
           onAddFeed={addFeed}
           onRemoveFeed={removeFeed}
           onSave={saveConfig}
-          onSetWebhook={(v) => setLocalConfig({ ...localConfig, feishu_webhook: v })}
+          onSetNotification={(n) => setLocalConfig({ ...localConfig, notification: n })}
         />
       )}
 
@@ -295,7 +295,7 @@ function SubConfigPanel({
   onAddFeed,
   onRemoveFeed,
   onSave,
-  onSetWebhook,
+  onSetNotification,
 }: {
   config: SubConfig;
   enabledSet: Set<string>;
@@ -305,12 +305,24 @@ function SubConfigPanel({
   onAddFeed: (name: string, url: string, cat: string) => void;
   onRemoveFeed: (i: number) => void;
   onSave: () => void;
-  onSetWebhook: (v: string) => void;
+  onSetNotification: (n: NotificationConfig) => void;
 }) {
   const [newKw, setNewKw] = useState('');
   const [feedName, setFeedName] = useState('');
   const [feedUrl, setFeedUrl] = useState('');
   const [feedCat, setFeedCat] = useState(DEFAULT_CATS[0]);
+
+  const CHANNEL_OPTIONS = [
+    { id: 'feishu', label: '飞书 Feishu', icon: '💬', placeholder: 'https://open.feishu.cn/open-apis/bot/v2/hook/...' },
+    { id: 'wecom', label: '企业微信', icon: '📱', placeholder: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...' },
+    { id: 'telegram', label: 'Telegram', icon: '✈️', placeholder: 'https://api.telegram.org/bot<TOKEN>/sendMessage' },
+    { id: 'discord', label: 'Discord', icon: '🎮', placeholder: 'https://discord.com/api/webhooks/.../...' },
+    { id: 'slack', label: 'Slack', icon: '💬', placeholder: 'https://hooks.slack.com/services/.../.../...' },
+    { id: 'webhook', label: '通用 Webhook', icon: '🔗', placeholder: 'https://your-webhook-url/...' },
+  ];
+
+  const notification: NotificationConfig = config.notification || { enabled: true, channel: 'feishu', webhook: config.feishu_webhook || '' };
+  const currentChannel = CHANNEL_OPTIONS.find(c => c.id === notification.channel) || CHANNEL_OPTIONS[0];
 
   const allCats = [...DEFAULT_CATS];
   (config.categories || []).forEach((c) => {
@@ -396,14 +408,33 @@ function SubConfigPanel({
         </div>
       </div>
 
-      {/* Feishu Webhook */}
+      {/* Notification */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>飞书 Webhook</div>
+        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>消息推送</div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+          <select
+            value={notification.channel}
+            onChange={(e) => onSetNotification({ ...notification, channel: e.target.value as NotificationConfig['channel'] })}
+            style={{ padding: '6px 10px', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 6, color: 'var(--text)', fontSize: 12, outline: 'none' }}
+          >
+            {CHANNEL_OPTIONS.map((ch) => (
+              <option key={ch.id} value={ch.id}>{ch.icon} {ch.label}</option>
+            ))}
+          </select>
+          <label style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={notification.enabled}
+              onChange={(e) => onSetNotification({ ...notification, enabled: e.target.checked })}
+            />
+            启用推送
+          </label>
+        </div>
         <input
           type="text"
-          value={config.feishu_webhook || ''}
-          onChange={(e) => onSetWebhook(e.target.value)}
-          placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..."
+          value={notification.webhook || ''}
+          onChange={(e) => onSetNotification({ ...notification, webhook: e.target.value })}
+          placeholder={currentChannel.placeholder}
           style={{ width: '100%', padding: '8px 10px', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 6, color: 'var(--text)', fontSize: 12, outline: 'none' }}
         />
       </div>
