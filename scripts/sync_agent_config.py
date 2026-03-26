@@ -192,7 +192,7 @@ def main():
     # 自动部署 SOUL.md 到 workspace（如果项目里有更新）
     deploy_soul_files()
     # 同步 scripts/ 到各 workspace（保持 kanban_update.py 等最新）
-    sync_scripts_to_workspaces()
+    #sync_scripts_to_workspaces() 已经在ps1中调用，这里注释掉避免重复执行 如果workspace-*/scripts没有正确链接到项目scripts目录，可以取消注释重新启用
 
 
 # 项目 agents/ 目录名 → 运行时 agent_id 映射

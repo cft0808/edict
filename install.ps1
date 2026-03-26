@@ -34,9 +34,9 @@ function Check-Deps {
     }
     Log "OpenClaw CLI: OK"
 
-    $py = Get-Command python3 -ErrorAction SilentlyContinue
+    $py = Get-Command python -ErrorAction SilentlyContinue  #win环境优先 python，兼容first-sync脚本 
     if (-not $py) {
-        $py = Get-Command python -ErrorAction SilentlyContinue
+        $py = Get-Command python3 -ErrorAction SilentlyContinue
     }
     if (-not $py) {
         Error "未找到 python3 或 python"
