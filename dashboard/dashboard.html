@@ -11,9 +11,17 @@
       --text:#dde4f8;--muted:#5a6b92;--ok:#2ecc8a;--warn:#f5c842;--danger:#ff5270;
       --acc:#6a9eff;--acc2:#a07aff;
     }
+    html.light{
+      --bg:#f4f5f7;--panel:#ffffff;--panel2:#ebedf0;--line:#d8dce6;
+      --text:#1a1d26;--muted:#6b7280;--ok:#16a34a;--warn:#d97706;--danger:#dc2626;
+      --acc:#3b82f6;--acc2:#7c3aed;
+    }
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:var(--bg);color:var(--text);font-family:"PingFang SC",Inter,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
     ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1e2538;border-radius:4px}
+    html.light ::-webkit-scrollbar-thumb{background:#c4c8d4}
+    .theme-toggle{background:var(--panel);border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:16px;padding:4px 10px;color:var(--text);transition:all .15s}
+    .theme-toggle:hover{background:var(--panel2)}
 
     .wrap{max-width:1400px;margin:0 auto;padding:16px}
 
@@ -661,6 +669,8 @@
       <div class="sub">皇上视角 · 实时旨意追踪</div>
     </div>
     <div class="hdr-r">
+      <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="切换主题">🌙</button>
+      <button class="theme-toggle" onclick="openFeedback()" title="祈告上苍（反馈问题或建议）">🙏 祈告上苍</button>
       <span class="chip" id="chip-sync">⟳ 同步中</span>
       <span class="chip" id="chip-tasks">— 旨意</span>
       <button class="btn-refresh" onclick="loadAll()">⟳ 立即刷新</button>
@@ -776,6 +786,19 @@
     </div>
     <div class="tpl-cats" id="tpl-cats"></div>
     <div class="tpl-grid" id="tpl-grid"></div>
+    <!-- 自由下旨 -->
+    <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--line)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">✍️ 自由下旨</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">无需模板，直接用自然语言描述你的需求，系统会自动派发给太子处理</div>
+      <textarea id="free-edict-input" style="width:100%;min-height:80px;resize:vertical;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px;color:var(--text);font-family:inherit" placeholder="例如：帮我分析一下最近三个月的销售数据趋势，生成图表和报告…"></textarea>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">
+        <select id="free-edict-priority" style="background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--text)">
+          <option value="normal">普通优先级</option>
+          <option value="high">高优先级</option>
+        </select>
+        <button class="tpl-go" style="padding:8px 20px;font-size:13px" onclick="submitFreeEdict()">📜 下旨</button>
+      </div>
+    </div>
   </div>
 
   <!-- ══ 天下要闻 ══ -->
@@ -2938,6 +2961,8 @@ function openMemorial(jsonStr){
     ${t.output&&t.output!=='-'?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
       <div style="font-size:11px;font-weight:600;margin-bottom:4px">📦 产出物</div>
       <code style="font-size:11px;word-break:break-all">${esc(t.output)}</code>
+      <button class="btn btn-g" onclick="loadTaskOutput('${esc(t.id)}')" style="font-size:11px;padding:4px 12px;margin-left:8px">📖 查看奏章</button>
+      <div id="task-output-content" style="display:none;margin-top:10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;max-height:400px;overflow-y:auto;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-word"></div>
     </div>`:''}
 
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
@@ -3190,6 +3215,81 @@ async function executeTemplate(e, tplId){
     navigator.clipboard.writeText(cmd).catch(()=>{});
     closeModal();
   }
+}
+
+/* ══ THEME ══ */
+function toggleTheme(){
+  const isLight = document.documentElement.classList.toggle('light');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  document.getElementById('theme-btn').textContent = isLight ? '☀️' : '🌙';
+}
+(function initTheme(){
+  const saved = localStorage.getItem('theme');
+  if(saved === 'light'){
+    document.documentElement.classList.add('light');
+    document.getElementById('theme-btn').textContent = '☀️';
+  }
+})();
+
+/* ══ TASK OUTPUT / 奏章查看 ══ */
+async function loadTaskOutput(taskId){
+  const el = document.getElementById('task-output-content');
+  if(!el) return;
+  if(el.style.display !== 'none'){ el.style.display='none'; return; }
+  el.style.display='block';
+  el.textContent='加载中…';
+  try{
+    const r = await fetchJ(API+'/task-output/'+encodeURIComponent(taskId));
+    if(r.ok && r.exists && r.content){
+      el.textContent = r.content;
+    } else if(r.ok && !r.exists){
+      el.textContent = '（产出物文件不存在或尚未生成）';
+    } else {
+      el.textContent = r.error || '加载失败';
+    }
+  }catch(err){
+    el.textContent = '服务器连接失败';
+  }
+}
+
+/* ══ FREE EDICT ══ */
+async function submitFreeEdict(){
+  const input = document.getElementById('free-edict-input');
+  const text = (input.value||'').trim();
+  if(!text || text.length < 6){ toast('请输入至少6个字的旨意内容','err'); return; }
+  if(!confirm('确认下旨？\n\n'+text.substring(0,200)+(text.length>200?'…':''))) return;
+  const priority = document.getElementById('free-edict-priority').value;
+  try{
+    const r = await postJ(API+'/create-task', {
+      title: text.substring(0,120),
+      org: '中书省',
+      priority: priority,
+      templateId: '',
+      params: { content: text },
+    });
+    if(r.ok){
+      toast('📜 '+r.taskId+' 旨意已下达','ok',5000);
+      input.value = '';
+      loadAll();
+    } else {
+      toast(r.error||'下旨失败','err');
+    }
+  }catch(err){
+    toast('服务器连接失败','err');
+  }
+}
+
+/* ══ FEEDBACK ══ */
+function openFeedback(){
+  const kind = prompt('请选择反馈类型：\n1 = 禀报异常 (Bug)\n2 = 奏请功能 (Feature)\n\n输入 1 或 2：');
+  if(!kind) return;
+  const isBug = kind.trim() === '1';
+  const title = encodeURIComponent(isBug ? '[Bug] ' : '[Feature] ');
+  const tmpl = isBug
+    ? encodeURIComponent('## 问题描述\n\n## 复现步骤\n1. \n2. \n3. \n\n## 期望行为\n\n## 实际行为\n\n## 环境信息\n- OS: \n- Browser: \n')
+    : encodeURIComponent('## 功能描述\n\n## 使用场景\n\n## 期望效果\n\n## 其他信息\n');
+  const label = isBug ? 'bug' : 'enhancement';
+  window.open(`https://github.com/cft0808/edict/issues/new?title=${title}&body=${tmpl}&labels=${label}`, '_blank');
 }
 
 /* ══ INIT ══ */

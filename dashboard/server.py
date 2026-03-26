@@ -2283,6 +2283,29 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(get_scheduler_state(task_id))
         elif p == '/api/agents-status':
             self.send_json(get_agents_status())
+        elif p.startswith('/api/task-output/'):
+            task_id = p.replace('/api/task-output/', '')
+            if not task_id or not _SAFE_NAME_RE.match(task_id):
+                self.send_json({'ok': False, 'error': 'invalid task_id'}, 400)
+            else:
+                tasks = load_tasks()
+                task = next((t for t in tasks if t.get('id') == task_id), None)
+                if not task:
+                    self.send_json({'ok': False, 'error': 'task not found'}, 404)
+                else:
+                    output_path = task.get('output', '')
+                    if not output_path or output_path == '-':
+                        self.send_json({'ok': True, 'taskId': task_id, 'content': '', 'exists': False})
+                    else:
+                        p_out = pathlib.Path(output_path)
+                        if not p_out.exists():
+                            self.send_json({'ok': True, 'taskId': task_id, 'content': '', 'exists': False})
+                        else:
+                            try:
+                                content = p_out.read_text(encoding='utf-8', errors='replace')[:50000]
+                                self.send_json({'ok': True, 'taskId': task_id, 'content': content, 'exists': True})
+                            except Exception as e:
+                                self.send_json({'ok': False, 'error': f'读取失败: {e}'}, 500)
         elif p.startswith('/api/agent-activity/'):
             agent_id = p.replace('/api/agent-activity/', '')
             if not agent_id or not _SAFE_NAME_RE.match(agent_id):
