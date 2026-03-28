@@ -222,8 +222,19 @@ def _sync_script_symlink(src_file: pathlib.Path, dst_file: pathlib.Path) -> bool
     Returns True if the link was (re-)created, False if already up-to-date.
     """
     src_resolved = src_file.resolve()
+    # Guard: skip if dst resolves to the same real path as src.
+    # This happens when ws_scripts is itself a directory-level symlink pointing
+    # to the project scripts/ dir (created by install.sh link_resources).
+    # Without this check the function would unlink the real source file and
+    # then create a self-referential symlink (foo.py -> foo.py).
+    try:
+        dst_resolved = dst_file.resolve()
+    except OSError:
+        dst_resolved = None
+    if dst_resolved == src_resolved:
+        return False
     # Already a correct symlink?
-    if dst_file.is_symlink() and dst_file.resolve() == src_resolved:
+    if dst_file.is_symlink() and dst_resolved == src_resolved:
         return False
     # Remove stale file / old physical copy / broken symlink
     if dst_file.exists() or dst_file.is_symlink():
