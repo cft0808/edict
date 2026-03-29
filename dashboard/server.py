@@ -37,6 +37,7 @@ if str(CHANNELS_DIR.parent) not in sys.path:
 from channels import get_channel, get_channel_info, CHANNELS as NOTIFICATION_CHANNELS
 
 OCLAW_HOME = pathlib.Path.home() / '.openclaw'
+OPENCLAW_BIN = os.environ.get('OPENCLAW_BIN') or str(pathlib.Path.home() / '.npm-global/bin/openclaw')
 MAX_REQUEST_BODY = 1 * 1024 * 1024  # 1 MB
 ALLOWED_ORIGIN = None  # Set via --cors; None means restrict to localhost
 _DASHBOARD_PORT = 7891  # Updated at startup from --port arg
@@ -924,7 +925,7 @@ def wake_agent(agent_id, message=''):
 
     def do_wake():
         try:
-            cmd = ['openclaw', 'agent', '--agent', runtime_id, '-m', msg, '--timeout', '120']
+            cmd = [OPENCLAW_BIN, 'agent', '--agent', runtime_id, '-m', msg, '--timeout', '120']
             log.info(f'🔔 唤醒 {agent_id}...')
             # 带重试（最多2次）
             for attempt in range(1, 3):
@@ -960,6 +961,20 @@ _STATE_AGENT_MAP = {
     'Next': None,          # 待执行，从 org 推断
     'Pending': 'architect', # 待处理，默认中书省
 }
+_DISPLAY_TO_RUNTIME_AGENT_MAP = {
+    'taizi': 'main',
+    'zhongshu': 'architect',
+    'menxia': 'reviewer',
+    'shangshu': 'ops',
+    'libu': 'trainer',
+    'hubu': 'analyst',
+    'bingbu': 'writer',
+    'xingbu': 'qa',
+    'gongbu': 'trader',
+    'libu_hr': 'evolver',
+    'zaochao': 'community',
+}
+
 _ORG_AGENT_MAP = {
     '礼部': 'trainer', '户部': 'analyst', '兵部': 'writer',
     '刑部': 'qa', '工部': 'trader', '吏部': 'evolver',
@@ -1984,11 +1999,13 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
         log.info(f'ℹ️ {task_id} 新状态 {new_state} 无对应 Agent，跳过自动派发')
         return
 
+    runtime_agent_id = _DISPLAY_TO_RUNTIME_AGENT_MAP.get(agent_id, agent_id)
+
     _update_task_scheduler(task_id, lambda t, s: (
         s.update({
             'lastDispatchAt': now_iso(),
             'lastDispatchStatus': 'queued',
-            'lastDispatchAgent': agent_id,
+            'lastDispatchAgent': runtime_agent_id,
             'lastDispatchTrigger': trigger,
         }),
         _scheduler_add_flow(t, f'已入队派发：{new_state} → {agent_id}（{trigger}）', to=_STATE_LABELS.get(new_state, new_state))
@@ -2043,7 +2060,7 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
                 _update_task_scheduler(task_id, lambda t, s: s.update({
                     'lastDispatchAt': now_iso(),
                     'lastDispatchStatus': 'gateway-offline',
-                    'lastDispatchAgent': agent_id,
+                    'lastDispatchAgent': runtime_agent_id,
                     'lastDispatchTrigger': trigger,
                 }))
                 return
@@ -2051,25 +2068,25 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
             # "unknown channel: feishu" 错误（非飞书用户）
             _agent_cfg = read_json(DATA / 'agent_config.json', {})
             _channel = (_agent_cfg.get('dispatchChannel') or '').strip()
-            cmd = ['openclaw', 'agent', '--agent', agent_id, '-m', msg, '--timeout', '300']
+            cmd = [OPENCLAW_BIN, 'agent', '--agent', runtime_agent_id, '-m', msg, '--timeout', '300']
             if _channel:
                 cmd.extend(['--deliver', '--channel', _channel])
             max_retries = 2
             err = ''
             for attempt in range(1, max_retries + 1):
-                log.info(f'🔄 自动派发 {task_id} → {agent_id} (第{attempt}次)...')
+                log.info(f'🔄 自动派发 {task_id} → {agent_id} / {runtime_agent_id} (第{attempt}次)...')
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=310)
                 if result.returncode == 0:
-                    log.info(f'✅ {task_id} 自动派发成功 → {agent_id}')
+                    log.info(f'✅ {task_id} 自动派发成功 → {agent_id} / {runtime_agent_id}')
                     _update_task_scheduler(task_id, lambda t, s: (
                         s.update({
                             'lastDispatchAt': now_iso(),
                             'lastDispatchStatus': 'success',
-                            'lastDispatchAgent': agent_id,
+                            'lastDispatchAgent': runtime_agent_id,
                             'lastDispatchTrigger': trigger,
                             'lastDispatchError': '',
                         }),
-                        _scheduler_add_flow(t, f'派发成功：{agent_id}（{trigger}）', to=t.get('org', ''))
+                        _scheduler_add_flow(t, f'派发成功：{agent_id}→{runtime_agent_id}（{trigger}）', to=t.get('org', ''))
                     ))
                     return
                 err = result.stderr[:200] if result.stderr else result.stdout[:200]
@@ -2077,40 +2094,40 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
                 if attempt < max_retries:
                     import time
                     time.sleep(5)
-            log.error(f'❌ {task_id} 自动派发最终失败 → {agent_id}')
+            log.error(f'❌ {task_id} 自动派发最终失败 → {agent_id} / {runtime_agent_id}')
             _update_task_scheduler(task_id, lambda t, s: (
                 s.update({
                     'lastDispatchAt': now_iso(),
                     'lastDispatchStatus': 'failed',
-                    'lastDispatchAgent': agent_id,
+                    'lastDispatchAgent': runtime_agent_id,
                     'lastDispatchTrigger': trigger,
                     'lastDispatchError': err,
                 }),
-                _scheduler_add_flow(t, f'派发失败：{agent_id}（{trigger}）', to=t.get('org', ''))
+                _scheduler_add_flow(t, f'派发失败：{agent_id}→{runtime_agent_id}（{trigger}）', to=t.get('org', ''))
             ))
         except subprocess.TimeoutExpired:
-            log.error(f'❌ {task_id} 自动派发超时 → {agent_id}')
+            log.error(f'❌ {task_id} 自动派发超时 → {agent_id} / {runtime_agent_id}')
             _update_task_scheduler(task_id, lambda t, s: (
                 s.update({
                     'lastDispatchAt': now_iso(),
                     'lastDispatchStatus': 'timeout',
-                    'lastDispatchAgent': agent_id,
+                    'lastDispatchAgent': runtime_agent_id,
                     'lastDispatchTrigger': trigger,
                     'lastDispatchError': 'timeout',
                 }),
-                _scheduler_add_flow(t, f'派发超时：{agent_id}（{trigger}）', to=t.get('org', ''))
+                _scheduler_add_flow(t, f'派发超时：{agent_id}→{runtime_agent_id}（{trigger}）', to=t.get('org', ''))
             ))
         except Exception as e:
-            log.warning(f'⚠️ {task_id} 自动派发异常: {e}')
+            log.warning(f'⚠️ {task_id} 自动派发异常({agent_id}/{runtime_agent_id}): {e}')
             _update_task_scheduler(task_id, lambda t, s: (
                 s.update({
                     'lastDispatchAt': now_iso(),
                     'lastDispatchStatus': 'error',
-                    'lastDispatchAgent': agent_id,
+                    'lastDispatchAgent': runtime_agent_id,
                     'lastDispatchTrigger': trigger,
                     'lastDispatchError': str(e)[:200],
                 }),
-                _scheduler_add_flow(t, f'派发异常：{agent_id}（{trigger}）', to=t.get('org', ''))
+                _scheduler_add_flow(t, f'派发异常：{agent_id}→{runtime_agent_id}（{trigger}）', to=t.get('org', ''))
             ))
 
     threading.Thread(target=_do_dispatch, daemon=True).start()
