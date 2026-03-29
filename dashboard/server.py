@@ -144,7 +144,7 @@ def save_tasks(tasks):
 
     def _refresh():
         try:
-            subprocess.run(['python3', str(script)], timeout=30)
+            subprocess.run([os.environ.get('EDICT_PYTHON', sys.executable or 'python3'), str(script)], timeout=30)
         except Exception as e:
             log.warning(f'refresh_live_data.py 触发失败: {e}')
     threading.Thread(target=_refresh, daemon=True).start()
@@ -295,7 +295,7 @@ def add_skill_to_agent(agent_id, skill_name, description, trigger=''):
     skill_md.write_text(template)
     # Re-sync agent config
     try:
-        subprocess.run(['python3', str(SCRIPTS / 'sync_agent_config.py')], timeout=10)
+        subprocess.run([os.environ.get('EDICT_PYTHON', sys.executable or 'python3'), str(SCRIPTS / 'sync_agent_config.py')], timeout=10)
     except Exception:
         pass
     return {'ok': True, 'message': f'技能 {skill_name} 已添加到 {agent_id}', 'path': str(skill_md)}
@@ -405,7 +405,7 @@ def add_remote_skill(agent_id, skill_name, source_url, description=''):
     
     # Re-sync agent config
     try:
-        subprocess.run(['python3', str(SCRIPTS / 'sync_agent_config.py')], timeout=10)
+        subprocess.run([os.environ.get('EDICT_PYTHON', sys.executable or 'python3'), str(SCRIPTS / 'sync_agent_config.py')], timeout=10)
     except Exception:
         pass
     
@@ -523,7 +523,7 @@ def remove_remote_skill(agent_id, skill_name):
         
         # Re-sync agent config
         try:
-            subprocess.run(['python3', str(SCRIPTS / 'sync_agent_config.py')], timeout=10)
+            subprocess.run([os.environ.get('EDICT_PYTHON', sys.executable or 'python3'), str(SCRIPTS / 'sync_agent_config.py')], timeout=10)
         except Exception:
             pass
         
@@ -951,19 +951,19 @@ def wake_agent(agent_id, message=''):
 
 # 状态 → agent_id 映射
 _STATE_AGENT_MAP = {
-    'Taizi': 'taizi',
-    'Zhongshu': 'zhongshu',
-    'Menxia': 'menxia',
-    'Assigned': 'shangshu',
+    'Taizi': 'main',
+    'Zhongshu': 'architect',
+    'Menxia': 'reviewer',
+    'Assigned': 'ops',
     'Doing': None,         # 六部，需从 org 推断
     'Review': 'shangshu',
     'Next': None,          # 待执行，从 org 推断
-    'Pending': 'zhongshu', # 待处理，默认中书省
+    'Pending': 'architect', # 待处理，默认中书省
 }
 _ORG_AGENT_MAP = {
-    '礼部': 'libu', '户部': 'hubu', '兵部': 'bingbu',
-    '刑部': 'xingbu', '工部': 'gongbu', '吏部': 'libu_hr',
-    '中书省': 'zhongshu', '门下省': 'menxia', '尚书省': 'shangshu',
+    '礼部': 'trainer', '户部': 'analyst', '兵部': 'writer',
+    '刑部': 'qa', '工部': 'trader', '吏部': 'evolver',
+    '中书省': 'architect', '门下省': 'reviewer', '尚书省': 'ops',
 }
 
 _TERMINAL_STATES = {'Done', 'Cancelled'}
@@ -2432,7 +2432,7 @@ class Handler(BaseHTTPRequestHandler):
             force = body.get('force', True)  # 从看板手动触发默认强制
             def do_refresh():
                 try:
-                    cmd = ['python3', str(SCRIPTS / 'fetch_morning_news.py')]
+                    cmd = [os.environ.get('EDICT_PYTHON', sys.executable or 'python3'), str(SCRIPTS / 'fetch_morning_news.py')]
                     if force:
                         cmd.append('--force')
                     subprocess.run(cmd, timeout=120)
@@ -2599,8 +2599,8 @@ class Handler(BaseHTTPRequestHandler):
             # Async apply
             def apply_async():
                 try:
-                    subprocess.run(['python3', str(SCRIPTS / 'apply_model_changes.py')], timeout=30)
-                    subprocess.run(['python3', str(SCRIPTS / 'sync_agent_config.py')], timeout=10)
+                    subprocess.run([os.environ.get('EDICT_PYTHON', sys.executable or 'python3'), str(SCRIPTS / 'apply_model_changes.py')], timeout=30)
+                    subprocess.run([os.environ.get('EDICT_PYTHON', sys.executable or 'python3'), str(SCRIPTS / 'sync_agent_config.py')], timeout=10)
                 except Exception as e:
                     print(f'[apply error] {e}', file=sys.stderr)
 

@@ -18,15 +18,25 @@ ID_LABEL = {
     'taizi':    {'label': '太子',   'role': '太子',     'duty': '飞书消息分拣与回奏',  'emoji': '🤴'},
     'main':     {'label': '太子',   'role': '太子',     'duty': '飞书消息分拣与回奏',  'emoji': '🤴'},  # 兼容旧配置
     'zhongshu': {'label': '中书省', 'role': '中书令',   'duty': '起草任务令与优先级',  'emoji': '📜'},
+    'architect':{'label': '中书省', 'role': '中书令',   'duty': '起草任务令与优先级',  'emoji': '📜'},
     'menxia':   {'label': '门下省', 'role': '侍中',     'duty': '审议与退回机制',      'emoji': '🔍'},
+    'reviewer': {'label': '门下省', 'role': '侍中',     'duty': '审议与退回机制',      'emoji': '🔍'},
     'shangshu': {'label': '尚书省', 'role': '尚书令',   'duty': '派单与升级裁决',      'emoji': '📮'},
+    'ops':      {'label': '尚书省', 'role': '尚书令',   'duty': '派单与升级裁决',      'emoji': '📮'},
     'libu':     {'label': '礼部',   'role': '礼部尚书', 'duty': '文档/汇报/规范',      'emoji': '📝'},
+    'trainer':  {'label': '礼部',   'role': '礼部尚书', 'duty': '文档/汇报/规范',      'emoji': '📝'},
     'hubu':     {'label': '户部',   'role': '户部尚书', 'duty': '资源/预算/成本',      'emoji': '💰'},
+    'analyst':  {'label': '户部',   'role': '户部尚书', 'duty': '资源/预算/成本',      'emoji': '💰'},
     'bingbu':   {'label': '兵部',   'role': '兵部尚书', 'duty': '工程实现与架构设计',  'emoji': '⚔️'},
+    'writer':   {'label': '兵部',   'role': '兵部尚书', 'duty': '工程实现与架构设计',  'emoji': '⚔️'},
     'xingbu':   {'label': '刑部',   'role': '刑部尚书', 'duty': '合规/审计/红线',      'emoji': '⚖️'},
+    'qa':       {'label': '刑部',   'role': '刑部尚书', 'duty': '合规/审计/红线',      'emoji': '⚖️'},
     'gongbu':   {'label': '工部',   'role': '工部尚书', 'duty': '基础设施与部署运维',  'emoji': '🔧'},
+    'trader':   {'label': '工部',   'role': '工部尚书', 'duty': '基础设施与部署运维',  'emoji': '🔧'},
     'libu_hr':  {'label': '吏部',   'role': '吏部尚书', 'duty': '人事/培训/Agent管理',  'emoji': '👔'},
+    'evolver':  {'label': '吏部',   'role': '吏部尚书', 'duty': '人事/培训/Agent管理',  'emoji': '👔'},
     'zaochao':  {'label': '钦天监', 'role': '朝报官',   'duty': '每日新闻采集与简报',  'emoji': '📰'},
+    'community':{'label': '钦天监', 'role': '朝报官',   'duty': '每日新闻采集与简报',  'emoji': '📰'},
 }
 
 KNOWN_MODELS = [
@@ -132,8 +142,9 @@ def main():
             allow_agents = ag.get('allowAgents', []) or []
         else:
             allow_agents = ag.get('subagents', {}).get('allowAgents', [])
+        runtime_alias = {'main':'taizi','architect':'zhongshu','reviewer':'menxia','ops':'shangshu','trainer':'libu','analyst':'hubu','writer':'bingbu','qa':'xingbu','trader':'gongbu','evolver':'libu_hr','community':'zaochao'}.get(ag_id, ag_id)
         result.append({
-            'id': ag_id,
+            'id': runtime_alias,
             'label': meta['label'], 'role': meta['role'], 'duty': meta['duty'], 'emoji': meta['emoji'],
             'model': normalize_model(ag.get('model', default_model), default_model),
             'defaultModel': default_model,
@@ -141,7 +152,7 @@ def main():
             'skills': get_skills(workspace),
             'allowAgents': allow_agents,
         })
-        seen_ids.add(ag_id)
+        seen_ids.add(runtime_alias)
 
     # 补充不在 openclaw.json agents list 中的 agent（兼容旧版 main）
     EXTRA_AGENTS = {
@@ -155,11 +166,12 @@ def main():
                     'allowAgents': ['shangshu']},
     }
     for ag_id, extra in EXTRA_AGENTS.items():
-        if ag_id in seen_ids or ag_id not in ID_LABEL:
+        runtime_alias = {'main':'taizi','architect':'zhongshu','reviewer':'menxia','ops':'shangshu','trainer':'libu','analyst':'hubu','writer':'bingbu','qa':'xingbu','trader':'gongbu','evolver':'libu_hr','community':'zaochao'}.get(ag_id, ag_id)
+        if runtime_alias in seen_ids or ag_id not in ID_LABEL:
             continue
         meta = ID_LABEL[ag_id]
         result.append({
-            'id': ag_id,
+            'id': runtime_alias,
             'label': meta['label'], 'role': meta['role'], 'duty': meta['duty'], 'emoji': meta['emoji'],
             'model': extra['model'],
             'defaultModel': default_model,
@@ -168,6 +180,7 @@ def main():
             'allowAgents': extra['allowAgents'],
             'isDefaultModel': True,
         })
+        seen_ids.add(runtime_alias)
 
     # 保留已有的 dispatchChannel 配置 (Fix #139)
     existing_cfg = {}
