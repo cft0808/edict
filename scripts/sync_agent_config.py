@@ -195,7 +195,7 @@ def main():
         'generatedAt': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'defaultModel': default_model,
         'knownModels': merged_models,
-        'dispatchChannel': existing_cfg.get('dispatchChannel') or os.getenv('DEFAULT_DISPATCH_CHANNEL', 'feishu'),
+        'dispatchChannel': existing_cfg.get('dispatchChannel') or os.getenv('DEFAULT_DISPATCH_CHANNEL', ''),
         'agents': result,
     }
     DATA.mkdir(exist_ok=True)
