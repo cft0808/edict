@@ -20,7 +20,7 @@ jobs:
   size-label:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Label PR size
         uses: codelytv/pr-size-labeler@v1
         with:
