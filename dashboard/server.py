@@ -348,9 +348,13 @@ def add_remote_skill(agent_id, skill_name, source_url, description=''):
         
         elif source_url.startswith('file://'):
             # file:// URL 格式
-            local_path = pathlib.Path(source_url[7:])
+            local_path = pathlib.Path(source_url[7:]).resolve()
             if not local_path.exists():
                 return {'ok': False, 'error': f'本地文件不存在: {local_path}'}
+            # 路径遍历防护：与本地路径分支一致，确保在允许范围内
+            allowed_roots = (OCLAW_HOME.resolve(), BASE.parent.resolve())
+            if not any(str(local_path).startswith(str(root)) for root in allowed_roots):
+                return {'ok': False, 'error': '路径不在允许的目录范围内'}
             content = local_path.read_text()
         
         elif source_url.startswith('/') or source_url.startswith('.'):
