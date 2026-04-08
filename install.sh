@@ -131,8 +131,8 @@ register_agents() {
   python3 << 'PYEOF'
 import json, os as _os, pathlib, sys
 
-_oc_home = pathlib.Path(_os.environ.get('OPENCLAW_HOME', str(pathlib.Path.home() / '.openclaw'))).expanduser()
-cfg_path = _oc_home / 'openclaw.json'
+oc_home = pathlib.Path(_os.environ.get('OPENCLAW_HOME', str(pathlib.Path.home() / '.openclaw'))).expanduser()
+cfg_path = oc_home / 'openclaw.json'
 cfg = json.loads(cfg_path.read_text())
 
 AGENTS = [
@@ -156,7 +156,7 @@ existing_ids = {a['id'] for a in agents_list}
 added = 0
 for ag in AGENTS:
     ag_id = ag['id']
-    ws = str(_oc_home / f'workspace-{ag_id}')
+    ws = str(oc_home / f'workspace-{ag_id}')
     if ag_id not in existing_ids:
         entry = {'id': ag_id, 'workspace': ws, **{k:v for k,v in ag.items() if k!='id'}}
         agents_list.append(entry)
