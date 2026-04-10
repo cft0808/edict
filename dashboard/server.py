@@ -1956,13 +1956,24 @@ def get_task_activity(task_id):
         except Exception:
             pass
 
+    last_active = None
+    if updated_at:
+        try:
+            dt = _parse_iso(updated_at)
+            if dt:
+                last_active = dt.astimezone().strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                last_active = updated_at[:19].replace('T', ' ')
+        except Exception:
+            last_active = updated_at[:19].replace('T', ' ')
+
     result = {
         'ok': True,
         'taskId': task_id,
         'taskMeta': task_meta,
         'agentId': agent_id,
         'agentLabel': _STATE_LABELS.get(state, state),
-        'lastActive': updated_at[:19].replace('T', ' ') if updated_at else None,
+        'lastActive': last_active,
         'activity': activity,
         'activitySource': 'progress+session',
         'relatedAgents': sorted(list(related_agents)),
