@@ -42,14 +42,41 @@ function fmtStalled(sec: number): string {
   return `${h}小时${m}分`;
 }
 
-function fmtActivityTime(ts: number | string | undefined): string {
-  if (!ts) return '';
+function parseDateFlexible(ts: number | string | undefined): Date | null {
+  if (ts == null || ts === '') return null;
   if (typeof ts === 'number') {
-    const d = new Date(ts);
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+    const d = new Date(ts > 1e12 ? ts : ts * 1000);
+    return isNaN(d.getTime()) ? null : d;
   }
-  if (typeof ts === 'string' && ts.length >= 19) return ts.substring(11, 19);
-  return String(ts).substring(0, 8);
+  const s = String(ts).trim();
+  if (!s) return null;
+  const localMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
+  if (localMatch) {
+    const [, y, m, d, h, mi, se] = localMatch;
+    const dt = new Date(Number(y), Number(m) - 1, Number(d), Number(h), Number(mi), Number(se));
+    return isNaN(dt.getTime()) ? null : dt;
+  }
+  const iso = s.includes(' ') ? s.replace(' ', 'T') : s;
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function fmtDateTime(ts: number | string | undefined): string {
+  const d = parseDateFlexible(ts);
+  if (!d) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, '0');
+  const mi = String(d.getMinutes()).padStart(2, '0');
+  const se = String(d.getSeconds()).padStart(2, '0');
+  return `${y}-${m}-${day} ${h}:${mi}:${se}`;
+}
+
+function fmtActivityTime(ts: number | string | undefined): string {
+  const d = parseDateFlexible(ts);
+  if (!d) return '';
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
 }
 
 export default function TaskModal() {
@@ -302,8 +329,8 @@ export default function TaskModal() {
             </div>
             {sched && (
               <div className="sched-line">
-                {sched.lastProgressAt && <span>最近进展 {(sched.lastProgressAt || '').replace('T', ' ').substring(0, 19)}</span>}
-                {sched.lastDispatchAt && <span>最近派发 {(sched.lastDispatchAt || '').replace('T', ' ').substring(0, 19)}</span>}
+                {sched.lastProgressAt && <span>最近进展 {fmtDateTime(sched.lastProgressAt)}</span>}
+                {sched.lastDispatchAt && <span>最近派发 {fmtDateTime(sched.lastDispatchAt)}</span>}
                 <span>自动回滚 {sched.autoRollback === false ? '关闭' : '开启'}</span>
                 {sched.lastDispatchAgent && <span>目标 {sched.lastDispatchAgent}</span>}
               </div>
@@ -365,7 +392,7 @@ export default function TaskModal() {
                   const col = deptColor(fl.from || '');
                   return (
                     <div className="fl-item" key={i}>
-                      <div className="fl-time">{fl.at ? fl.at.substring(11, 16) : ''}</div>
+                      <div className="fl-time">{fmtActivityTime(fl.at).substring(0, 5)}</div>
                       <div className="fl-dot" style={{ background: col }} />
                       <div className="fl-content">
                         <div className="fl-who">
@@ -458,7 +485,7 @@ function LiveActivitySection({
   const agentParts: string[] = [];
   if (data.agentLabel) agentParts.push(data.agentLabel);
   if (data.relatedAgents && data.relatedAgents.length > 1) agentParts.push(`${data.relatedAgents.length}个 Agent`);
-  if (data.lastActive) agentParts.push(`最后活跃: ${data.lastActive}`);
+  if (data.lastActive) agentParts.push(`最后活跃: ${fmtDateTime(data.lastActive)}`);
 
   // Phase durations
   const phaseDurations = data.phaseDurations || [];

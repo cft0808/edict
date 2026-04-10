@@ -2,6 +2,22 @@ import { useStore, isEdict, STATE_LABEL, timeAgo } from '../store';
 import type { Task } from '../api';
 import { useState } from 'react';
 
+function fmtActivityTime(ts: string | number | undefined): string {
+  if (ts == null) return '';
+  if (typeof ts === 'number') {
+    const d = new Date(ts > 1e12 ? ts : ts * 1000);
+    if (isNaN(d.getTime())) return '';
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+  }
+  const s = String(ts).trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
+  const d = m
+    ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]), Number(m[5]), Number(m[6]))
+    : new Date(s.includes(' ') ? s.replace(' ', 'T') : s);
+  if (isNaN(d.getTime())) return s.length >= 8 ? s.substring(0, 8) : s;
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+}
+
 // Agent maps built from agentConfig
 function useAgentMaps() {
   const cfg = useStore((s) => s.agentConfig);
@@ -231,7 +247,7 @@ function SessionDetailModal({
                 const kLabel = kind === 'assistant' ? '回复' : kind === 'tool' ? '工具' : kind === 'user' ? '用户' : '事件';
                 let txt = (a.text || '').replace(/\[\[.*?\]\]/g, '').replace(/\*\*/g, '').trim();
                 if (txt.length > 200) txt = txt.substring(0, 200) + '…';
-                const time = ((a.at as string) || '').substring(11, 19);
+                const time = fmtActivityTime(a.at as string | number | undefined);
                 return (
                   <div key={i} style={{ padding: '8px 12px', borderBottom: '1px solid var(--line)', fontSize: 12, lineHeight: 1.5 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
