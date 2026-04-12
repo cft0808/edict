@@ -208,16 +208,30 @@ def handle_task_action(task_id, action, reason):
     return {'ok': True, 'message': f'{task_id} {label}'}
 
 
+def _task_eligible_for_archive_batch(t):
+    """与看板 canArchiveEdict 一致：终态/阻塞态，或 block 含皇上叫停但 state 未同步为 Blocked。"""
+    if t.get('archived'):
+        return False
+    st = (t.get('state') or '').strip()
+    if st.lower() in ('done', 'cancelled', 'blocked'):
+        return True
+    block = (t.get('block') or '').strip()
+    if not block or block in ('无', '-'):
+        return False
+    return '皇上' in block or '叫停' in block
+
+
 def handle_archive_task(task_id, archived, archive_all_done=False):
-    """Archive or unarchive a task, or batch-archive all Done/Cancelled tasks."""
+    """Archive or unarchive a task, or batch-archive 终态/阻塞/皇上叫停类 block。"""
     tasks = load_tasks()
     if archive_all_done:
         count = 0
         for t in tasks:
-            if t.get('state') in ('Done', 'Cancelled') and not t.get('archived'):
-                t['archived'] = True
-                t['archivedAt'] = now_iso()
-                count += 1
+            if not _task_eligible_for_archive_batch(t):
+                continue
+            t['archived'] = True
+            t['archivedAt'] = now_iso()
+            count += 1
         save_tasks(tasks)
         return {'ok': True, 'message': f'{count} 道旨意已归档', 'count': count}
     task = next((t for t in tasks if t.get('id') == task_id), None)
