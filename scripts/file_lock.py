@@ -103,7 +103,7 @@ def atomic_json_update(
             dir=str(path.parent), suffix='.tmp', prefix=path.stem + '_'
         )
         try:
-            with os.fdopen(tmp_fd, 'w') as f:
+            with os.fdopen(tmp_fd, 'w', encoding='utf-8') as f:
                 json.dump(result, f, ensure_ascii=False, indent=2)
             os.replace(tmp_path, str(path))
         except Exception:

@@ -687,6 +687,13 @@ def handle_create_task(title, org='中书省', official='中书令', priority='n
     return {'ok': True, 'taskId': task_id, 'message': f'旨意 {task_id} 已下达，正在派发给太子'}
 
 
+def _todo_progress(task):
+    todos = task.get('todos') or []
+    total = len(todos)
+    completed = sum(1 for td in todos if td.get('status') == 'completed')
+    return completed, total
+
+
 def handle_review_action(task_id, action, comment=''):
     """门下省御批：准奏/封驳。"""
     tasks = load_tasks()
@@ -706,6 +713,9 @@ def handle_review_action(task_id, action, comment=''):
             remark = f'✅ 准奏：{comment or "门下省审议通过"}'
             to_dept = '尚书省'
         else:  # Review
+            completed, total = _todo_progress(task)
+            if total > 0 and completed < total:
+                return {'ok': False, 'error': f'子任务尚未全部完成（{completed}/{total}），不能直接准奏完结'}
             task['state'] = 'Done'
             task['now'] = '御批通过，任务完成'
             remark = f'✅ 御批准奏：{comment or "审查通过"}'

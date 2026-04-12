@@ -231,6 +231,14 @@ def _sanitize_remark(raw):
     return _sanitize_text(raw, 120)
 
 
+def _todo_counts(task):
+    """返回 (completed, total) 便于完成态校验。"""
+    todos = task.get('todos') or []
+    total = len(todos)
+    completed = sum(1 for td in todos if td.get('status') == 'completed')
+    return completed, total
+
+
 def _infer_agent_id_from_runtime(task=None):
     """尽量推断当前执行该命令的 Agent。"""
     for k in ('OPENCLAW_AGENT_ID', 'OPENCLAW_AGENT', 'AGENT_ID'):
@@ -429,18 +437,33 @@ def cmd_flow(task_id, from_dept, to_dept, remark):
 
 
 def cmd_done(task_id, output_path='', summary=''):
-    """标记任务完成（原子操作）"""
+    """执行部门回报完成，任务进入 Review 待尚书省汇总审查。"""
+    rejected = [False]
+    reject_reason = ['']
     def modifier(tasks):
         t = find_task(tasks, task_id)
         if not t:
             log.error(f'任务 {task_id} 不存在')
             return tasks
-        t['state'] = 'Done'
+        old_state = t.get('state')
+        if old_state not in ('Doing', 'Next'):
+            rejected[0] = True
+            reject_reason[0] = f'当前状态 {old_state} 不允许直接上报完成'
+            return tasks
+        completed, total = _todo_counts(t)
+        if total > 0 and completed < total:
+            rejected[0] = True
+            reject_reason[0] = f'todos 未完成（{completed}/{total}），禁止直接收口'
+            return tasks
+
+        from_org = t.get('org', '执行部门')
+        t['state'] = 'Review'
+        t['org'] = STATE_ORG_MAP.get('Review', t.get('org', ''))
         t['output'] = output_path
-        t['now'] = summary or '任务已完成'
+        t['now'] = summary or '执行已完成，提交尚书省汇总审查'
         t.setdefault('flow_log', []).append({
-            "at": now_iso(), "from": t.get('org', '执行部门'),
-            "to": "皇上", "remark": f"✅ 完成：{summary or '任务已完成'}"
+            "at": now_iso(), "from": from_org,
+            "to": "尚书省", "remark": f"✅ 执行完成，提交审查：{summary or '待尚书省汇总'}"
         })
         # 同步设置 outputMeta，避免依赖 refresh_live_data.py 异步补充
         if output_path:
@@ -454,8 +477,12 @@ def cmd_done(task_id, output_path='', summary=''):
         return tasks
     atomic_json_update(TASKS_FILE, modifier, [])
     _trigger_refresh()
-    log.info(f'✅ {task_id} 已完成')
-    _append_audit(task_id, _infer_agent_id_from_runtime(), 'done', None, output_path, summary)
+    if rejected[0]:
+        log.warning(f'⚠️ {task_id} done 被拒绝：{reject_reason[0]}')
+        _append_audit(task_id, _infer_agent_id_from_runtime(), 'done_rejected', None, 'Review', reject_reason[0])
+        return
+    log.info(f'✅ {task_id} 执行完成，已提交尚书省审查')
+    _append_audit(task_id, _infer_agent_id_from_runtime(), 'done', None, 'Review', summary or '')
 
 
 def cmd_block(task_id, reason):
