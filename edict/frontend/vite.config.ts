@@ -7,7 +7,8 @@ export default defineConfig({
     port: 5173,
   },
   build: {
-    outDir: 'dist',
+    // 与 dashboard/server.py 的 DIST 一致，避免 build 到 edict/frontend/dist 后看板仍加载旧 bundle
+    outDir: '../../dashboard/dist',
     emptyOutDir: true,
   },
 })

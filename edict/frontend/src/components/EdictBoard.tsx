@@ -1,4 +1,4 @@
-import { useStore, isEdict, isArchived, getPipeStatus, stateLabel, deptColor, PIPE } from '../store';
+import { useStore, isEdict, isArchived, canArchiveEdict, getPipeStatus, stateLabel, deptColor, PIPE } from '../store';
 import { api, type Task } from '../api';
 
 // 排序权重
@@ -141,7 +141,7 @@ function EdictCard({ task }: { task: Task }) {
         {canResume && (
           <button className="mini-act" onClick={(e) => handleAction('resume', e)}>▶ 恢复</button>
         )}
-        {archived && !task.archived && (
+        {canArchiveEdict(task) && (
           <button className="mini-act" onClick={handleArchive}>📦 归档</button>
         )}
         {task.archived && (
@@ -171,10 +171,10 @@ export default function EdictBoard() {
 
   edicts.sort((a, b) => (STATE_ORDER[a.state] ?? 9) - (STATE_ORDER[b.state] ?? 9));
 
-  const unArchivedDone = allEdicts.filter((t) => !t.archived && ['Done', 'Cancelled'].includes(t.state));
+  const unArchivedDone = allEdicts.filter((t) => canArchiveEdict(t));
 
   const handleArchiveAll = async () => {
-    if (!confirm('将所有已完成/已取消的旨意移入归档？')) return;
+    if (!confirm('将已完成、已取消、已阻塞及皇上叫停的旨意移入归档？')) return;
     try {
       const r = await api.archiveAllDone();
       if (r.ok) { toast(`📦 ${r.count || 0} 道旨意已归档`); loadAll(); }

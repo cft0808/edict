@@ -69,6 +69,16 @@ export function isArchived(t: Task): boolean {
   return !!t.archived;
 }
 
+/** 与 dashboard.html canArchiveEdict 一致 */
+export function canArchiveEdict(t: Task): boolean {
+  if (t.archived) return false;
+  const st = String(t.state ?? '').trim();
+  if (/^(done|cancelled|blocked)$/i.test(st)) return true;
+  const b = (t.block || '').trim();
+  if (!b || b === '无' || b === '-') return false;
+  return b.includes('皇上') || b.includes('叫停');
+}
+
 export type PipeStatus = { key: string; dept: string; icon: string; action: string; status: 'done' | 'active' | 'pending' };
 
 export function getPipeStatus(t: Task): PipeStatus[] {

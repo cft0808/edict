@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useStore, getPipeStatus, deptColor, stateLabel, STATE_LABEL } from '../store';
+import { useStore, getPipeStatus, deptColor, stateLabel, STATE_LABEL, canArchiveEdict } from '../store';
 import { api } from '../api';
 import type {
   Task,
@@ -221,6 +221,21 @@ export default function TaskModal() {
     doTaskAction('cancel', reason);
   };
 
+  const doArchive = async (archived: boolean) => {
+    try {
+      const r = await api.archiveTask(task.id, archived);
+      if (r.ok) {
+        toast(r.message || '操作成功', 'ok');
+        loadAll();
+        close();
+      } else {
+        toast(r.error || '操作失败', 'err');
+      }
+    } catch {
+      toast('服务器连接失败', 'err');
+    }
+  };
+
   // Scheduler state
   const sched = schedData?.scheduler;
   const stalledSec = schedData?.stalledSec || 0;
@@ -283,6 +298,12 @@ export default function TaskModal() {
             )}
             {['Pending', 'Taizi', 'Zhongshu', 'Menxia', 'Assigned', 'Doing', 'Review', 'Next'].includes(task.state) && (
               <button className="btn-action" style={{ background: '#7c5cfc18', color: '#7c5cfc', border: '1px solid #7c5cfc44' }} onClick={doAdvance}>⏩ 推进到下一步</button>
+            )}
+            {task.archived && (
+              <button className="btn-action" style={{ background: '#2ecc8a18', color: '#2ecc8a', border: '1px solid #2ecc8a44' }} onClick={() => doArchive(false)}>📤 取消归档</button>
+            )}
+            {canArchiveEdict(task) && (
+              <button className="btn-action" style={{ background: '#6a9eff18', color: '#6a9eff', border: '1px solid #6a9eff44' }} onClick={() => doArchive(true)}>📦 归档</button>
             )}
           </div>
 
