@@ -408,6 +408,25 @@ def _get_llm_config() -> dict | None:
     return None
 
 
+def _try_repair_truncated_discuss(content: str) -> dict | None:
+    """尝试从被截断的 JSON 中提取已完成的 messages 条目。"""
+    import re
+    # 寻找 "messages" 数组中完整的 JSON 对象
+    pattern = r'\{\s*"official_id"\s*:\s*"[^"]+"\s*,\s*"name"\s*:\s*"[^"]+"\s*,\s*"content"\s*:\s*"(?:[^"\\]|\\.)*"\s*,\s*"emotion"\s*:\s*"[^"]+"\s*(?:,\s*"action"\s*:\s*"(?:[^"\\]|\\.)*"\s*)?\}'
+    matches = re.findall(pattern, content)
+    if not matches:
+        return None
+    messages = []
+    for m in matches:
+        try:
+            messages.append(json.loads(m))
+        except json.JSONDecodeError:
+            continue
+    if not messages:
+        return None
+    return {'messages': messages, 'scene_note': None}
+
+
 def _llm_complete(system_prompt: str, user_prompt: str, max_tokens: int = 1024) -> str | None:
     """调用 LLM API（自动适配 GitHub Copilot / OpenAI / Anthropic 协议）。"""
     config = _get_llm_config()
@@ -546,10 +565,12 @@ def _llm_discuss(session: dict, user_message: str = None, decree: str = None) ->
 
 只输出JSON，不要其他内容。"""
 
+    # 根据参与官员数量动态调整 max_tokens，避免响应被截断 (#265)
+    token_budget = 300 * len(officials) + 200
     content = _llm_complete(
         '你是一个古代朝堂群聊模拟器，严格输出JSON格式。',
         prompt,
-        max_tokens=1500,
+        max_tokens=max(token_budget, 1500),
     )
 
     if not content:
@@ -564,6 +585,11 @@ def _llm_discuss(session: dict, user_message: str = None, decree: str = None) ->
     try:
         return json.loads(content)
     except json.JSONDecodeError:
+        # 尝试修复被截断的 JSON：提取已完成的 messages 条目
+        repaired = _try_repair_truncated_discuss(content)
+        if repaired:
+            logger.info('Repaired truncated LLM response, recovered %d messages', len(repaired.get('messages', [])))
+            return repaired
         logger.warning('Failed to parse LLM response: %s', content[:200])
         return None
 
