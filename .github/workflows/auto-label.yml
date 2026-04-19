@@ -10,6 +10,9 @@ permissions:
 
 jobs:
   label:
+    # Fork PRs do not get a write-capable GITHUB_TOKEN under pull_request,
+    # so actions/labeler would fail with "Resource not accessible by integration".
+    if: ${{ !github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/labeler@v6
