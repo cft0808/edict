@@ -30,6 +30,7 @@ venv/
 # Node.js
 node_modules/
 edict/frontend/node_modules/
+edict/frontend/dist/
 *.tsbuildinfo
 
 # Vite cache
