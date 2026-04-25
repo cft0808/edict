@@ -550,24 +550,24 @@ edict/
 #### 2️⃣ CLI 命令（最灵活）
 
 ```bash
-# 从 GitHub 添加 code_review skill 到中书省
+# 从 GitHub 添加 mmx_cli skill 到门下省
 python3 scripts/skill_manager.py add-remote \
-  --agent zhongshu \
-  --name code_review \
-  --source https://raw.githubusercontent.com/openclaw-ai/skills-hub/main/code_review/SKILL.md \
-  --description "代码审查技能"
+  --agent menxia \
+  --name mmx_cli \
+  --source https://raw.githubusercontent.com/MiniMax-AI/cli/main/skill/SKILL.md \
+  --description "MiniMax 多模态 CLI 技能"
 
-# 一键导入官方 skills 库到指定 agents
+# 一键导入默认 skills 到指定 agents
 python3 scripts/skill_manager.py import-official-hub \
-  --agents zhongshu,menxia,shangshu,bingbu,xingbu
+  --agents menxia,shangshu
 
 # 列出所有已添加的远程 skills
 python3 scripts/skill_manager.py list-remote
 
 # 更新某个 skill 到最新版本
 python3 scripts/skill_manager.py update-remote \
-  --agent zhongshu \
-  --name code_review
+  --agent menxia \
+  --name mmx_cli
 ```
 
 #### 3️⃣ API 请求（自动化集成）
@@ -577,25 +577,22 @@ python3 scripts/skill_manager.py update-remote \
 curl -X POST http://localhost:7891/api/add-remote-skill \
   -H "Content-Type: application/json" \
   -d '{
-    "agentId": "zhongshu",
-    "skillName": "code_review",
-    "sourceUrl": "https://raw.githubusercontent.com/...",
-    "description": "代码审查"
+    "agentId": "menxia",
+    "skillName": "mmx_cli",
+    "sourceUrl": "https://raw.githubusercontent.com/MiniMax-AI/cli/main/skill/SKILL.md",
+    "description": "MiniMax 多模态 CLI 技能"
   }'
 
 # 查看所有远程 skills
 curl http://localhost:7891/api/remote-skills-list
 ```
 
-**官方 Skills Hub：** https://github.com/openclaw-ai/skills-hub
+**默认可导入 Skill：**
 
 支持的 Skills：
-- `code_review` — 代码审查（Python/JS/Go）
-- `api_design` — API 设计审查
-- `security_audit` — 安全审计
-- `data_analysis` — 数据分析
-- `doc_generation` — 文档生成
-- `test_framework` — 测试框架设计
+- `mmx_cli` — MiniMax 多模态 CLI 技能（文本、图像、视频、语音、音乐、搜索）
+
+如果你有自己的 Skills Hub，可以通过 `OPENCLAW_SKILLS_HUB_BASE` 或 `~/.openclaw/skills-hub-url` 配置自定义源。
 
 详见 [🎓 远程 Skills 资源管理指南](docs/remote-skills-guide.md)
 
@@ -636,7 +633,7 @@ curl http://localhost:7891/api/remote-skills-list
 
 - **[🎓 远程 Skills 资源管理指南](docs/remote-skills-guide.md)** — Skills 生态
   - 从网上连接和增补 skills，支持 GitHub/Gitee/任意 HTTPS URL
-  - 官方 Skills Hub 预设能力库
+  - 默认 Skills 源和自定义 Hub 支持
   - CLI 工具 + 看板 UI + Restful API
   - Skills 文件规范与安全防护
   - 支持版本管理和一键更新
@@ -711,17 +708,17 @@ docker compose up
 **排查**：
 ```bash
 # 测试网络连通性
-curl -I https://raw.githubusercontent.com/openclaw-ai/skills-hub/main/code_review/SKILL.md
+curl -I https://raw.githubusercontent.com/MiniMax-AI/cli/main/skill/SKILL.md
 
 # 如果超时，使用代理
 export https_proxy=http://your-proxy:port
-python3 scripts/skill_manager.py import-official-hub --agents zhongshu
+python3 scripts/skill_manager.py import-official-hub --agents menxia
 ```
 
 **常见原因**：
 - 中国大陆访问 GitHub raw 资源需要代理
 - 网络超时（已增加到 30 秒 + 自动重试 3 次）
-- 官方 Skills Hub 仓库维护中
+- 默认 skill 源无法访问，或自定义 Skills Hub 配置错误
 
 </details>
 

@@ -7,7 +7,7 @@
 - **GitHub 仓库** (raw.githubusercontent.com)
 - **任何 HTTPS URL** (需返回有效的 skill 文件)
 - **本地文件路径**
-- **内置仓库** (官方 skills 库)
+- **默认 Skills 源** (经验证可访问的内置导入源)
 
 ---
 
@@ -157,28 +157,32 @@ python3 scripts/skill_manager.py remove-remote \
 
 ---
 
-## 官方 Skills 库
+## 默认 Skills 源
 
-### OpenClaw Skills Hub
+### MiniMax CLI Skill
 
-> **官方 skills 库地址**: https://github.com/openclaw-ai/skills-hub
+默认导入源包含经验证可访问的 MiniMax CLI skill。旧的 `openclaw-ai/skills-hub` 仓库当前不可用，因此不再作为默认官方源。
 
 可用 skills 列表：
 
 | Skill 名称 | 描述 | 适用 Agent | 源 URL |
 |-----------|------|----------|--------|
-| `code_review` | 代码审查（支持 Python/JS/Go） | 兵部/刑部 | https://raw.githubusercontent.com/openclaw-ai/skills-hub/main/code_review/SKILL.md |
-| `api_design` | API 设计审查 | 兵部/工部 | https://raw.githubusercontent.com/openclaw-ai/skills-hub/main/api_design/SKILL.md |
-| `security_audit` | 安全审计 | 刑部 | https://raw.githubusercontent.com/openclaw-ai/skills-hub/main/security_audit/SKILL.md |
-| `data_analysis` | 数据分析 | 户部 | https://raw.githubusercontent.com/openclaw-ai/skills-hub/main/data_analysis/SKILL.md |
-| `doc_generation` | 文档生成 | 礼部 | https://raw.githubusercontent.com/openclaw-ai/skills-hub/main/doc_generation/SKILL.md |
-| `test_framework` | 测试框架设计 | 工部/刑部 | https://raw.githubusercontent.com/openclaw-ai/skills-hub/main/test_framework/SKILL.md |
+| `mmx_cli` | MiniMax 多模态 CLI 技能 | 门下省/尚书省 | https://raw.githubusercontent.com/MiniMax-AI/cli/main/skill/SKILL.md |
 
-**一键导入官方 skills**
+如果你维护自己的 Skills Hub，可以使用以下方式指定 Hub base URL。指定后，`import-official-hub` 会按 `<base>/<skill_name>/SKILL.md` 解析 `code_review`、`api_design`、`security_audit`、`data_analysis`、`doc_generation`、`test_framework` 等传统 skill 名称。
+
+```bash
+export OPENCLAW_SKILLS_HUB_BASE=https://your-hub/raw-base
+
+# 或写入本地配置
+echo "https://your-hub/raw-base" > ~/.openclaw/skills-hub-url
+```
+
+**一键导入默认 skills**
 
 ```bash
 python3 scripts/skill_manager.py import-official-hub \
-  --agents zhongshu,menxia,shangshu,bingbu,xingbu,libu
+  --agents menxia,shangshu
 ```
 
 ---
@@ -360,7 +364,7 @@ compatibleAgents: [bingbu, xingbu, menxia]
 2. **大小限制**: 最多 10 MB
 3. **超时保护**: 下载超过 30 秒自动中止
 4. **路径遍历防护**: 检查解析后的 skill 名称，禁用 `../` 模式
-5. **checksum 验证**: 可选的 GPG 签名验证（仅官方库）
+5. **checksum 验证**: 可选的 GPG 签名验证（适用于可信发布源）
 
 ### 隔离执行
 
@@ -397,7 +401,7 @@ A: 不支持（安全考虑）。可以：
 
 **Q: 如何创建自己的 skills 库？**
 
-A: 参考 [OpenClaw Skills Hub](https://github.com/openclaw-ai/skills-hub) 的结构创建自己的仓库，然后：
+A: 按 `<skill_name>/SKILL.md` 的结构创建自己的仓库，然后：
 
 ```bash
 git clone https://github.com/yourname/my-skills-hub.git
@@ -406,7 +410,7 @@ cd my-skills-hub
 # 提交 & 推送到 GitHub
 ```
 
-然后通过 URL 或官方库导入功能添加即可。
+然后通过 URL 添加，或通过 `OPENCLAW_SKILLS_HUB_BASE` / `~/.openclaw/skills-hub-url` 配置为自定义 Hub 后导入。
 
 ---
 
@@ -442,7 +446,7 @@ python3 scripts/skill_manager.py check-updates --interval weekly
 
 ### 5. 贡献社区
 
-成熟的 skills 可向 [OpenClaw Skills Hub](https://github.com/openclaw-ai/skills-hub) 贡献。
+成熟的 skills 可以沉淀到你自己的公开 Skills Hub，并通过 `OPENCLAW_SKILLS_HUB_BASE` 分享给团队使用。
 
 ---
 

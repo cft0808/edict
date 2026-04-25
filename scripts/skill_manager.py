@@ -14,7 +14,7 @@ Usage:
   
   python3 scripts/skill_manager.py remove-remote --agent zhongshu --name code_review
   
-  python3 scripts/skill_manager.py import-official-hub --agents zhongshu,menxia,shangshu
+  python3 scripts/skill_manager.py import-official-hub --agents menxia,shangshu
 """
 import sys
 import json
@@ -60,7 +60,7 @@ def _download_file(url: str, timeout: int = 30, retries: int = 3) -> str:
     if 'timed out' in str(last_error).lower() or '超时' in str(last_error):
         hint = '\n   💡 提示: 如果在中国大陆，请设置代理 export https_proxy=http://proxy:port'
     elif '404' in str(last_error):
-        hint = '\n   💡 提示: 官方 Skills Hub 可能尚未发布该 skill，请检查 URL 是否正确'
+        hint = '\n   💡 提示: 远程 skill URL 不存在，请检查 URL 或自定义 Skills Hub 配置'
     raise Exception(f'{last_error} (已重试 {retries} 次){hint}')
 
 
@@ -218,33 +218,44 @@ def remove_remote(agent_id: str, name: str) -> bool:
         return False
 
 
-OFFICIAL_SKILLS_HUB_BASE = 'https://raw.githubusercontent.com/openclaw-ai/skills-hub/main'
-# 备用镜像（GitHub 国内访问不稳定时自动切换）
-_FALLBACK_HUB_BASES = [
-    'https://ghproxy.com/https://raw.githubusercontent.com/openclaw-ai/skills-hub/main',
-    'https://raw.gitmirror.com/openclaw-ai/skills-hub/main',
-]
-
-# 支持通过环境变量覆盖 Hub 地址
+# 支持通过环境变量或本地配置指定自定义 Hub 地址
 _HUB_BASE_ENV = 'OPENCLAW_SKILLS_HUB_BASE'
 
-def _get_hub_url(skill_name):
-    """获取 skill 的 Hub URL，支持环境变量覆盖"""
+
+def _get_configured_hub_base():
+    """Return a user-provided skills hub base URL, if configured."""
+    env_base = os.environ.get(_HUB_BASE_ENV)
+    if env_base:
+        return env_base
+
     hub_url_file = OCLAW_HOME / 'skills-hub-url'
-    base = hub_url_file.read_text().strip() if hub_url_file.exists() else None
-    base = base or os.environ.get(_HUB_BASE_ENV) or OFFICIAL_SKILLS_HUB_BASE
+    return hub_url_file.read_text().strip() if hub_url_file.exists() else None
+
+
+def _get_hub_url(base, skill_name):
+    """获取 skill 的 Hub URL，支持环境变量/本地配置覆盖"""
     return f'{base.rstrip("/")}/{skill_name}/SKILL.md'
 
 
 OFFICIAL_SKILLS_HUB = {
-    'code_review': _get_hub_url('code_review'),
-    'api_design': _get_hub_url('api_design'),
-    'security_audit': _get_hub_url('security_audit'),
-    'data_analysis': _get_hub_url('data_analysis'),
-    'doc_generation': _get_hub_url('doc_generation'),
-    'test_framework': _get_hub_url('test_framework'),
     'mmx_cli': 'https://raw.githubusercontent.com/MiniMax-AI/cli/main/skill/SKILL.md',
 }
+
+_HUB_SKILL_NAMES = (
+    'code_review',
+    'api_design',
+    'security_audit',
+    'data_analysis',
+    'doc_generation',
+    'test_framework',
+)
+
+_configured_hub_base = _get_configured_hub_base()
+if _configured_hub_base:
+    OFFICIAL_SKILLS_HUB.update({
+        skill_name: _get_hub_url(_configured_hub_base, skill_name)
+        for skill_name in _HUB_SKILL_NAMES
+    })
 
 SKILL_AGENT_MAPPING = {
     'code_review': ('bingbu', 'xingbu', 'menxia'),
@@ -258,14 +269,12 @@ SKILL_AGENT_MAPPING = {
 
 
 def import_official_hub(agent_ids: list) -> bool:
-    """从官方 Skills Hub 导入指定的 skills 到指定 agents。
+    """从默认 Skills 源或自定义 Hub 导入 skills 到指定 agents。
     如果未指定 agents，使用该 skill 的推荐 agents。
     """
-    if not agent_ids:
-        print('❌ 未指定 agent，使用推荐配置...\n')
-        for skill_name, recommended_agents in SKILL_AGENT_MAPPING.items():
-            agent_ids.extend(recommended_agents)
-        agent_ids = list(set(agent_ids))
+    requested_agents = list(agent_ids)
+    if not requested_agents:
+        print('ℹ️ 未指定 agent，使用推荐配置...\n')
     
     total = 0
     success = 0
@@ -273,27 +282,14 @@ def import_official_hub(agent_ids: list) -> bool:
     
     for skill_name, url in OFFICIAL_SKILLS_HUB.items():
         # 确定目标 agents
-        target_agents = agent_ids
-        if not agent_ids:
-            target_agents = SKILL_AGENT_MAPPING.get(skill_name, ['menxia'])
+        target_agents = requested_agents or list(SKILL_AGENT_MAPPING.get(skill_name, ['menxia']))
         
         print(f'\n📥 正在导入 skill: {skill_name}')
         print(f'   目标 agents: {", ".join(target_agents)}')
         
-        # 尝试主 URL，失败则自动切换镜像
-        effective_url = url
         for agent_id in target_agents:
             total += 1
-            ok = add_remote(agent_id, skill_name, effective_url, f'官方 skill：{skill_name}')
-            if not ok and effective_url == url:
-                # 主 URL 失败，尝试镜像
-                for fb_base in _FALLBACK_HUB_BASES:
-                    fb_url = f'{fb_base.rstrip("/")}/{skill_name}/SKILL.md'
-                    print(f'   🔄 尝试镜像: {fb_url}')
-                    ok = add_remote(agent_id, skill_name, fb_url, f'官方 skill：{skill_name}')
-                    if ok:
-                        effective_url = fb_url  # 后续 agent 也用这个镜像
-                        break
+            ok = add_remote(agent_id, skill_name, url, f'默认 skill：{skill_name}')
             if ok:
                 success += 1
             else:
@@ -305,10 +301,10 @@ def import_official_hub(agent_ids: list) -> bool:
         for f in failed:
             print(f'   - {f}')
         print(f'\n💡 排查建议:')
-        print(f'   1. 检查网络: curl -I {OFFICIAL_SKILLS_HUB_BASE}/code_review/SKILL.md')
+        print(f'   1. 检查网络: curl -I <skill-url>')
         print(f'   2. 设置代理: export https_proxy=http://your-proxy:port')
-        print(f'   3. 使用镜像: export {_HUB_BASE_ENV}=https://ghproxy.com/{OFFICIAL_SKILLS_HUB_BASE}')
-        print(f'   4. 自定义源: echo "https://your-mirror/skills" > {OCLAW_HOME / "skills-hub-url"}')
+        print(f'   3. 自定义 Hub: export {_HUB_BASE_ENV}=https://your-hub/raw-base')
+        print(f'   4. 自定义源: echo "https://your-hub/raw-base" > {OCLAW_HOME / "skills-hub-url"}')
         print(f'   5. 单独重试: python3 scripts/skill_manager.py add-remote --agent <agent> --name <skill> --source <url>')
     return success == total
 
@@ -339,7 +335,7 @@ def main():
     remove_parser.add_argument('--name', required=True, help='Skill 名称')
     
     # import-official-hub
-    import_parser = subparsers.add_parser('import-official-hub', help='从官方库导入 skills')
+    import_parser = subparsers.add_parser('import-official-hub', help='从默认 Skills 源或自定义 Hub 导入 skills')
     import_parser.add_argument('--agents', default='', help='逗号分隔的 Agent IDs（可选）')
     
     # check-updates
