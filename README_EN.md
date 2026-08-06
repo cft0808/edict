@@ -245,6 +245,8 @@ bash edict.sh stop     # Stop
 </details>
 
 > 📖 See [Getting Started Guide](docs/getting-started.md) for detailed walkthrough.
+>
+> Configure MiniMax before selecting it in Model Config: [MiniMax Provider Setup](docs/minimax-provider-setup.md).
 
 ---
 

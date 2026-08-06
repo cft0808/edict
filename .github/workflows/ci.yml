@@ -38,7 +38,7 @@ jobs:
 
       - name: Syntax check (py_compile)
         run: |
-          find scripts dashboard -name '*.py' | while read f; do
+          find scripts dashboard -type f -name '*.py' | while read f; do
             echo "  checking $f"
             python3 -m py_compile "$f"
           done
@@ -109,7 +109,7 @@ jobs:
 
       - name: Syntax check (py_compile)
         run: |
-          find edict/backend -name '*.py' | while read f; do
+          find edict/backend -type f -name '*.py' | while read f; do
             echo "  checking $f"
             python3 -m py_compile "$f"
           done

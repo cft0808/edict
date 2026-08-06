@@ -46,6 +46,8 @@ KNOWN_MODELS = [
     {'id': 'copilot/gpt-4o',              'label': 'GPT-4o',            'provider': 'Copilot'},
     {'id': 'copilot/gemini-2.5-pro',      'label': 'Gemini 2.5 Pro',    'provider': 'Copilot'},
     {'id': 'copilot/o3-mini',             'label': 'o3-mini',           'provider': 'Copilot'},
+    {'id': 'minimax/MiniMax-M3',          'label': 'MiniMax M3',        'provider': 'MiniMax'},
+    {'id': 'minimax/MiniMax-M2.7',        'label': 'MiniMax M2.7',      'provider': 'MiniMax'},
 ]
 
 
