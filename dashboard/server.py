@@ -1099,6 +1099,56 @@ def _scheduler_mark_progress(task, note=''):
         _scheduler_add_flow(task, f'进展确认：{note}')
 
 
+def _final_reply_entry(task):
+    """Return the latest completed 太子 → 皇上 reply, if it is safe to close."""
+    todos = task.get('todos') or []
+    if any(
+        not isinstance(todo, dict) or todo.get('status') != 'completed'
+        for todo in todos
+    ):
+        return None
+
+    flow_log = task.get('flow_log') or []
+    if not isinstance(flow_log, list):
+        return None
+    return next((
+        entry for entry in reversed(flow_log)
+        if isinstance(entry, dict)
+        and str(entry.get('from', '')).strip() == '太子'
+        and str(entry.get('to', '')).strip() == '皇上'
+        and (
+            entry.get('kind') == 'completion'
+            or str(entry.get('remark', '')).lstrip().startswith('✅ 回奏皇上')
+        )
+    ), None)
+
+
+def _finalize_returned_task(task):
+    """Heal a legacy final reply into the terminal scheduler state."""
+    final_entry = _final_reply_entry(task)
+    if final_entry is None:
+        return False
+
+    completed_at = final_entry.get('at') or task.get('updatedAt') or now_iso()
+    task['state'] = 'Done'
+    task['org'] = '皇上'
+    task['now'] = final_entry.get('remark') or '✅ 已回奏皇上'
+    task['block'] = '无'
+    task['completedAt'] = task.get('completedAt') or completed_at
+    task['updatedAt'] = now_iso()
+    sched = _ensure_scheduler(task)
+    sched.update({
+        'enabled': False,
+        'stallSince': None,
+        'retryCount': 0,
+        'escalationLevel': 0,
+        'lastProgressAt': task['completedAt'],
+        'lastDispatchStatus': 'completed',
+        'lastDispatchTrigger': 'taizi-final-reply',
+    })
+    return True
+
+
 def _resolve_openclaw_bin():
     """Return the OpenClaw CLI path used by dashboard dispatch.
 
@@ -1154,24 +1204,27 @@ def handle_scheduler_retry(task_id, reason=''):
     if not task:
         return {'ok': False, 'error': f'任务 {task_id} 不存在'}
     state = task.get('state', '')
-    if state in _TERMINAL_STATES or state == 'Blocked':
+    if state in _TERMINAL_STATES or state == 'Blocked' or _final_reply_entry(task):
         return {'ok': False, 'error': f'任务 {task_id} 当前状态 {state} 不支持重试'}
 
-    result = {'retryCount': 0, 'state': state}
+    result = {'applied': False, 'retryCount': 0, 'state': state}
 
     def _apply(task):
         cur = task.get('state', '')
-        if cur in _TERMINAL_STATES or cur == 'Blocked':
+        if cur in _TERMINAL_STATES or cur == 'Blocked' or _final_reply_entry(task):
             return  # state changed between pre-check and lock; skip
         sched = _ensure_scheduler(task)
         sched['retryCount'] = int(sched.get('retryCount') or 0) + 1
         sched['lastRetryAt'] = now_iso()
         sched['lastDispatchTrigger'] = 'taizi-retry'
         _scheduler_add_flow(task, f'触发重试第{sched["retryCount"]}次：{reason or "超时未推进"}')
+        result['applied'] = True
         result['retryCount'] = sched['retryCount']
         result['state'] = cur
 
     modify_task(task_id, _apply)
+    if not result['applied']:
+        return {'ok': False, 'error': f'任务 {task_id} 已结束，无需重试'}
 
     dispatch_for_state(task_id, task, result['state'], trigger='taizi-retry')
     return {'ok': True, 'message': f'{task_id} 已触发重试派发', 'retryCount': result['retryCount']}
@@ -1183,32 +1236,52 @@ def handle_scheduler_escalate(task_id, reason=''):
     if not task:
         return {'ok': False, 'error': f'任务 {task_id} 不存在'}
     state = task.get('state', '')
-    if state in _TERMINAL_STATES:
+    if state in _TERMINAL_STATES or _final_reply_entry(task):
         return {'ok': False, 'error': f'任务 {task_id} 已结束，无需升级'}
 
-    sched = _ensure_scheduler(task)
-    current_level = int(sched.get('escalationLevel') or 0)
-    next_level = min(current_level + 1, 2)
-    target = 'menxia' if next_level == 1 else 'shangshu'
-    target_label = '门下省' if next_level == 1 else '尚书省'
+    result = {'applied': False, 'state': state, 'level': 0, 'target': '', 'target_label': ''}
 
-    sched['escalationLevel'] = next_level
-    sched['lastEscalatedAt'] = now_iso()
-    _scheduler_add_flow(task, f'升级到{target_label}协调：{reason or "任务停滞"}', to=target_label)
-    task['updatedAt'] = now_iso()
-    save_tasks(tasks)
+    def _apply(task):
+        cur = task.get('state', '')
+        if cur in _TERMINAL_STATES or _final_reply_entry(task):
+            return
+        sched = _ensure_scheduler(task)
+        current_level = int(sched.get('escalationLevel') or 0)
+        next_level = min(current_level + 1, 2)
+        target = 'menxia' if next_level == 1 else 'shangshu'
+        target_label = '门下省' if next_level == 1 else '尚书省'
+        sched['escalationLevel'] = next_level
+        sched['lastEscalatedAt'] = now_iso()
+        _scheduler_add_flow(task, f'升级到{target_label}协调：{reason or "任务停滞"}', to=target_label)
+        result.update({
+            'applied': True,
+            'state': cur,
+            'level': next_level,
+            'target': target,
+            'target_label': target_label,
+        })
+
+    modify_task(task_id, _apply)
+    if not result['applied']:
+        return {'ok': False, 'error': f'任务 {task_id} 已结束，无需升级'}
 
     msg = (
         f'🧭 太子调度升级通知\n'
         f'任务ID: {task_id}\n'
-        f'当前状态: {state}\n'
+        f'当前状态: {result["state"]}\n'
         f'停滞处理: 请你介入协调推进\n'
         f'原因: {reason or "任务超过阈值未推进"}\n'
         f'⚠️ 看板已有任务，请勿重复创建。'
     )
-    wake_agent(target, msg)
+    if not _dispatch_is_current(task_id, result['state']):
+        return {'ok': False, 'error': f'任务 {task_id} 已结束，无需升级'}
+    wake_agent(result['target'], msg)
 
-    return {'ok': True, 'message': f'{task_id} 已升级至{target_label}', 'escalationLevel': next_level}
+    return {
+        'ok': True,
+        'message': f'{task_id} 已升级至{result["target_label"]}',
+        'escalationLevel': result['level'],
+    }
 
 
 def handle_scheduler_rollback(task_id, reason=''):
@@ -1217,15 +1290,19 @@ def handle_scheduler_rollback(task_id, reason=''):
     task = next((t for t in tasks if t.get('id') == task_id), None)
     if not task:
         return {'ok': False, 'error': f'任务 {task_id} 不存在'}
+    if task.get('state', '') in _TERMINAL_STATES or _final_reply_entry(task):
+        return {'ok': False, 'error': f'任务 {task_id} 已结束，无需回滚'}
     sched = _ensure_scheduler(task)
     snapshot = sched.get('snapshot') or {}
     snap_state = snapshot.get('state')
     if not snap_state:
         return {'ok': False, 'error': f'任务 {task_id} 无可用回滚快照'}
 
-    result = {'snap_state': snap_state}
+    result = {'applied': False, 'snap_state': snap_state}
 
     def _apply(task):
+        if task.get('state', '') in _TERMINAL_STATES or _final_reply_entry(task):
+            return
         sched = _ensure_scheduler(task)
         snapshot = sched.get('snapshot') or {}
         s_state = snapshot.get('state')
@@ -1241,9 +1318,13 @@ def handle_scheduler_rollback(task_id, reason=''):
         sched['stallSince'] = None
         sched['lastProgressAt'] = now_iso()
         _scheduler_add_flow(task, f'执行回滚：{old_state} → {s_state}，原因：{reason or "停滞恢复"}')
+        result['applied'] = True
         result['snap_state'] = s_state
 
     modify_task(task_id, _apply)
+
+    if not result['applied']:
+        return {'ok': False, 'error': f'任务 {task_id} 已结束，无需回滚'}
 
     if result['snap_state'] not in _TERMINAL_STATES:
         dispatch_for_state(task_id, task, result['snap_state'], trigger='taizi-rollback')
@@ -1277,10 +1358,15 @@ def handle_scheduler_scan(threshold_sec=600):
             state = task.get('state', '')
             if not task_id or state in _TERMINAL_STATES or task.get('archived'):
                 continue
+            if _finalize_returned_task(task):
+                changed = True
+                continue
             if state == 'Blocked':
                 continue
 
             sched = _ensure_scheduler(task)
+            if sched.get('enabled') is False:
+                continue
             task_threshold = int(sched.get('stallThresholdSec') or threshold_sec)
             last_progress = _parse_iso(sched.get('lastProgressAt') or task.get('updatedAt'))
             if not last_progress:
@@ -1362,10 +1448,25 @@ def handle_scheduler_scan(threshold_sec=600):
 
     for task_id, state in pending_retries:
         retry_task = next((t for t in tasks if t.get('id') == task_id), None)
-        if retry_task:
+        retry_sched = (retry_task or {}).get('_scheduler') or {}
+        if (
+            retry_task
+            and retry_task.get('state') == state
+            and state not in _TERMINAL_STATES
+            and retry_sched.get('enabled') is not False
+        ):
             dispatch_for_state(task_id, retry_task, state, trigger='taizi-scan-retry')
 
     for task_id, state, target, target_label, stalled_sec in pending_escalates:
+        current_task = next((t for t in tasks if t.get('id') == task_id), None)
+        current_sched = (current_task or {}).get('_scheduler') or {}
+        if (
+            not current_task
+            or current_task.get('state') != state
+            or state in _TERMINAL_STATES
+            or current_sched.get('enabled') is False
+        ):
+            continue
         msg = (
             f'🧭 太子调度升级通知\n'
             f'任务ID: {task_id}\n'
@@ -1378,7 +1479,13 @@ def handle_scheduler_scan(threshold_sec=600):
 
     for task_id, state in pending_rollbacks:
         rollback_task = next((t for t in tasks if t.get('id') == task_id), None)
-        if rollback_task and state not in _TERMINAL_STATES:
+        rollback_sched = (rollback_task or {}).get('_scheduler') or {}
+        if (
+            rollback_task
+            and rollback_task.get('state') == state
+            and state not in _TERMINAL_STATES
+            and rollback_sched.get('enabled') is not False
+        ):
             dispatch_for_state(task_id, rollback_task, state, trigger='taizi-auto-rollback')
 
     return {
@@ -1399,6 +1506,8 @@ def _startup_recover_queued_dispatches():
         task_id = task.get('id', '')
         state = task.get('state', '')
         if not task_id or state in _TERMINAL_STATES or task.get('archived'):
+            continue
+        if _final_reply_entry(task):
             continue
         sched = task.get('_scheduler') or {}
         if sched.get('lastDispatchStatus') == 'queued':
@@ -2111,6 +2220,41 @@ _STATE_LABELS = {
 }
 
 
+def _task_accepts_dispatch(task, expected_state):
+    """Return whether a task still matches a queued dispatch."""
+    if not task or task.get('state') != expected_state or task.get('archived'):
+        return False
+    if expected_state in _TERMINAL_STATES or expected_state == 'Blocked':
+        return False
+    sched = task.get('_scheduler') or {}
+    if isinstance(sched, dict) and sched.get('enabled') is False:
+        return False
+    return _final_reply_entry(task) is None
+
+
+def _update_current_dispatch(task_id, expected_state, updater):
+    """Apply a dispatch mutation only while the task is still dispatchable."""
+    applied = [False]
+
+    def _apply(tasks):
+        task = next((t for t in tasks if t.get('id') == task_id), None)
+        if not _task_accepts_dispatch(task, expected_state):
+            return tasks
+        sched = _ensure_scheduler(task)
+        updater(task, sched)
+        task['updatedAt'] = now_iso()
+        applied[0] = True
+        return tasks
+
+    modify_tasks(_apply)
+    return applied[0]
+
+
+def _dispatch_is_current(task_id, expected_state):
+    task = next((t for t in load_tasks() if t.get('id') == task_id), None)
+    return _task_accepts_dispatch(task, expected_state)
+
+
 def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
     """推进/审批后自动派发对应 Agent（后台异步，不阻塞响应）。"""
     agent_id = _STATE_AGENT_MAP.get(new_state)
@@ -2121,7 +2265,7 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
         log.info(f'ℹ️ {task_id} 新状态 {new_state} 无对应 Agent，跳过自动派发')
         return
 
-    _update_task_scheduler(task_id, lambda t, s: (
+    queued = _update_current_dispatch(task_id, new_state, lambda t, s: (
         s.update({
             'lastDispatchAt': now_iso(),
             'lastDispatchStatus': 'queued',
@@ -2130,6 +2274,9 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
         }),
         _scheduler_add_flow(t, f'已入队派发：{new_state} → {agent_id}（{trigger}）', to=_STATE_LABELS.get(new_state, new_state))
     ))
+    if not queued:
+        log.info(f'ℹ️ {task_id} 状态已变化或调度已关闭，取消派发 {new_state} → {agent_id}')
+        return
 
     title = task.get('title', '(无标题)')
     target_dept = task.get('targetDept', '')
@@ -2175,6 +2322,9 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
 
     def _do_dispatch():
         try:
+            if not _dispatch_is_current(task_id, new_state):
+                log.info(f'ℹ️ {task_id} 状态已变化或调度已关闭，取消后台派发')
+                return
             # Gateway 可能暂时不可达（休眠恢复、进程重启），等待后重试
             import time as _time
             _gw_alive = False
@@ -2186,7 +2336,7 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
                     _time.sleep(5 * (_gw_attempt + 1))  # 5s, 10s
             if not _gw_alive:
                 log.warning(f'⚠️ {task_id} 自动派发跳过: Gateway 未启动（重试3次仍不可达）')
-                _update_task_scheduler(task_id, lambda t, s: s.update({
+                _update_current_dispatch(task_id, new_state, lambda t, s: s.update({
                     'lastDispatchAt': now_iso(),
                     'lastDispatchStatus': 'gateway-offline',
                     'lastDispatchAgent': agent_id,
@@ -2201,7 +2351,7 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
             if not openclaw_bin:
                 err = 'OpenClaw CLI 未找到：请确认已安装 openclaw 并加入 PATH；Windows 可设置 OPENCLAW_BIN 指向 openclaw.cmd'
                 log.warning(f'⚠️ {task_id} 自动派发异常: {err}')
-                _update_task_scheduler(task_id, lambda t, s: (
+                _update_current_dispatch(task_id, new_state, lambda t, s: (
                     s.update({
                         'lastDispatchAt': now_iso(),
                         'lastDispatchStatus': 'openclaw-missing',
@@ -2218,11 +2368,14 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
             max_retries = 2
             err = ''
             for attempt in range(1, max_retries + 1):
+                if not _dispatch_is_current(task_id, new_state):
+                    log.info(f'ℹ️ {task_id} 状态已变化或调度已关闭，取消后台派发')
+                    return
                 log.info(f'🔄 自动派发 {task_id} → {agent_id} (第{attempt}次)...')
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=310)
                 if result.returncode == 0:
                     log.info(f'✅ {task_id} 自动派发成功 → {agent_id}')
-                    _update_task_scheduler(task_id, lambda t, s: (
+                    _update_current_dispatch(task_id, new_state, lambda t, s: (
                         s.update({
                             'lastDispatchAt': now_iso(),
                             'lastDispatchStatus': 'success',
@@ -2239,7 +2392,7 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
                     import time
                     time.sleep(5)
             log.error(f'❌ {task_id} 自动派发最终失败 → {agent_id}')
-            _update_task_scheduler(task_id, lambda t, s: (
+            _update_current_dispatch(task_id, new_state, lambda t, s: (
                 s.update({
                     'lastDispatchAt': now_iso(),
                     'lastDispatchStatus': 'failed',
@@ -2251,7 +2404,7 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
             ))
         except subprocess.TimeoutExpired:
             log.error(f'❌ {task_id} 自动派发超时 → {agent_id}')
-            _update_task_scheduler(task_id, lambda t, s: (
+            _update_current_dispatch(task_id, new_state, lambda t, s: (
                 s.update({
                     'lastDispatchAt': now_iso(),
                     'lastDispatchStatus': 'timeout',
@@ -2264,7 +2417,7 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
         except FileNotFoundError as e:
             err = f'OpenClaw CLI 未找到：{e}'
             log.warning(f'⚠️ {task_id} 自动派发异常: {err}')
-            _update_task_scheduler(task_id, lambda t, s: (
+            _update_current_dispatch(task_id, new_state, lambda t, s: (
                 s.update({
                     'lastDispatchAt': now_iso(),
                     'lastDispatchStatus': 'openclaw-missing',
@@ -2276,7 +2429,7 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
             ))
         except Exception as e:
             log.warning(f'⚠️ {task_id} 自动派发异常: {e}')
-            _update_task_scheduler(task_id, lambda t, s: (
+            _update_current_dispatch(task_id, new_state, lambda t, s: (
                 s.update({
                     'lastDispatchAt': now_iso(),
                     'lastDispatchStatus': 'error',

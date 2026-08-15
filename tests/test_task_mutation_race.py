@@ -43,6 +43,58 @@ def _setup_server(monkeypatch, tmp_path, tasks=None):
     return srv, data_dir, tasks_path
 
 
+def test_complete_atomically_finalizes_task_and_is_idempotent(monkeypatch, tmp_path):
+    """The documented final-reply command must also close scheduling state."""
+    import kanban_update as kb
+
+    tasks_path = tmp_path / 'tasks_source.json'
+    tasks_path.write_text(json.dumps([{
+        'id': 'T-FINAL-FLOW', 'title': '待回奏任务', 'state': 'Zhongshu',
+        'org': '中书省', 'todos': [],
+        'flow_log': [],
+        '_scheduler': {
+            'enabled': True, 'lastDispatchStatus': 'success',
+            'stallSince': '2026-04-22T02:00:00Z',
+        },
+    }], ensure_ascii=False), encoding='utf-8')
+    monkeypatch.setattr(kb, 'TASKS_FILE', tasks_path)
+    monkeypatch.setattr(kb, '_trigger_refresh', lambda: None)
+    monkeypatch.setattr(kb, '_append_audit', lambda *a, **kw: None)
+
+    assert kb.cmd_complete('T-FINAL-FLOW', '任务已完成') is True
+    first = json.loads(tasks_path.read_text(encoding='utf-8'))[0]
+    assert kb.cmd_complete('T-FINAL-FLOW', '不同的重复摘要') is True
+    task = json.loads(tasks_path.read_text(encoding='utf-8'))[0]
+
+    assert task == first
+    assert task['state'] == 'Done'
+    assert task['org'] == '皇上'
+    assert task['completedAt']
+    assert task['_scheduler']['enabled'] is False
+    assert task['_scheduler']['lastDispatchStatus'] == 'completed'
+    assert len(task['flow_log']) == 1
+    assert task['flow_log'][0]['kind'] == 'completion'
+
+
+def test_complete_rejects_incomplete_todos(monkeypatch, tmp_path):
+    """A final reply cannot bypass the existing todo completion gate."""
+    import kanban_update as kb
+
+    original = [{
+        'id': 'T-INCOMPLETE', 'title': '未完成任务', 'state': 'Doing',
+        'org': '工部', 'ready_to_close': True,
+        'todos': [{'id': '1', 'title': '执行', 'status': 'in-progress'}],
+        'flow_log': [],
+    }]
+    tasks_path = tmp_path / 'tasks_source.json'
+    tasks_path.write_text(json.dumps(original, ensure_ascii=False), encoding='utf-8')
+    monkeypatch.setattr(kb, 'TASKS_FILE', tasks_path)
+    monkeypatch.setattr(kb, '_append_audit', lambda *a, **kw: None)
+
+    assert kb.cmd_complete('T-INCOMPLETE', '不应完结') is False
+    assert json.loads(tasks_path.read_text(encoding='utf-8')) == original
+
+
 # ── Test: modify_tasks holds file lock ──
 
 
@@ -126,6 +178,73 @@ class TestUpdateTaskSchedulerAtomicity:
         assert result is False
 
 
+class TestDispatchCompletionGuard:
+    """Dispatch must not cross a concurrent terminal-state boundary."""
+
+    def test_dispatch_queue_rejects_completed_task(self, monkeypatch, tmp_path):
+        task = {
+            'id': 'T-DISPATCH-DONE', 'title': '已完成', 'state': 'Done',
+            'org': '皇上', 'completedAt': '2026-04-22T02:00:00Z',
+            '_scheduler': {'enabled': False, 'lastDispatchStatus': 'completed'},
+        }
+        srv, _, tasks_path = _setup_server(monkeypatch, tmp_path, [task])
+        started = []
+
+        class FakeThread:
+            def __init__(self, **kwargs):
+                self.target = kwargs['target']
+
+            def start(self):
+                started.append(self.target)
+
+        monkeypatch.setattr(srv.threading, 'Thread', FakeThread)
+        stale_snapshot = dict(task, state='Zhongshu', org='中书省')
+
+        srv.dispatch_for_state('T-DISPATCH-DONE', stale_snapshot, 'Zhongshu', trigger='test')
+
+        assert started == []
+        assert json.loads(tasks_path.read_text(encoding='utf-8'))[0] == task
+
+    def test_background_dispatch_rechecks_after_completion(self, monkeypatch, tmp_path):
+        task = {
+            'id': 'T-DISPATCH-RACE', 'title': '并发完成', 'state': 'Zhongshu',
+            'org': '中书省',
+            '_scheduler': {'enabled': True, 'lastDispatchStatus': 'idle'},
+        }
+        srv, _, tasks_path = _setup_server(monkeypatch, tmp_path, [task])
+        targets = []
+
+        class FakeThread:
+            def __init__(self, **kwargs):
+                self.target = kwargs['target']
+
+            def start(self):
+                targets.append(self.target)
+
+        monkeypatch.setattr(srv.threading, 'Thread', FakeThread)
+        monkeypatch.setattr(
+            srv.subprocess,
+            'run',
+            lambda *a, **kw: (_ for _ in ()).throw(AssertionError('must not dispatch')),
+        )
+
+        srv.dispatch_for_state('T-DISPATCH-RACE', task, 'Zhongshu', trigger='test')
+        assert len(targets) == 1
+
+        def finish(current):
+            current['state'] = 'Done'
+            current['org'] = '皇上'
+            current['_scheduler']['enabled'] = False
+            current['_scheduler']['lastDispatchStatus'] = 'completed'
+
+        srv.modify_task('T-DISPATCH-RACE', finish)
+        targets[0]()
+
+        updated = json.loads(tasks_path.read_text(encoding='utf-8'))[0]
+        assert updated['state'] == 'Done'
+        assert updated['_scheduler']['lastDispatchStatus'] == 'completed'
+
+
 # ── Test: handle_scheduler_scan uses modify_tasks ──
 
 
@@ -167,6 +286,84 @@ class TestSchedulerScanAtomicity:
         sched = data[0].get('_scheduler', {})
         assert sched['retryCount'] == 1
         assert sched['lastDispatchTrigger'] == 'taizi-scan-retry'
+
+    def test_scan_finalizes_returned_task_without_redispatch(self, monkeypatch, tmp_path):
+        """A completed final reply must heal the task instead of retrying it."""
+        import datetime
+
+        old_ts = (
+            datetime.datetime.now(datetime.timezone.utc)
+            - datetime.timedelta(seconds=700)
+        ).isoformat()
+        task = {
+            'id': 'T-RETURNED', 'title': '已回奏任务', 'state': 'Zhongshu',
+            'org': '皇上', 'updatedAt': old_ts, 'ready_to_close': True,
+            'todos': [{'id': '1', 'title': '执行', 'status': 'completed'}],
+            'flow_log': [{
+                'at': old_ts, 'from': '太子', 'to': '皇上',
+                'remark': '✅ 回奏皇上：任务已完成',
+            }],
+            '_scheduler': {
+                'enabled': True, 'stallThresholdSec': 600, 'maxRetry': 2,
+                'retryCount': 0, 'escalationLevel': 0, 'autoRollback': True,
+                'lastProgressAt': old_ts, 'stallSince': None,
+                'lastDispatchStatus': 'idle', 'rollbackCount': 0,
+                'snapshot': {'state': 'Taizi', 'org': '太子', 'now': '', 'savedAt': old_ts, 'note': 'init'},
+            },
+        }
+        srv, _, tasks_path = _setup_server(monkeypatch, tmp_path, [task])
+
+        dispatched = []
+        monkeypatch.setattr(srv, 'dispatch_for_state', lambda *a, **kw: dispatched.append((a, kw)))
+        monkeypatch.setattr(srv, 'wake_agent', lambda *a, **kw: dispatched.append((a, kw)))
+
+        result = srv.handle_scheduler_scan(threshold_sec=600)
+
+        assert result['ok'] is True
+        assert result['count'] == 0
+        assert dispatched == []
+        updated = json.loads(tasks_path.read_text(encoding='utf-8'))[0]
+        assert updated['state'] == 'Done'
+        assert updated['org'] == '皇上'
+        assert updated['completedAt']
+        assert updated['_scheduler']['enabled'] is False
+        assert updated['_scheduler']['lastDispatchStatus'] == 'completed'
+
+    def test_scan_rechecks_state_before_retry_side_effect(self, monkeypatch, tmp_path):
+        """A completion committed after scanning must cancel queued dispatch."""
+        import datetime
+
+        old_ts = (
+            datetime.datetime.now(datetime.timezone.utc)
+            - datetime.timedelta(seconds=700)
+        ).isoformat()
+        task = {
+            'id': 'T-RACE-COMPLETE', 'title': '扫描并发收口', 'state': 'Zhongshu',
+            'org': '中书省', 'updatedAt': old_ts,
+            '_scheduler': {
+                'enabled': True, 'stallThresholdSec': 600, 'maxRetry': 2,
+                'retryCount': 0, 'escalationLevel': 0,
+                'lastProgressAt': old_ts, 'lastDispatchStatus': 'idle',
+            },
+        }
+        srv, _, _ = _setup_server(monkeypatch, tmp_path, [task])
+        real_load_tasks = srv.load_tasks
+
+        def complete_before_dispatch():
+            current = real_load_tasks()
+            current[0]['state'] = 'Done'
+            current[0]['_scheduler']['enabled'] = False
+            current[0]['_scheduler']['lastDispatchStatus'] = 'completed'
+            return current
+
+        dispatched = []
+        monkeypatch.setattr(srv, 'load_tasks', complete_before_dispatch)
+        monkeypatch.setattr(srv, 'dispatch_for_state', lambda *a, **kw: dispatched.append((a, kw)))
+
+        result = srv.handle_scheduler_scan(threshold_sec=600)
+
+        assert result['count'] == 1
+        assert dispatched == []
 
 
 # ── Test: concurrent modify_task calls don't clobber ──
