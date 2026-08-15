@@ -22,6 +22,9 @@
   # 完成任务
   python3 kanban_update.py done JJC-20260223-012 "/path/to/output" "任务完成摘要"
 
+  # 最终回奏并关闭调度
+  python3 kanban_update.py complete JJC-20260223-012 "最终回奏摘要"
+
   # 添加/更新子任务 todo
   python3 kanban_update.py todo JJC-20260223-012 1 "实现API接口" in-progress
   python3 kanban_update.py todo JJC-20260223-012 1 "" completed
@@ -160,7 +163,7 @@ def _append_audit(task_id, agent, action, old_val=None, new_val=None, reason="")
 
 # ── 越权检测（Agent 权限策略）──
 AGENT_POLICY = {
-    "taizi":    {"role": "coordination", "commands": {"create", "state", "flow", "progress", "todo", "memory", "task-memo"}},
+    "taizi":    {"role": "coordination", "commands": {"create", "state", "flow", "complete", "progress", "todo", "memory", "task-memo"}},
     "zhongshu": {"role": "coordination", "commands": {"state", "flow", "progress", "todo", "memory", "task-memo", "delegate"}},
     "menxia":   {"role": "coordination", "commands": {"state", "flow", "progress", "todo", "confirm", "memory", "task-memo"}},
     "shangshu": {"role": "coordination", "commands": {"state", "flow", "progress", "todo", "confirm", "delegate", "memory", "task-memo", "shared-memo"}},
@@ -435,6 +438,100 @@ def cmd_flow(task_id, from_dept, to_dept, remark):
     _trigger_refresh()
     log.info(f'✅ {task_id} 流转记录: {from_dept} → {to_dept}')
     _append_audit(task_id, _infer_agent_id_from_runtime(), 'flow', from_dept, to_dept, clean_remark)
+
+
+def cmd_complete(task_id, summary=''):
+    """原子、幂等地记录最终回奏并关闭任务调度。"""
+    clean_summary = _sanitize_remark(summary or '任务已完成')
+    agent_id = _infer_agent_id_from_runtime()
+    agent_label = _AGENT_LABELS.get(agent_id, agent_id)
+    changed = [False]
+    rejected = ['']
+
+    def modifier(tasks):
+        t = find_task(tasks, task_id)
+        if not t:
+            rejected[0] = f'任务 {task_id} 不存在'
+            return tasks
+        if t.get('state') == 'Cancelled':
+            rejected[0] = f'任务 {task_id} 已取消，不能回奏完结'
+            return tasks
+
+        completed, total = _todo_counts(t)
+        if total > 0 and completed < total:
+            rejected[0] = f'todos 未完成（{completed}/{total}），禁止回奏完结'
+            return tasks
+
+        flow_log = t.setdefault('flow_log', [])
+        final_entry = next((
+            entry for entry in reversed(flow_log)
+            if isinstance(entry, dict)
+            and str(entry.get('from', '')).strip() == '太子'
+            and str(entry.get('to', '')).strip() == '皇上'
+            and (
+                entry.get('kind') == 'completion'
+                or str(entry.get('remark', '')).lstrip().startswith('✅ 回奏皇上')
+            )
+        ), None)
+
+        sched = t.get('_scheduler')
+        if not isinstance(sched, dict):
+            sched = {}
+            t['_scheduler'] = sched
+        if (
+            t.get('state') == 'Done'
+            and t.get('org') == '皇上'
+            and t.get('completedAt')
+            and final_entry is not None
+            and sched.get('enabled') is False
+            and sched.get('lastDispatchStatus') == 'completed'
+        ):
+            return tasks
+
+        completed_at = t.get('completedAt') or (final_entry or {}).get('at') or now_iso()
+        if final_entry is None:
+            final_entry = {
+                'at': completed_at,
+                'from': '太子',
+                'to': '皇上',
+                'remark': f'✅ 回奏皇上：{clean_summary}',
+                'kind': 'completion',
+                'agent': agent_id,
+                'agentLabel': agent_label,
+            }
+            flow_log.append(final_entry)
+
+        t['state'] = 'Done'
+        t['org'] = '皇上'
+        t['now'] = final_entry.get('remark') or f'✅ 回奏皇上：{clean_summary}'
+        t['block'] = '无'
+        t['completedAt'] = completed_at
+        t['updatedAt'] = completed_at
+        sched.update({
+            'enabled': False,
+            'stallSince': None,
+            'retryCount': 0,
+            'escalationLevel': 0,
+            'lastProgressAt': completed_at,
+            'lastDispatchStatus': 'completed',
+            'lastDispatchTrigger': 'taizi-complete',
+        })
+        changed[0] = True
+        return tasks
+
+    atomic_json_update(TASKS_FILE, modifier, [])
+    if rejected[0]:
+        log.warning(f'⚠️ {task_id} complete 被拒绝：{rejected[0]}')
+        _append_audit(task_id, agent_id, 'complete_rejected', None, 'Done', rejected[0])
+        return False
+    if not changed[0]:
+        log.info(f'✅ {task_id} 已处于完成态，无需重复收口')
+        return True
+
+    _trigger_refresh()
+    log.info(f'✅ {task_id} 已回奏皇上并完成收口')
+    _append_audit(task_id, agent_id, 'complete', None, 'Done', clean_summary)
+    return True
 
 
 def cmd_done(task_id, output_path='', summary=''):
@@ -938,7 +1035,7 @@ def cmd_delegate_result(sub_task_id, result_json):
     _append_audit(parent_id, to_agent, 'delegate_result', sub_task_id, None, result_json[:100])
 
 _CMD_MIN_ARGS = {
-    'create': 6, 'state': 3, 'flow': 5, 'done': 2, 'block': 3, 'confirm': 3,
+    'create': 6, 'state': 3, 'flow': 5, 'complete': 2, 'done': 2, 'block': 3, 'confirm': 3,
     'todo': 4, 'progress': 3,
     'memory': 4, 'task-memo': 4, 'shared-memo': 3,
     'delegate': 5, 'delegate-result': 3,
@@ -962,6 +1059,8 @@ if __name__ == '__main__':
         cmd_state(args[1], args[2], args[3] if len(args)>3 else None)
     elif cmd == 'flow':
         cmd_flow(args[1], args[2], args[3], args[4])
+    elif cmd == 'complete':
+        cmd_complete(args[1], args[2] if len(args)>2 else '')
     elif cmd == 'done':
         cmd_done(args[1], args[2] if len(args)>2 else '', args[3] if len(args)>3 else '')
     elif cmd == 'block':

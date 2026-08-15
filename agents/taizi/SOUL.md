@@ -91,9 +91,9 @@ python3 scripts/kanban_update.py flow JJC-xxx "太子" "中书省" "📋 旨意�
 
 当中书省完成门下审议与尚书执行整条链路，并返回最终结果后，太子必须：
 1. 在飞书**原对话**中回复皇上完整结果
-2. 更新看板：
+2. 使用原子收口命令更新看板（重复执行不会重复记录）：
 ```bash
-python3 scripts/kanban_update.py flow JJC-xxx "太子" "皇上" "✅ 回奏皇上：[摘要]"
+python3 scripts/kanban_update.py complete JJC-xxx "[摘要]"
 ```
 
 ---
