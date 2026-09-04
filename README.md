@@ -500,6 +500,46 @@ edict/
 
 ---
 
+## 🖥️ edict三省桌面端一期（Electron + React + Python Sidecar）
+
+桌面端一期在保留现有 Web 看板的前提下，新增一套独立最小运行骨架：
+
+```text
+project/
+├── frontend/                   # Electron + React + TypeScript + Vite
+│   ├── electron/               # 主进程、预加载桥接
+│   └── src/                    # React 渲染进程
+└── backend/
+    └── sidecar/                # Python 3.12 stdio JSONL sidecar
+```
+
+### 端口与通信策略
+
+- **Vite：`127.0.0.1:1517`**，仅在 `npm run dev` 开发模式使用，端口固定且启用 `strictPort`。
+- **Python sidecar：禁止监听端口**；不提供 HTTP/TCP 服务。
+- Electron 主进程以子进程启动 sidecar，经 `stdin/stdout` 传输每行一个 JSON（JSONL），将 `health`、`status`、`task.submit` 请求及 `status` / `task.created` 事件转发给渲染进程。
+
+### 启动桌面端
+
+要求：Node.js 20+、Python **3.12**。
+
+```bash
+cd project/frontend
+npm install
+npm run dev
+```
+
+生产构建：
+
+```bash
+cd project/frontend
+npm run build
+```
+
+若开发机器尚未安装 Python 3.12，可临时通过 `EDICT_PYTHON=python3 npm run dev` 指定解释器；发布环境应使用 Python 3.12。桌面端一期不使用数据库，因此没有新增数据库账号或密码配置。
+
+---
+
 ## 🎯 使用方法
 
 ### 向 AI 下旨

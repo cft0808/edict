@@ -31,11 +31,24 @@ venv/
 node_modules/
 edict/frontend/node_modules/
 edict/frontend/dist/
+project/frontend/node_modules/
+project/frontend/dist-renderer/
+project/frontend/dist-electron/
+project/frontend/release/
+project/frontend/.vite/
 dashboard/dist/
 *.tsbuildinfo
 
 # Vite cache
 .vite/
+
+# Electron/macOS build artifacts
+*.dmg
+*.app
+*.zip
+*.blockmap
+project/backend/**/__pycache__/
+project/backend/**/*.py[cod]
 
 # IDE
 .vscode/
@@ -45,7 +58,7 @@ dashboard/dist/
 data
 
 # Local dev/test scripts
-_*.py
+/_*.py
 
 # Generated docs
 *.docx

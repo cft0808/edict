@@ -66,6 +66,38 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  desktop-quality:
+    runs-on: macos-13
+    defaults:
+      run:
+        working-directory: project/frontend
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: project/frontend/package-lock.json
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install desktop dependencies
+        run: npm ci
+
+      - name: Verify desktop quality
+        run: npm run verify
+
+      - name: Verify sidecar protocol
+        run: python3 -m unittest discover -s ../backend/tests -v
+
+      - name: Verify unsigned macOS app packaging
+        run: npm run package:mac
+
   edict-backend:
     runs-on: ubuntu-latest
     services:

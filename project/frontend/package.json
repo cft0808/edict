@@ -1,0 +1,75 @@
+{
+  "name": "edict-desktop",
+  "description": "edict三省 macOS desktop control console",
+  "author": "Edict Contributors",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on tcp:1517 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:1517 electron .\"",
+    "build": "tsc -p tsconfig.electron.json && tsc -b && vite build && node scripts/verify-build.mjs",
+    "package:mac": "npm run build && electron-builder --mac --dir --publish never",
+    "dist:mac": "npm run build && electron-builder --mac --publish never",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.electron.json --noEmit && tsc -b --noEmit",
+    "verify": "npm run typecheck && npm run test && npm run build",
+    "start": "electron ."
+  },
+  "build": {
+    "appId": "io.edict.desktop",
+    "productName": "edict三省",
+    "icon": "assets/edict-three-provinces.icns",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist-electron/**",
+      "dist-renderer/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend",
+        "to": "backend",
+        "filter": [
+          "sidecar/**",
+          "!**/__pycache__/**",
+          "!**/*.pyc"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "minimumSystemVersion": "13.0"
+    }
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8",
+    "wait-on": "^8.0.1"
+  }
+}
