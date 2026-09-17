@@ -168,6 +168,7 @@ python3 scripts/skill_manager.py remove-remote \
 | Skill 名称 | 描述 | 适用 Agent | 源 URL |
 |-----------|------|----------|--------|
 | `mmx_cli` | MiniMax 多模态 CLI 技能 | 门下省/尚书省 | https://raw.githubusercontent.com/MiniMax-AI/cli/main/skill/SKILL.md |
+| `serply_search` | Serply 实时搜索技能（Google/学术/新闻/地图/Reddit 与网页抓取） | 门下省/户部/礼部 | https://raw.githubusercontent.com/serply-inc/skills/main/skills/searching-with-serply/SKILL.md |
 
 如果你维护自己的 Skills Hub，可以使用以下方式指定 Hub base URL。指定后，`import-official-hub` 会按 `<base>/<skill_name>/SKILL.md` 解析 `code_review`、`api_design`、`security_audit`、`data_analysis`、`doc_generation`、`test_framework` 等传统 skill 名称。
 

@@ -29,6 +29,7 @@ class SkillManagerTests(unittest.TestCase):
             skill_manager = _load_skill_manager(Path(tmp) / ".openclaw")
 
         self.assertIn("mmx_cli", skill_manager.OFFICIAL_SKILLS_HUB)
+        self.assertIn("serply_search", skill_manager.OFFICIAL_SKILLS_HUB)
         self.assertTrue(
             all(
                 "openclaw-ai/skills-hub" not in url
@@ -83,6 +84,24 @@ class SkillManagerTests(unittest.TestCase):
                     "mmx_cli",
                     "https://raw.githubusercontent.com/MiniMax-AI/cli/main/skill/SKILL.md",
                     "默认 skill：mmx_cli",
+                ),
+                (
+                    "menxia",
+                    "serply_search",
+                    "https://raw.githubusercontent.com/serply-inc/skills/main/skills/searching-with-serply/SKILL.md",
+                    "默认 skill：serply_search",
+                ),
+                (
+                    "hubu",
+                    "serply_search",
+                    "https://raw.githubusercontent.com/serply-inc/skills/main/skills/searching-with-serply/SKILL.md",
+                    "默认 skill：serply_search",
+                ),
+                (
+                    "libu",
+                    "serply_search",
+                    "https://raw.githubusercontent.com/serply-inc/skills/main/skills/searching-with-serply/SKILL.md",
+                    "默认 skill：serply_search",
                 ),
             ],
         )

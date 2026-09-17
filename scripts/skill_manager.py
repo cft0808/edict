@@ -239,6 +239,7 @@ def _get_hub_url(base, skill_name):
 
 OFFICIAL_SKILLS_HUB = {
     'mmx_cli': 'https://raw.githubusercontent.com/MiniMax-AI/cli/main/skill/SKILL.md',
+    'serply_search': 'https://raw.githubusercontent.com/serply-inc/skills/main/skills/searching-with-serply/SKILL.md',
 }
 
 _HUB_SKILL_NAMES = (
@@ -265,6 +266,7 @@ SKILL_AGENT_MAPPING = {
     'doc_generation': ('libu', 'menxia'),
     'test_framework': ('gongbu', 'xingbu', 'menxia'),
     'mmx_cli': ('menxia', 'shangshu'),
+    'serply_search': ('menxia', 'hubu', 'libu'),
 }
 
 

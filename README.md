@@ -591,6 +591,7 @@ curl http://localhost:7891/api/remote-skills-list
 
 支持的 Skills：
 - `mmx_cli` — MiniMax 多模态 CLI 技能（文本、图像、视频、语音、音乐、搜索）
+- `serply_search` — Serply 实时搜索技能（Google 搜索、学术、新闻、地图、招聘、商品、Reddit 与网页抓取，需 Serply API Key）
 
 如果你有自己的 Skills Hub，可以通过 `OPENCLAW_SKILLS_HUB_BASE` 或 `~/.openclaw/skills-hub-url` 配置自定义源。
 
