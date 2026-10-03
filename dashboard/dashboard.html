@@ -38,6 +38,8 @@
     #cd{font-size:11px;color:var(--muted)}
 
     /* TABS */
+    .nav-toggle{display:none;align-items:center;justify-content:center;gap:6px;margin:0 0 10px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+    .nav-toggle:hover{background:var(--panel2)}
     .tabs{display:flex;gap:2px;margin-bottom:18px;border-bottom:1px solid var(--line);overflow-x:auto}
     .tab{font-size:13px;padding:8px 16px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);border:1px solid transparent;border-bottom:none;white-space:nowrap;position:relative;bottom:-1px;transition:background-color .3s ease,color .2s ease,border-color .2s ease;user-select:none}
     .tab:hover{color:var(--text);background:var(--panel)}
@@ -661,6 +663,38 @@
       .edict-card{animation:none!important}
       *{transition-duration:0s!important}
     }
+
+    /* ══ ≤767 phone ══ */
+    @media (max-width: 767px){
+      html,body{overflow-x:clip}
+      .hdr,.hdr>*{min-width:0;max-width:100%}
+      .edict-grid,.duty-grid,.model-grid,.skills-grid,.sess-grid,.mn-cats,.mb-cats,.tpl-grid,.m-rows,.od-stats{grid-template-columns:1fr}
+      .edict-grid>*,.duty-grid>*,.model-grid>*,.skills-grid>*,.sess-grid>*,.mn-cats>*,.mb-cats>*,.tpl-grid>*,.m-rows>*,.od-stats>*{min-width:0}
+      .sched-grid,.off-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .off-layout{grid-template-columns:1fr}
+      .off-layout,.off-layout>*{min-width:0}
+      .modal,.sk-modal-body,.sk-md{max-width:100%;min-width:0}
+      .modal{padding:56px 12px 16px}
+      .modal-bg.open{padding:12px}
+      .modal-close{top:8px;right:8px}
+      .sk-md{overflow-x:auto}
+      .sk-md table{width:max-content;min-width:100%}
+      .nav-toggle{display:flex}
+      .tabs{display:none;flex-direction:column;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;gap:0}
+      .tabs.open{display:flex}
+      .tabs .tab{bottom:auto;border-radius:0;border:none;border-bottom:1px solid var(--line);white-space:normal}
+      .tabs .tab.active{background:var(--panel2)}
+      .nav-toggle,.tab,.btn,.btn-refresh,.btn-action,.btn-morning-refresh,.theme-toggle,.ab-btn,.ab-scan,.ab-archive-all,.ab-scan-detail,.ab-scan-copy,.sched-btn,.tpl-cat,.tpl-go,.sess-filter,.modal-close,.as-wake-btn{min-height:44px;min-width:44px;touch-action:manipulation}
+      .sess-filter,.tpl-cat{display:inline-flex;align-items:center;justify-content:center}
+      .logo{font-size:clamp(.875rem,4.8vw,1.25rem);max-width:100%}
+      .modal-title{font-size:clamp(1rem,5vw,1.375rem)}
+      .ec-title{font-size:clamp(.875rem,4vw,.9375rem)}
+      .od-name{font-size:clamp(1.05rem,5vw,1.375rem)}
+      .mn-date{font-size:clamp(1rem,4.8vw,1.25rem)}
+      .mb-title{font-size:clamp(1rem,4.8vw,1.25rem)}
+      .crm-line1{font-size:clamp(1.75rem,11vw,3.25rem);max-width:100%;min-width:0}
+      .ceremony-bg{overflow:hidden;padding:0 12px}
+    }
   </style>
 </head>
 <body>
@@ -693,7 +727,8 @@
   </div>
 
   <!-- TABS -->
-  <div class="tabs">
+  <button type="button" class="nav-toggle" id="nav-toggle" aria-controls="main-tabs" aria-expanded="false">☰ 导航</button>
+  <div class="tabs" id="main-tabs">
     <div class="tab active" data-tab="edicts">📜 旨意看板 <span class="tbadge" id="tb-e">0</span></div>
     <div class="tab" data-tab="monitor">🔭 省部调度 <span class="tbadge" id="tb-m">0</span></div>
     <div class="tab" data-tab="officials">👥 官员总览</div>
@@ -2857,6 +2892,10 @@ async function copyGlobalScanReport(){
 }
 
 /* ══ TABS ══ */
+document.getElementById('nav-toggle').addEventListener('click',()=>{
+  const open=document.getElementById('main-tabs').classList.toggle('open');
+  document.getElementById('nav-toggle').setAttribute('aria-expanded',open?'true':'false');
+});
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
@@ -2869,6 +2908,8 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   if(activeTab==='sessions')renderSessions(liveStatus?liveStatus.tasks:[]);
   if(activeTab==='memorials')renderMemorials();
   if(activeTab==='templates')renderTemplates();
+  document.getElementById('main-tabs').classList.remove('open');
+  document.getElementById('nav-toggle').setAttribute('aria-expanded','false');
 }));
 
 /* ══ COUNTDOWN (5s) ══ */
@@ -2882,7 +2923,12 @@ function startCd(){
 }
 
 /* ══ KEY ══ */
-document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('modal-bg').classList.remove('open')});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  document.getElementById('modal-bg').classList.remove('open');
+  document.getElementById('main-tabs').classList.remove('open');
+  document.getElementById('nav-toggle').setAttribute('aria-expanded','false');
+});
 
 /* ══ COURT CEREMONY (上朝仪式感) ══ */
 function showCeremony(){
