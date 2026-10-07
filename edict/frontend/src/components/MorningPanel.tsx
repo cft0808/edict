@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useStore } from '../store';
 import { api } from '../api';
-import type { SubConfig, MorningNewsItem } from '../api';
+import type { SubConfig, MorningNewsItem, NotificationConfig } from '../api';
 
 const CAT_META: Record<string, { icon: string; color: string; desc: string }> = {
   '政治': { icon: '🏛️', color: '#6a9eff', desc: '全球政治动态' },
@@ -193,6 +193,12 @@ export default function MorningPanel() {
           onRemoveFeed={removeFeed}
           onSave={saveConfig}
           onSetWebhook={(v) => setLocalConfig({ ...localConfig, feishu_webhook: v })}
+          onSetNotification={(patch) =>
+            setLocalConfig({
+              ...localConfig,
+              notification: { ...(localConfig.notification || {}), ...patch },
+            })
+          }
         />
       )}
 
@@ -296,6 +302,7 @@ function SubConfigPanel({
   onRemoveFeed,
   onSave,
   onSetWebhook,
+  onSetNotification,
 }: {
   config: SubConfig;
   enabledSet: Set<string>;
@@ -306,6 +313,7 @@ function SubConfigPanel({
   onRemoveFeed: (i: number) => void;
   onSave: () => void;
   onSetWebhook: (v: string) => void;
+  onSetNotification: (patch: NotificationConfig) => void;
 }) {
   const [newKw, setNewKw] = useState('');
   const [feedName, setFeedName] = useState('');
@@ -396,9 +404,14 @@ function SubConfigPanel({
         </div>
       </div>
 
-      {/* Feishu Webhook */}
+      {/* 消息推送 (notification): 渠道 + Webhook */}
+      <NotificationConfigBlock config={config} onSetNotification={onSetNotification} />
+
+      {/* 兼容旧字段：飞书 Webhook */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>飞书 Webhook</div>
+        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+          飞书 Webhook <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(旧字段，仅渠道选「飞书」时生效)</span>
+        </div>
         <input
           type="text"
           value={config.feishu_webhook || ''}
@@ -413,6 +426,71 @@ function SubConfigPanel({
           💾 保存配置
         </button>
       </div>
+    </div>
+  );
+}
+
+// 与后端 edict/backend/app/channels/__init__.py 的注册表保持一致
+const NOTIFY_CHANNELS: { id: string; label: string; placeholder: string }[] = [
+  { id: 'feishu', label: '💬 飞书 Feishu', placeholder: 'https://open.feishu.cn/open-apis/bot/v2/hook/...' },
+  { id: 'dingtalk', label: '📌 钉钉 DingTalk', placeholder: 'https://oapi.dingtalk.com/robot/send?access_token=...&secret=SEC...' },
+  { id: 'wecom', label: '📱 企业微信 WeCom', placeholder: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...' },
+  { id: 'telegram', label: '✈️ Telegram', placeholder: 'https://api.telegram.org/bot.../sendMessage?chat_id=...' },
+  { id: 'discord', label: '🎮 Discord', placeholder: 'https://discord.com/api/webhooks/...' },
+  { id: 'slack', label: '💬 Slack', placeholder: 'https://hooks.slack.com/services/...' },
+  { id: 'qq', label: '🐧 QQ', placeholder: 'http://127.0.0.1:3000/send_private_msg?user_id=...' },
+  { id: 'webhook', label: '🔗 通用 Webhook', placeholder: 'https://your-server.com/webhook/...' },
+];
+
+const DINGTALK_HINT =
+  '钉钉机器人安全设置选「加签」时，把 secret 作为 secret=SEC... 追加在 webhook 后面，' +
+  '例如 .../send?access_token=xxx&secret=SECyyy；选「自定义关键词」则直接在机器人里配置关键词。';
+
+function NotificationConfigBlock({
+  config,
+  onSetNotification,
+}: {
+  config: SubConfig;
+  onSetNotification: (patch: NotificationConfig) => void;
+}) {
+  const noti = config.notification || {};
+  const channel = noti.channel || 'feishu';
+  const meta = NOTIFY_CHANNELS.find((c) => c.id === channel) || NOTIFY_CHANNELS[0];
+
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>🔔 消息推送</div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+        <select
+          value={channel}
+          onChange={(e) => onSetNotification({ channel: e.target.value })}
+          style={{ padding: '6px 10px', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 6, color: 'var(--text)', fontSize: 12, outline: 'none', minWidth: 170 }}
+        >
+          {NOTIFY_CHANNELS.map((c) => (
+            <option key={c.id} value={c.id}>{c.label}</option>
+          ))}
+        </select>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--muted)' }}>
+          <input
+            type="checkbox"
+            checked={noti.enabled !== false}
+            onChange={(e) => onSetNotification({ enabled: e.target.checked })}
+          />
+          启用推送
+        </label>
+      </div>
+      <input
+        type="text"
+        value={noti.webhook || ''}
+        onChange={(e) => onSetNotification({ webhook: e.target.value })}
+        placeholder={meta.placeholder}
+        style={{ width: '100%', padding: '8px 10px', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 6, color: 'var(--text)', fontSize: 12, outline: 'none' }}
+      />
+      {channel === 'dingtalk' && (
+        <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 6, lineHeight: 1.6 }}>
+          {DINGTALK_HINT}
+        </div>
+      )}
     </div>
   );
 }
