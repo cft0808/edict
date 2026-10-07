@@ -34,6 +34,29 @@ def cleanup_backups():
             pass
 
 
+def _agent_list(agents_cfg):
+    """Agents as [{id, ...}], supporting legacy `list` and current `entries`."""
+    entries = agents_cfg.get('entries')
+    if isinstance(entries, dict) and entries:
+        out = []
+        for ag_id, cfg in entries.items():
+            item = dict(cfg) if isinstance(cfg, dict) else {}
+            item.setdefault('id', ag_id)
+            out.append(item)
+        return out
+    lst = agents_cfg.get('list')
+    return lst if isinstance(lst, list) else []
+
+
+def _normalize_model(model_value):
+    """Extract a model id from a string or {primary: ...} object."""
+    if isinstance(model_value, str):
+        return model_value
+    if isinstance(model_value, dict):
+        return model_value.get('primary') or model_value.get('id') or ''
+    return ''
+
+
 def main():
     if not PENDING.exists():
         return
@@ -42,8 +65,11 @@ def main():
         return
 
     cfg = rj(OPENCLAW_CFG, {})
-    agents_list = cfg.get('agents', {}).get('list', [])
-    default_model = cfg.get('agents', {}).get('defaults', {}).get('model', {}).get('primary', '')
+    agents_cfg = cfg.get('agents', {})
+    entries = agents_cfg.get('entries')
+    use_entries = isinstance(entries, dict) and bool(entries)
+    agents_list = _agent_list(agents_cfg)
+    default_model = _normalize_model(agents_cfg.get('defaults', {}).get('model', {})) or ''
 
     applied, errors = [], []
     for change in pending:
@@ -55,7 +81,7 @@ def main():
         found = False
         for ag in agents_list:
             if ag.get('id') == ag_id:
-                old = ag.get('model', default_model)
+                old = _normalize_model(ag.get('model', default_model)) or default_model
                 if new_model == default_model:
                     ag.pop('model', None)
                 else:
@@ -69,8 +95,12 @@ def main():
     if applied:
         # 只有内容真正变化时才备份和写入
         new_cfg = dict(cfg)
-        new_cfg['agents'] = dict(cfg.get('agents', {}))
-        new_cfg['agents']['list'] = agents_list
+        new_agents = dict(agents_cfg)
+        if use_entries:
+            new_agents['entries'] = {ag['id']: {k: v for k, v in ag.items() if k != 'id'} for ag in agents_list}
+        else:
+            new_agents['list'] = agents_list
+        new_cfg['agents'] = new_agents
         old_text = json.dumps(cfg, ensure_ascii=False, sort_keys=True)
         new_text = json.dumps(new_cfg, ensure_ascii=False, sort_keys=True)
         if old_text != new_text:

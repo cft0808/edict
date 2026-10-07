@@ -62,15 +62,29 @@ def normalize_model(model_value, fallback='anthropic/claude-sonnet-4-6'):
         return model_value.get('primary') or model_value.get('id') or fallback
     return fallback
 
+def _agent_list(agents_cfg):
+    """Agents as [{id, ...}], supporting legacy `list` and current `entries`."""
+    entries = agents_cfg.get('entries')
+    if isinstance(entries, dict) and entries:
+        out = []
+        for ag_id, cfg in entries.items():
+            item = dict(cfg) if isinstance(cfg, dict) else {}
+            item.setdefault('id', ag_id)
+            out.append(item)
+        return out
+    lst = agents_cfg.get('list')
+    return lst if isinstance(lst, list) else []
+
 def get_model(agent_id):
     cfg = _load_openclaw_cfg()
-    default = normalize_model(cfg.get('agents',{}).get('defaults',{}).get('model',{}), 'anthropic/claude-sonnet-4-6')
-    for a in cfg.get('agents',{}).get('list',[]):
+    agents_cfg = cfg.get('agents',{})
+    default = normalize_model(agents_cfg.get('defaults',{}).get('model',{}), 'anthropic/claude-sonnet-4-6')
+    for a in _agent_list(agents_cfg):
         if a.get('id') == agent_id:
             return normalize_model(a.get('model', default), default)
     # 兼容历史：太子曾使用 main 作为运行时 id
     if agent_id == 'taizi':
-        for a in cfg.get('agents',{}).get('list',[]):
+        for a in _agent_list(agents_cfg):
             if a.get('id') == 'main':
                 return normalize_model(a.get('model', default), default)
     return default
