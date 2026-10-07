@@ -51,6 +51,8 @@ export const api = {
     postJ<ActionResult>(`${API_BASE}/api/set-model`, { agentId, model }),
   setDispatchChannel: (channel: string) =>
     postJ<ActionResult>(`${API_BASE}/api/set-dispatch-channel`, { channel }),
+  setDispatchTarget: (target: string) =>
+    postJ<ActionResult>(`${API_BASE}/api/set-dispatch-target`, { target }),
   agentWake: (agentId: string) =>
     postJ<ActionResult>(`${API_BASE}/api/agent-wake`, { agentId }),
   taskAction: (taskId: string, action: string, reason: string) =>
@@ -193,6 +195,7 @@ export interface AgentConfig {
   agents: AgentInfo[];
   knownModels?: KnownModel[];
   dispatchChannel?: string;
+  dispatchTarget?: string;
 }
 
 export interface ChangeLogEntry {
@@ -285,11 +288,18 @@ export interface CustomFeed {
   category: string;
 }
 
+export interface NotificationConfig {
+  enabled?: boolean;
+  channel?: string;
+  webhook?: string;
+}
+
 export interface SubConfig {
   categories: SubCategoryConfig[];
   keywords: string[];
   custom_feeds: CustomFeed[];
   feishu_webhook: string;
+  notification?: NotificationConfig;
 }
 
 export interface ActivityEntry {

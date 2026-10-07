@@ -2214,7 +2214,18 @@ def dispatch_for_state(task_id, task, new_state, trigger='state-transition'):
                 return
             cmd = [openclaw_bin, 'agent', '--agent', agent_id, '-m', msg, '--timeout', '300']
             if _channel:
-                cmd.extend(['--deliver', '--channel', _channel])
+                # 注意：`--channel` 只接受 OpenClaw 内置渠道白名单（telegram/slack/feishu…），
+                # 插件渠道（如 dingtalk-connector）不在其中，传了会直接失败：
+                #   INVALID_REQUEST: Unable to resolve a session route for channel "dingtalk-connector"
+                # 同时钉钉这类渠道投递必须带目标，否则消息静默未送达。
+                # 因此：有 dispatchTarget 时改用 `--reply-channel` + `--reply-to`（渠道/目标覆盖），
+                # 无目标时维持 `--channel` 以兼容内置渠道。
+                _target = (_agent_cfg.get('dispatchTarget') or '').strip()
+                cmd.extend(['--deliver'])
+                if _target:
+                    cmd.extend(['--reply-channel', _channel, '--reply-to', _target])
+                else:
+                    cmd.extend(['--channel', _channel])
             max_retries = 2
             err = ''
             for attempt in range(1, max_retries + 1):
@@ -2837,7 +2848,7 @@ class Handler(BaseHTTPRequestHandler):
         # Fix #139: 设置派发渠道（feishu/telegram/wecom/signal/tui）
         elif p == '/api/set-dispatch-channel':
             channel = body.get('channel', '').strip()
-            allowed = {'feishu', 'telegram', 'wecom', 'signal', 'tui', 'discord', 'slack'}
+            allowed = {'feishu', 'telegram', 'wecom', 'signal', 'tui', 'discord', 'slack', 'dingtalk-connector'}
             if not channel or channel not in allowed:
                 self.send_json({'ok': False, 'error': f'channel must be one of: {", ".join(sorted(allowed))}'}, 400)
                 return
@@ -2846,6 +2857,15 @@ class Handler(BaseHTTPRequestHandler):
                 return cfg
             atomic_json_update(DATA / 'agent_config.json', _set_channel, {})
             self.send_json({'ok': True, 'message': f'派发渠道已切换为 {channel}'})
+
+        # 投递目标：部分渠道（钉钉）必须指定，否则投递被拒且不报错
+        elif p == '/api/set-dispatch-target':
+            target = (body.get('target') or '').strip()
+            def _set_target(cfg):
+                cfg['dispatchTarget'] = target
+                return cfg
+            atomic_json_update(DATA / 'agent_config.json', _set_target, {})
+            self.send_json({'ok': True, 'message': f'投递目标已保存: {target or "(已清空)"}'})
 
         # ── 朝堂议政 POST ──
         elif p == '/api/court-discuss/start':

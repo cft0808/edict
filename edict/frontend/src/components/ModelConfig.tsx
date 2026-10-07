@@ -22,6 +22,7 @@ const CHANNELS = [
   { id: 'discord', label: 'Discord' },
   { id: 'slack', label: 'Slack' },
   { id: 'signal', label: 'Signal' },
+  { id: 'dingtalk-connector', label: '钉钉 DingTalk' },
   { id: 'tui', label: 'TUI (终端)' },
 ];
 
@@ -35,6 +36,8 @@ export default function ModelConfig() {
   const [statusMap, setStatusMap] = useState<Record<string, { cls: string; text: string }>>({});
   const [channelSel, setChannelSel] = useState('feishu');
   const [channelStatus, setChannelStatus] = useState('');
+  const [targetInput, setTargetInput] = useState<string | null>(null);
+  const [targetStatus, setTargetStatus] = useState('');
 
   useEffect(() => {
     loadAgentConfig();
@@ -153,6 +156,34 @@ export default function ModelConfig() {
           {channelStatus && <span style={{ fontSize: 12, color: channelStatus.startsWith('✅') ? 'var(--success)' : 'var(--danger)' }}>{channelStatus}</span>}
         </div>
         <div style={{ fontSize: 11, color: 'var(--muted)' }}>自动派发时使用的 OpenClaw 通知渠道（需已在 openclaw.json 中配置对应 channel）</div>
+      </div>
+
+      {/* 投递目标 */}
+      <div style={{ marginTop: 16, marginBottom: 8 }}>
+        <div className="sec-title">投递目标</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0' }}>
+          <input
+            className="msel"
+            style={{ maxWidth: 320 }}
+            value={targetInput ?? (agentConfig?.dispatchTarget || '')}
+            onChange={(e) => setTargetInput(e.target.value)}
+            placeholder="user:userId 或 group:conversationId"
+          />
+          <button className="btn btn-p"
+            onClick={async () => {
+              try {
+                const r = await api.setDispatchTarget((targetInput ?? agentConfig?.dispatchTarget ?? '').trim());
+                if (r.ok) { setTargetStatus('✅ 已保存'); toast('投递目标已保存', 'ok'); loadAgentConfig(); }
+                else setTargetStatus('❌ ' + (r.error || '失败'));
+              } catch { setTargetStatus('❌ 无法连接'); }
+              setTimeout(() => setTargetStatus(''), 3000);
+            }}>应用</button>
+          {targetStatus && <span style={{ fontSize: 12, color: targetStatus.startsWith('✅') ? 'var(--success)' : 'var(--danger)' }}>{targetStatus}</span>}
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+          部分渠道<b>必须</b>指定目标才能送达（例如钉钉：<code>user:用户ID</code> 或 <code>group:会话ID</code>）。
+          留空则使用被动回复模式（仅回复向机器人发过消息的人）。因渠道而异，请按渠道文档填写。
+        </div>
       </div>
 
       {/* Change Log */}
