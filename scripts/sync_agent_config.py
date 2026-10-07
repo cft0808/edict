@@ -104,19 +104,47 @@ def _collect_openclaw_models(cfg):
                 extra.append({'id': model_id, 'label': model_id, 'provider': provider})
                 known_ids.add(model_id)
     # 收集每个 agent 的 model
-    for ag in agents_cfg.get('list', []):
+    for ag in _agent_list(agents_cfg):
         m = normalize_model(ag.get('model', ''), '')
         if m and m not in known_ids:
             extra.append({'id': m, 'label': m, 'provider': 'OpenClaw'})
             known_ids.add(m)
     # 收集 providers 中的 model id（如 copilot-proxy、anthropic 等）
-    for pname, pcfg in cfg.get('providers', {}).items():
-        for mid in (pcfg.get('models') or []):
-            mid_str = mid if isinstance(mid, str) else (mid.get('id') or mid.get('name') or '')
-            if mid_str and mid_str not in known_ids:
-                extra.append({'id': mid_str, 'label': mid_str, 'provider': pname})
-                known_ids.add(mid_str)
+    # 兼容旧版顶级 providers 与新版 models.providers 两种位置
+    provider_maps = []
+    if isinstance(cfg.get('providers'), dict):
+        provider_maps.append(cfg['providers'])
+    if isinstance((cfg.get('models') or {}).get('providers'), dict):
+        provider_maps.append(cfg['models']['providers'])
+    for provs in provider_maps:
+        for pname, pcfg in provs.items():
+            for mid in ((pcfg or {}).get('models') or []):
+                mid_str = mid if isinstance(mid, str) else (mid.get('id') or mid.get('name') or '')
+                if not mid_str:
+                    continue
+                full = mid_str if '/' in mid_str else f'{pname}/{mid_str}'
+                if full not in known_ids:
+                    extra.append({'id': full, 'label': full, 'provider': pname})
+                    known_ids.add(full)
     return KNOWN_MODELS + extra
+
+
+def _agent_list(agents_cfg):
+    """Return agents as a list of {id, ...} dicts.
+
+    Supports both legacy `agents.list` (array) and current `agents.entries`
+    (object keyed by agent id) layouts of openclaw.json.
+    """
+    entries = agents_cfg.get('entries')
+    if isinstance(entries, dict) and entries:
+        out = []
+        for ag_id, cfg in entries.items():
+            item = dict(cfg) if isinstance(cfg, dict) else {}
+            item.setdefault('id', ag_id)
+            out.append(item)
+        return out
+    lst = agents_cfg.get('list')
+    return lst if isinstance(lst, list) else []
 
 
 def main():
@@ -129,7 +157,7 @@ def main():
 
     agents_cfg = cfg.get('agents', {})
     default_model = normalize_model(agents_cfg.get('defaults', {}).get('model', {}), 'unknown')
-    agents_list = agents_cfg.get('list', [])
+    agents_list = _agent_list(agents_cfg)
     merged_models = _collect_openclaw_models(cfg)
 
     result = []
@@ -195,6 +223,7 @@ def main():
         'defaultModel': default_model,
         'knownModels': merged_models,
         'dispatchChannel': existing_cfg.get('dispatchChannel') or os.getenv('DEFAULT_DISPATCH_CHANNEL', ''),
+        'dispatchTarget': existing_cfg.get('dispatchTarget') or os.getenv('DEFAULT_DISPATCH_TARGET', ''),
         'agents': result,
     }
     DATA.mkdir(exist_ok=True)
