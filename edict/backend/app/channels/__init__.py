@@ -10,6 +10,7 @@ from .discord import DiscordChannel
 from .slack import SlackChannel
 from .webhook import WebhookChannel
 from .qq import QQChannel
+from .dingtalk import DingtalkChannel
 
 
 CHANNELS: dict[str, Type[NotificationChannel]] = {
@@ -20,6 +21,7 @@ CHANNELS: dict[str, Type[NotificationChannel]] = {
     "slack": SlackChannel,
     "webhook": WebhookChannel,
     "qq": QQChannel,
+    "dingtalk": DingtalkChannel,
 }
 
 
@@ -52,6 +54,7 @@ __all__ = [
     "SlackChannel",
     "WebhookChannel",
     "QQChannel",
+    "DingtalkChannel",
     "CHANNELS",
     "get_channel",
     "get_all_channels",
