@@ -13,6 +13,8 @@ const FALLBACK_MODELS = [
   { id: 'copilot/claude-opus-4.5', l: 'Claude Opus 4.5', p: 'Copilot' },
   { id: 'copilot/gpt-4o', l: 'GPT-4o', p: 'Copilot' },
   { id: 'copilot/gemini-2.5-pro', l: 'Gemini 2.5 Pro', p: 'Copilot' },
+  { id: 'minimax/MiniMax-M3.1-Flash', l: 'MiniMax M3.1 Flash', p: 'MiniMax' },
+  { id: 'minimax/MiniMax-M3', l: 'MiniMax M3', p: 'MiniMax' },
 ];
 
 const CHANNELS = [
