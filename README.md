@@ -347,6 +347,13 @@ bash edict.sh stop     # 停止
 
 ---
 
+## ☁️ 一键部署
+
+<a href="https://repocloud.io/details/Edict/"><img src="https://d16t0pc4846x52.cloudfront.net/deploylobe.svg" alt="Deploy on RepoCloud" height="42"></a>
+<a href="https://railway.com/deploy/edict-aug-26-multi-agent-dashboard"><img src="https://railway.com/button.svg" alt="Deploy on Railway" height="42"></a>
+
+---
+
 ## 🏛️ 架构
 
 ```
