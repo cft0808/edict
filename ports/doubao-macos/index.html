@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="google" content="notranslate">
+<meta http-equiv="content-language" content="zh-Hant">
+<title>軍機處 · 三省六部看板</title>
+<style>
+:root{--ink:#1c1a17;--bg:#f3ece0;--card:#fffdf7;--line:#d8cbb2;--gold:#8a6a3b;--ok:#2f7a4f;--warn:#b5852a;--bad:#a33b2f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 "PingFang TC","Noto Sans TC",system-ui,sans-serif}
+header{padding:18px 22px;border-bottom:2px solid var(--gold);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+h1{margin:0;font-size:22px;letter-spacing:3px}
+.sub{color:var(--gold);font-size:12px}
+#stat{margin-left:auto;font-size:12px;color:#7a6c55}
+.board{display:grid;gap:10px;padding:16px;overflow-x:auto}
+.col{background:var(--card);border:1px solid var(--line);border-radius:10px;min-height:220px;display:flex;flex-direction:column}
+.col h2{margin:0;padding:9px 12px;font-size:13px;letter-spacing:2px;border-bottom:1px solid var(--line);color:var(--gold);display:flex;justify-content:space-between}
+.col h2 span{color:#9b8e78;font-weight:400}
+.cards{padding:8px;display:flex;flex-direction:column;gap:8px}
+.card{border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:8px;padding:8px 10px;background:#fff;cursor:pointer}
+.card.done{border-left-color:var(--ok)} .card.fail{border-left-color:var(--bad)}
+.card .t{font-weight:600;font-size:13px}
+.card .m{font-size:11px;color:#8b7f6b;margin-top:2px}
+.tag{display:inline-block;font-size:10px;border:1px solid var(--line);border-radius:4px;padding:0 4px;margin:3px 3px 0 0;color:#7a6c55}
+.tag.ok{color:var(--ok);border-color:var(--ok)} .tag.bad{color:var(--bad);border-color:var(--bad)}
+#detail{position:fixed;inset:auto 0 0 0;max-height:46vh;overflow:auto;background:var(--card);border-top:2px solid var(--gold);padding:14px 20px;display:none;box-shadow:0 -6px 20px rgba(0,0,0,.12)}
+#detail h3{margin:0 0 6px;font-size:15px}
+#detail .x{position:absolute;top:10px;right:16px;cursor:pointer;color:#9b8e78;font-size:18px}
+.log{font-size:12px;color:#5c5346;border-left:2px solid var(--line);padding-left:8px;margin:4px 0}
+footer{padding:8px 22px;color:#8b7f6b;font-size:11px}
+.empty{font-size:11px;color:#b6a992;padding:6px 2px}
+</style>
+</head>
+<body class="notranslate">
+<header>
+  <h1>軍機處</h1>
+  <span class="sub">三省六部 · 豆包版｜旨意流轉與審計</span>
+  <span id="stat"></span>
+</header>
+<div class="board" id="board"></div>
+<div id="detail"></div>
+<footer id="foot">載入中…</footer>
+<script>
+const BASE_STAGES=["太子","中書省","門下省","尚書省","六部執行","門下複審","歸檔"];
+const SIX=["戶部","禮部","兵部","刑部","工部","吏部"];
+const DEPTS=[...SIX,"太子","中書省","門下省","尚書省"];
+let DATA={edicts:[],updated:""};
+let curId=null;
+
+function cls(s){if(!s)return"";if(/完成|通過|已交|合格/.test(s))return"ok";if(/失敗|退回|否決|卡/.test(s))return"bad";return"";
+}
+function stageOf(e){return e.stage||"太子";}
+
+function render(){
+  const edicts=Array.isArray(DATA.edicts)?DATA.edicts:[];
+  // 動態欄位：固定七衙門 + 資料中出現但未列名的階段，避免卡片人間蒸發
+  const extra=[...new Set(edicts.map(stageOf))].filter(s=>!BASE_STAGES.includes(s));
+  const STAGES=[...BASE_STAGES,...extra];
+  const board=document.getElementById("board");
+  board.innerHTML="";
+  board.style.gridTemplateColumns=`repeat(${STAGES.length},minmax(190px,1fr))`;
+  STAGES.forEach(st=>{
+    const list=edicts.filter(e=>stageOf(e)===st);
+    const col=document.createElement("div");col.className="col";
+    col.innerHTML=`<h2>${st}<span>${list.length}</span></h2>`;
+    const wrap=document.createElement("div");wrap.className="cards";
+    if(!list.length){const p=document.createElement("div");p.className="empty";p.textContent="（無）";wrap.appendChild(p);}
+    list.forEach(e=>{
+      const c=document.createElement("div");
+      const st2=e.status||"";
+      c.className="card "+(/失敗/.test(st2)?"fail":(/完成|通過/.test(st2)?"done":""));
+      const d=e.depts||{};
+      const tags=DEPTS.filter(x=>d[x]).map(x=>`<span class="tag ${cls(d[x])}">${x}·${d[x]}</span>`).join("");
+      c.innerHTML=`<div class="t">${e.id||""}｜${e.title||""}</div><div class="m">${st2} · ${e.created||""}</div>${tags}`;
+      c.onclick=()=>show(e);wrap.appendChild(c);
+    });
+    col.appendChild(wrap);board.appendChild(col);
+  });
+  const open=edicts.filter(e=>!/歸檔|完成/.test((e.stage||"")+(e.status||""))).length;
+  document.getElementById("stat").textContent=`未結 ${open} 道`;
+  document.getElementById("foot").textContent=
+    `旨意 ${edicts.length} 道｜最後同步 ${DATA.updated||"—"}｜每 10 秒自動刷新`;
+  if(curId){const now=edicts.find(e=>e.id===curId);if(now)show(now);}
+}
+
+function show(e){
+  curId=e.id;
+  const d=document.getElementById("detail");
+  d.style.display="block";
+  const logs=(e.log||[]).slice(0,15).map(l=>`<div class="log">${l.t||""}　<b>${l.dept||""}</b>　${l.msg||""}</div>`).join("")
+            ||`<div class="empty">尚無軌跡</div>`;
+  d.innerHTML=`<span class="x" onclick="hide()">×</span>`+
+    `<h3>${e.id||""}｜${e.title||""}</h3><div class="m">${e.stage||""} · ${e.status||""}</div>`+logs;
+}
+function hide(){curId=null;document.getElementById("detail").style.display="none";}
+document.addEventListener("keydown",ev=>{if(ev.key==="Escape")hide();});
+
+async function tick(){
+  try{
+    const r=await fetch("state.json?_="+Date.now(),{cache:"no-store"});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    DATA=await r.json();
+    render();
+  }catch(err){
+    const tip=location.protocol==="file:"
+      ?"目前是 file:// 直開，瀏覽器不允許讀 state.json；請改跑 bash start.sh 後開 http://127.0.0.1:7891"
+      :"讀取 state.json 失敗："+err.message;
+    document.getElementById("foot").textContent=tip;
+    document.getElementById("stat").textContent="看板離線";
+  }
+}
+tick();setInterval(tick,10000);
+</script>
+</body>
+</html>
